@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}home{% endblock %}
+
+{% block title %}{{ mooc_name }}{% endblock %}
+
+{% block body %}
+  <h1> {{ mooc_name }} </h1>
+  <a href="{{ first_vertical["url"][1:] }}/index.html" class="btn btn-lg btn-success">Start course</a>
+  <br/>
+  <br/>
+  <br/>
+  {{ first_message }}
+{% endblock %}

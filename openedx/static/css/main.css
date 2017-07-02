@@ -1,0 +1,19 @@
+#top {
+  height:10%;
+  display:block;
+  width:100%
+  text-align: center;
+  color: inherit;
+  padding:3%;
+}
+#vertical-of-sequential {
+  display:inline-block;
+  margin: 0 auto;
+}
+
+#menu {
+  display:inline-block;
+  margin-right:5%;
+  float:left;
+}
+

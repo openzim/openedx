@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}menu_chapter{% endblock %}
+
+{% block title %}{{ chapter["display_name"] }}{% endblock %}
+
+{% block body %}
+  <div id="#top">
+    {% include "menu.html" %}
+  </div>
+
+  <div id="menu_chapter" style="display:inline-block, width=70%;">
+    <ul>
+      {% for sequential in chapter["descendants"] %}
+        <li><a href="{{ rooturl }}/course/{{ chapter["block_id"] }}/{{ sequential["block_id"] }}/{{ sequential["descendants"][0]["block_id"] }}/index.html" >{{ sequential["display_name"] }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}
+

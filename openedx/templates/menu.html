@@ -1,0 +1,15 @@
+<div id="menu" class="dropdown">
+  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+      <span class="glyphicon glyphicon-menu-hamburger" aria-hidden="true"></span>
+    </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+    {% for chapter in all_data["descendants"] %}
+        <li><a href="{{ rooturl }}/course/{{ chapter["block_id"] }}/index.html" >{{ chapter["display_name"] }}</a></li>
+        <ul>
+        {% for sequential in chapter["descendants"] %}
+          <li><a href="{{ rooturl }}/course/{{ chapter["block_id"] }}/{{ sequential["block_id"] }}/{{ sequential["descendants"][0]["block_id"] }}/index.html" >{{ sequential["display_name"] }}</a></li>
+        {% endfor %}
+        </ul>
+    {% endfor %}
+  </ul>
+</div>

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}vertical{% endblock %}
+
+{% block title %}{{ vertical["display_name"] }}{% endblock %}
+
+{% block body %}
+  <div id="top">
+    {% include "menu.html" %}
+    <div id="vertical-of-sequential"class="btn-group" role="group" aria-label="...">
+      {% if pred_seq %}
+        <a href="{{ rooturl }}/{{ pred_seq["url"] }}/index.html" title="{{ pred_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button></a>
+      {% endif %}
+      {% for vertical in sequential %}
+        <a href="{{ rooturl }}/{{ vertical["url"] }}/index.html" title="{{ vertical["title"] }}"><button type="button" class="btn btn-default"><span class="{{ vertical["type_icon"] }}" aria-hidden="true"></button></span>
+      {% endfor %}
+      {% if next_seq %}
+        <a href="{{ rooturl }}/{{ next_seq["url"] }}/index.html" title="{{ next_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div id="content">
+    <div id="vertical">
+      {% for elem  in vertical["descendants"] %}
+        {% if elem["type"] == "html" or elem["type"] == "problem" %} {# or type discuttion#}
+          {{ elem["html_content"] }}
+        {% endif %}
+        {% if elem["type"] == "video" %}
+          <video class="video-js vjs-default-skin" controls preload="auto" width="480px" height="270px" data-setup='{"autoplay": true, "preload": "true"}' >
+            <source src="{{ elem["block_id"] }}/video.webm" type="video/webm" />
+            {% for language in elem["transcripts_file"] %}
+              <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
+            {% endfor %}
+          </video>
+        {% endif %}
+        <hr>
+      {% endfor %}
+    </div>
+  </div>
+    
+{% endblock %}
