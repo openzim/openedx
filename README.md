@@ -1,13 +1,3 @@
-docopt
-bs4
-lxml
-webvtt-py
-youtube-dl
-awesome-slugify
-jinja2
-
-
-TODO : bin dependencies
 
 # openedx2zim
 
