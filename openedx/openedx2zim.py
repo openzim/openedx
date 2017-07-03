@@ -303,7 +303,7 @@ def vertical_list(data,parent_path,block_id_id):
     return vertical_path_list
 
 
-def render_course(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,):
+def render_course(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,block_id_id):
     path=os.path.join(parent_path, data[block_id_id])
     all_data=data
     for des in data["descendants"]:
