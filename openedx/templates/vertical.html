@@ -7,12 +7,12 @@
 {% block body %}
   <div id="top">
     {% include "menu.html" %}
-    <div id="vertical-of-sequential"class="btn-group" role="group" aria-label="...">
+    <div id="vertical-of-sequential" class="btn-group" role="group" aria-label="...">
       {% if pred_seq %}
         <a href="{{ rooturl }}/{{ pred_seq["url"] }}/index.html" title="{{ pred_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button></a>
       {% endif %}
       {% for vertical in sequential %}
-        <a href="{{ rooturl }}/{{ vertical["url"] }}/index.html" title="{{ vertical["title"] }}"><button type="button" class="btn btn-default"><span class="{{ vertical["type_icon"] }}" aria-hidden="true"></button></span>
+        <a href="{{ rooturl }}/{{ vertical["url"] }}/index.html" title="{{ vertical["title"] }}"><button type="button" class="btn btn-default"><span class="{{ vertical["type_icon"] }}" aria-hidden="true"></button></span></a>
       {% endfor %}
       {% if next_seq %}
         <a href="{{ rooturl }}/{{ next_seq["url"] }}/index.html" title="{{ next_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
