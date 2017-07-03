@@ -357,16 +357,20 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
 def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instance):
     content=get_page(course_url,headers).decode('utf-8')
     soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
-    html_content=soup.find('div', attrs={"id": "msg-content-0"}).prettify()
+    html_content=soup.find_all('div', attrs={"id": re.compile("msg-content-[0-9]*")})
     if not os.path.exists(os.path.join(output,"home")):
         os.makedirs(os.path.join(output,"home"))
-    html_content_offline=dl_dependencies(html_content,os.path.join(output, "home"),"home")
+    html_content_offline=[]
+    for x in range(0,len(html_content)):
+        article=html_content[x]
+        article['class']="toggle-visibility-element article-content"
+        html_content_offline.append(dl_dependencies(article.prettify(),os.path.join(output, "home"),"home"))
     jinja(
         os.path.join(output,"index.html"),
         "home.html",
         False,
         first_vertical=first_vertical,
-        first_message=html_content_offline,
+        messages=html_content_offline,
         mooc_name=mooc_name
     )
     download("https://www.google.com/s2/favicons?domain=" + instance,os.path.join(output,"favicon.png"))
