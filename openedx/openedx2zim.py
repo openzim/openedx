@@ -143,6 +143,18 @@ def get_content(data, headers,parent_path,block_id_id):
             data["html_content"]=str(html_content)
         elif data["type"] == "problem":
             data["html_content"]="<h3> Sorry, problem are not available for the moment</h3>"
+            content=get_page(data["student_view_url"],headers).decode('utf-8')
+            soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+            html_content_from_div=str(soup.find('div', attrs={"class": "problems-wrapper"})['data-content'])
+            soup=BeautifulSoup.BeautifulSoup(html_content_from_div, 'html.parser')
+            for div in soup.find_all('div', attrs={"class": "notification"}):
+                div.decompose()
+            soup.find('div', attrs={"class": "action"}).decompose()
+            for span in soup.find_all('span', attrs={"class" : "unanswered"}):
+                span.decompose()
+            html_content=str(soup)
+            html_content=dl_dependencies(html_content,path,data[block_id_id])
+            data["html_content"]=str(html_content)
         elif data["type"] == "discution":
             data["html_content"]="<h3> Sorry, this is not available </h3>"
         elif data["type"] == "video":
@@ -521,7 +533,6 @@ def run():
     copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(output, 'static'))
     if not arguments['--nozim']:
         done=create_zims(info["name"],"eng",arguments["<publisher>"],info["short_description"], info["org"],output,arguments["--zimpath"])
-
 
 
 if __name__ == '__main__':
