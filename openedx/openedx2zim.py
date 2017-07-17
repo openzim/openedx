@@ -88,6 +88,7 @@ def login(instance_url, page,headers,username,password):
     return resp
 
 def get_api_json(instance_url,page, headers):
+    print(instance_url+page)
     request = Request(instance_url + page, None, headers)
     response = urlopen(request)
     resp = json.loads(response.read().decode('utf-8'))
@@ -108,8 +109,13 @@ def get_username(url, headers):
     return re.search('"/u/[^"]*"', str(content)).group(0).split("/")[-1][:-1]
 
 def get_config(instance):
-    configuration = { "courses.edx.org" : { "login_page" : "/login_ajax", "account_page": "/account/settings", "course_page_name": "/info", "course_prefix": "/courses/", "instance_url": "https://courses.edx.org" } }
-    return configuration[instance]
+    #configuration = { "courses.edx.org" : { "login_page" : "/login_ajax", "account_page": "/account/settings", "course_page_name": "/info", "course_prefix": "/courses/", "instance_url": "https://courses.edx.org" } }
+    configuration={}
+    if instance not in configuration:
+        return { "login_page" : "/login_ajax", "account_page": "/account/settings", "course_page_name": "/info", "course_prefix": "/courses/", "instance_url": "https://" + instance }
+    else:
+        return configuration[instance]
+
 #########################
 #   Prepare content     #
 #########################
@@ -501,7 +507,7 @@ def run():
     course_id=quote_plus(course_id)
 
     logging.info("Get info about course")
-    info=get_api_json(conf["instance_url"], "/api/courses/v1/courses/" + course_id, headers)
+    info=get_api_json(conf["instance_url"], "/api/courses/v1/courses/" + course_id + "?username="+username, headers)
     output=os.path.join("output",slugify(info["name"]))
     if not os.path.exists(output):
         os.makedirs(output)
@@ -512,6 +518,8 @@ def run():
     logging.info("Find root block")
     course_root=None
     for x in blocks["blocks"]:
+        if "block_id" not in blocks["blocks"][x]:
+            sys.exit("Sorry this instance API hasn't info available")
         if blocks["blocks"][x]["type"] == "course":
             course_root=x
 
