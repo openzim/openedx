@@ -291,8 +291,37 @@ def dl_dependencies(content,path, folder_name):
                     pass
             src = os.path.join(folder_name,filename )
             a.attrib['href'] = src
-
-    if imgs or docs:
+    csss = body.xpath('//link')
+    for css in csss:
+        if "href" in css.attrib:
+            src = css.attrib['href']
+            ext = os.path.splitext(src.split("?")[0])[1]
+            filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
+            out = os.path.join(path, filename)
+            if not os.path.exists(out):
+                try:
+                    headers=download(src, out, timeout=180)
+                except :
+                    logging.warning("error with " + src)
+                    pass
+            src = os.path.join(folder_name,filename )
+            css.attrib['href'] = src 
+    jss = body.xpath('//script')
+    for js in jss:
+        if "src" in js.attrib:
+            src = js.attrib['src']
+            ext = os.path.splitext(src.split("?")[0])[1]
+            filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
+            out = os.path.join(path, filename)
+            if not os.path.exists(out):
+                try:
+                    headers=download(src, out, timeout=180)
+                except :
+                    logging.warning("error with " + src)
+                    pass
+            src = os.path.join(folder_name,filename )
+            js.attrib['href'] = src 
+    if imgs or docs or csss or jss:
         content = html2string(body, encoding="unicode")
     return content
 
