@@ -23,8 +23,11 @@
   <div id="content">
     <div id="vertical">
       {% for elem  in vertical["descendants"] %}
-        {% if elem["type"] == "html" or elem["type"] == "problem" %} {# or type discuttion#}
+        {% if elem["type"] == "html" or elem["type"] == "problem" or elem["type"] == "discution" %}
           {{ elem["html_content"] }}
+        {% endif %}
+        {% if elem["type"] == "problem" %}
+          <p> Answers are available <a href="{{ elem["answers"] }}">here</a></p>
         {% endif %}
         {% if elem["type"] == "video" %}
           <video class="video-js vjs-default-skin" controls preload="auto" width="480px" height="270px" data-setup='{"autoplay": true, "preload": "true"}' >

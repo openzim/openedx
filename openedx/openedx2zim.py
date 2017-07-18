@@ -88,7 +88,6 @@ def login(instance_url, page,headers,username,password):
     return resp
 
 def get_api_json(instance_url,page, headers):
-    print(instance_url+page)
     request = Request(instance_url + page, None, headers)
     response = urlopen(request)
     resp = json.loads(response.read().decode('utf-8'))
@@ -121,6 +120,7 @@ def get_config(instance):
 #########################
 def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_id):
     data=source_json[id]
+    data["block_name"]=id
     path=os.path.join(parent_path, data[block_id_id])
     if not os.path.exists(path):
         os.makedirs(path)
@@ -135,11 +135,11 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
 #   Content Extractor   #
 ########################
 
-def get_content(data, headers,parent_path,block_id_id):
+def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
     path=os.path.join(parent_path, data[block_id_id])
     if "descendants" in data:
         for des in data["descendants"]:
-            get_content(des, headers, path,block_id_id)
+            get_content(des, headers, path,block_id_id,instance_url,course_id)
     else:
         if data["type"] == "html":
             content=get_page(data["student_view_url"],headers).decode('utf-8')
@@ -161,6 +161,18 @@ def get_content(data, headers,parent_path,block_id_id):
             html_content=str(soup)
             html_content=dl_dependencies(html_content,path,data[block_id_id])
             data["html_content"]=str(html_content)
+
+            #Save json answers
+            path_answers=os.path.join(path,"problem_show")
+            answers_content=get_api_json(instance_url,"/courses/" + course_id + "/xblock/" + data["block_name"] + "/handler/xmodule_handler/problem_show", headers)
+            if "success" in answers_content:
+                logging.warning(" fail to get answers to this problem : " + data["block_name"])
+                data["answers"]=None
+            else:
+                with open(path_answers,"w") as f:
+                    json.dump(answers_content, f)
+                data["answers"]=os.path.join(data[block_id_id],"problem_show")
+
         elif data["type"] == "discution":
             data["html_content"]="<h3> Sorry, this is not available </h3>"
         elif data["type"] == "video":
@@ -530,7 +542,7 @@ def run():
     json_tree=make_json_tree_and_folder_tree(course_root,blocks["blocks"], headers, output,block_id_id) 
 
     logging.info("Get content")
-    json_tree_content=get_content(json_tree, headers,output,block_id_id) 
+    json_tree_content=get_content(json_tree, headers,output,block_id_id,conf["instance_url"],course_id) 
     vertical_path_list=vertical_list(json_tree_content,"/",block_id_id)
 
     logging.info("Render course")

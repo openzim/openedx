@@ -6,7 +6,7 @@
 The goal of this project is to create a suite of tools to create [zim](http://www.openzim.org) files required by [kiwix](http://kiwix.org/) reader to make available mooc from any OpenEdx instance offline (without access to Internet).
 
 
-Currently we only support edx.org
+Currently we only edx.org as been test (fun-mooc.fr doesn't work at this time)
 
 ## Getting started
 
@@ -43,6 +43,8 @@ openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zi
 
 course_url is something like this https://courses.edx.org/courses/[course name/id]/info you can find it from your dashboard and click on the mooc you want to offline
 You should already have enrolled course to make it offline.
+Also you should not connect on your browser or with an other run of openedx2zim to the same account while openedx2zim is still running.
+
 
 You should only use this to mooc with a free licence.
 
