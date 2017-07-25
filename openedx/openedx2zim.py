@@ -625,8 +625,7 @@ def run():
     logging.info("Find root block")
     course_root=None
     for x in blocks["blocks"]:
-        if "block_id" not in blocks["blocks"][x]:
-            blocks["blocks"][x]["folder_id"]=slugify(blocks["blocks"][x]["display_name"])
+        blocks["blocks"][x]["folder_id"]=slugify(blocks["blocks"][x]["display_name"])
         if blocks["blocks"][x]["type"] == "course":
             blocks["blocks"][x]["folder_id"]="course"
             course_root=x
