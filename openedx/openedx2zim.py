@@ -174,6 +174,8 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             html_content=str(soup.find('div', attrs={"class": "edx-notes-wrapper"}))
+            if html_content=="None":
+                html_content=str(soup.find('div', attrs={"class": "course-wrapper"}))
             html_content=dl_dependencies(html_content,path,data[block_id_id],instance_url)
             data["html_content"]=str(html_content)
         elif data["type"] == "problem":
@@ -471,6 +473,8 @@ def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instanc
     content=get_page(course_url,headers).decode('utf-8')
     soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
     html_content=soup.find_all('div', attrs={"id": re.compile("msg-content-[0-9]*")})
+    if len(html_content) == 0:
+        html_content=soup.find_all('div', attrs={"class": re.compile("info-wrapper")})
     if not os.path.exists(os.path.join(output,"home")):
         os.makedirs(os.path.join(output,"home"))
     html_content_offline=[]
@@ -614,12 +618,13 @@ def run():
     course_root=None
     for x in blocks["blocks"]:
         if "block_id" not in blocks["blocks"][x]:
-            blocks["blocks"][x]["block_id"]=slugify(blocks["blocks"][x]["display_name"])
+            blocks["blocks"][x]["folder_id"]=slugify(blocks["blocks"][x]["display_name"])
         if blocks["blocks"][x]["type"] == "course":
+            blocks["blocks"][x]["folder_id"]="course"
             course_root=x
 
 
-    block_id_id="block_id"
+    block_id_id="folder_id"
     #TODO : we need to do something because some instance/course doesn't have block_id
     logging.info("Make folder tree")
     json_tree=make_json_tree_and_folder_tree(course_root,blocks["blocks"], headers, output,block_id_id,conf["instance_url"]) 

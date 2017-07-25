@@ -32,7 +32,7 @@
         {% if elem["type"] == "video" %}
           {% if "html_content" not in elem %}
             <video class="video-js vjs-default-skin" controls preload="auto" width="480px" height="270px" data-setup='{"autoplay": true, "preload": "true"}' >
-              <source src="{{ elem["block_id"] }}/video.webm" type="video/webm" />
+              <source src="{{ elem["folder_id"] }}/video.webm" type="video/webm" />
               {% for language in elem["transcripts_file"] %}
                 <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
               {% endfor %}
