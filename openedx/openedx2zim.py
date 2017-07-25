@@ -54,6 +54,7 @@ from jinja2 import FileSystemLoader
 from distutils.dir_util import copy_tree
 import datetime
 import logging
+import random
 
 DEBUG=True
 #########################
@@ -206,7 +207,14 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             else:
                 with open(path_answers,"w") as f:
                     json.dump(answers_content, f)
-                data["answers"]=os.path.join(data[block_id_id],"problem_show")
+                #data["answers"]=os.path.join(data[block_id_id],"problem_show")
+                data["answers"]=[]
+                for qid in answers_content["answers"]:
+                    for response in answers_content["answers"][qid]:
+                        data["answers"].append("input_" + qid + "_" + response)
+                data["problem_id"]=sha256(str(random.random()).encode('utf-8')).hexdigest()
+
+
 
         elif data["type"] == "discussion":
             data["html_content"]="<h3> Sorry, this is not available </h3>"

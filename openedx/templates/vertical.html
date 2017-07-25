@@ -26,8 +26,15 @@
         {% if elem["type"] == "html" or elem["type"] == "problem" or elem["type"] == "discussion" %}
           {{ elem["html_content"] }}
         {% endif %}
-        {% if elem["type"] == "problem" %}
-          <p> Answers are available <a href="{{ elem["answers"] }}">here</a></p>
+        {% if elem["type"] == "problem" and elem["answers"] %}
+          <script>
+            function show_answers_of_{{ elem["problem_id"] }}(){
+            {% for ans in elem["answers"] %}
+                document.getElementById("{{ ans }}").parentNode.className += " show_answers_right";
+            {% endfor %}
+            }
+          </script>
+           <button onclick="show_answers_of_{{ elem["problem_id"] }}()">Show answers</button> 
         {% endif %}
         {% if elem["type"] == "video" %}
           {% if "html_content" not in elem %}
