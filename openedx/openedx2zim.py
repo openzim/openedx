@@ -55,6 +55,7 @@ from distutils.dir_util import copy_tree
 import datetime
 import logging
 
+DEBUG=True
 #########################
 # Interact with website #
 #########################
@@ -88,12 +89,16 @@ def login(instance_url, page,headers,username,password):
     return resp
 
 def get_api_json(instance_url,page, headers):
+    if DEBUG:
+        print(instance_url+page)
     request = Request(instance_url + page, None, headers)
     response = urlopen(request)
     resp = json.loads(response.read().decode('utf-8'))
     return resp
 
 def get_page(url,headers):
+    if DEBUG:
+        print(url)
     request = Request(url, None, headers)
     response = urlopen(request)
     return response.read()
@@ -118,7 +123,7 @@ def get_config(instance):
 #########################
 #   Prepare content     #
 #########################
-def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_id):
+def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_id,instance_url):
     data=source_json[id]
     data["block_name"]=id
     path=os.path.join(parent_path, data[block_id_id])
@@ -127,8 +132,32 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
     if "descendants" in data:
         new=[]
         for des in data["descendants"]:
-            new.append(make_json_tree_and_folder_tree(des,source_json, headers,path,block_id_id))
+            new.append(make_json_tree_and_folder_tree(des,source_json, headers,path,block_id_id,instance_url))
         data["descendants"]=new
+    else:
+        if data["type"] == "libcast_xblock" or ( data["type"] == "video" and "student_view_data" not in data):
+            data["type"] = "video"
+            data["student_view_data"]={}
+            data["student_view_data"]["encoded_videos"]={}
+            try:
+                content=get_page(data["student_view_url"],headers).decode('utf-8')
+                soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+                url=str(soup.find('video').find('source')["src"])
+                data["student_view_data"]["encoded_videos"]["fallback"]={}
+                data["student_view_data"]["encoded_videos"]["fallback"]["url"]=url
+                data["student_view_data"]["transcripts"]={}
+                data["student_view_data"]["transcripts_vtt"]=True
+                subs=soup.find('video').find_all('track')
+                for track in subs:
+                    if track["src"][0:4] == "http":
+                        data["student_view_data"]["transcripts"][track["srclang"]]=track["src"]
+                    else:
+                        data["student_view_data"]["transcripts"][track["srclang"]]=instance_url + track["src"]
+            except:
+                try:
+                    print("TODO youtube")
+                except:
+                    logging.warning("Sorry we can't get video from" +data["student_view_url"])
     return data
 
 #########################
@@ -145,13 +174,17 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             html_content=str(soup.find('div', attrs={"class": "edx-notes-wrapper"}))
-            html_content=dl_dependencies(html_content,path,data[block_id_id])
+            html_content=dl_dependencies(html_content,path,data[block_id_id],instance_url)
             data["html_content"]=str(html_content)
         elif data["type"] == "problem":
             data["html_content"]="<h3> Sorry, problem are not available for the moment</h3>"
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
-            html_content_from_div=str(soup.find('div', attrs={"class": "problems-wrapper"})['data-content'])
+            try:
+                html_content_from_div=str(soup.find('div', attrs={"class": "problems-wrapper"})['data-content'])
+            except:
+                problem_json_url=str(soup.find('div', attrs={"class": "problems-wrapper"})['data-url'])
+                html_content_from_div=str(get_api_json(instance_url,problem_json_url+"/problem_get",headers)["html"])
             soup=BeautifulSoup.BeautifulSoup(html_content_from_div, 'html.parser')
             for div in soup.find_all('div', attrs={"class": "notification"}):
                 div.decompose()
@@ -159,7 +192,7 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             for span in soup.find_all('span', attrs={"class" : "unanswered"}):
                 span.decompose()
             html_content=str(soup)
-            html_content=dl_dependencies(html_content,path,data[block_id_id])
+            html_content=dl_dependencies(html_content,path,data[block_id_id],instance_url)
             data["html_content"]=str(html_content)
 
             #Save json answers
@@ -173,8 +206,18 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
                     json.dump(answers_content, f)
                 data["answers"]=os.path.join(data[block_id_id],"problem_show")
 
-        elif data["type"] == "discution":
+        elif data["type"] == "discussion":
             data["html_content"]="<h3> Sorry, this is not available </h3>"
+            content=get_page(data["student_view_url"],headers).decode('utf-8')
+            soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+            discussion_id=str(soup.find('div', attrs={"class": "discussion-module"})['data-discussion-id'])
+            path_discussion=os.path.join(path,"discussion")
+            discussion_content=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=1&ajax=1", headers)
+            with open(path_discussion,"w") as f:
+                json.dump(discussion_content, f)
+
+
+
         elif data["type"] == "video":
             video_path=os.path.join(path,"video.mp4")
             video_final_path=os.path.join(path,"video.webm")
@@ -187,7 +230,10 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
                     convert_video_to_webm(video_path, video_final_path)
                 elif "youtube" in data["student_view_data"]["encoded_videos"]:
                     download_youtube(data["student_view_data"]["encoded_videos"]["youtube"]["url"], video_path)
-                download_and_convert_subtitles(path,data["student_view_data"]["transcripts"], headers)
+                else:
+                    data["html_content"]="<h3> Sorry, this video is not available </h3>"
+                    return data
+                download_and_convert_subtitles(path,data["student_view_data"]["transcripts"],data["student_view_data"]["transcripts_vtt"],headers)
             data["video_path"]=os.path.join(data[block_id_id], "video.webm")
             data["transcripts_file"]=[ {"file": os.path.join(data[block_id_id], lang + ".vtt"), "code": lang } for lang in data["student_view_data"]["transcripts"] ]
 
@@ -206,16 +252,16 @@ def download(url, output, timeout=None):
         f.write(output_content)
     return response.headers
 
-def download_and_convert_subtitles(path,transcripts_data,headers):
+def download_and_convert_subtitles(path,transcripts_data,already_in_vtt,headers):
     for lang in transcripts_data:
         path_lang=os.path.join(path,lang + ".vtt")
         subtitle=get_page(transcripts_data[lang],headers).decode('utf-8')
         with open(path_lang, 'w') as f:
             f.write(str(subtitle))
-        exec_cmd("sed -i 's/^0$/1/' " + path_lang) #This little hack is use because WebVTT.from_srt check is the first line is 1
-
-        webvtt = WebVTT().from_srt(path_lang)
-        webvtt.save()
+        if not already_in_vtt:
+            exec_cmd("sed -i 's/^0$/1/' " + path_lang) #This little hack is use because WebVTT.from_srt check is the first line is 1
+            webvtt = WebVTT().from_srt(path_lang)
+            webvtt.save()
 
 def download_youtube(youtube_url, video_path):
     parametre={"outtmpl" : video_path, 'progress_hooks': [hook_youtube_dl], 'preferredcodec': 'mp4', 'format' : 'mp4'}
@@ -253,11 +299,13 @@ def get_filetype(headers,path):
         type="gif"
     return type
 
-def dl_dependencies(content,path, folder_name):
+def dl_dependencies(content,path, folder_name,instance_url):
     body = string2html(content)
     imgs = body.xpath('//img')
     for img in imgs:
         src = img.attrib['src']
+        if src[0] == "/":
+            src=instance_url+src
         ext = os.path.splitext(src.split("?")[0])[1]
         filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
         out = os.path.join(path, filename)
@@ -278,6 +326,8 @@ def dl_dependencies(content,path, folder_name):
     docs = body.xpath('//a')
     for a in docs:
         src = a.attrib['href']
+        if src[0] == "/":
+            src=instance_url+src
         ext = os.path.splitext(src.split("?")[0])[1]
         filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
         out = os.path.join(path, filename)
@@ -295,6 +345,8 @@ def dl_dependencies(content,path, folder_name):
     for css in csss:
         if "href" in css.attrib:
             src = css.attrib['href']
+            if src[0] == "/":
+                src=instance_url+src
             ext = os.path.splitext(src.split("?")[0])[1]
             filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
             out = os.path.join(path, filename)
@@ -310,6 +362,8 @@ def dl_dependencies(content,path, folder_name):
     for js in jss:
         if "src" in js.attrib:
             src = js.attrib['src']
+            if src[0] == "/":
+                src=instance_url+src
             ext = os.path.splitext(src.split("?")[0])[1]
             filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
             out = os.path.join(path, filename)
@@ -413,7 +467,7 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         all_data=all_data
     )
 
-def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instance):
+def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instance,instance_url):
     content=get_page(course_url,headers).decode('utf-8')
     soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
     html_content=soup.find_all('div', attrs={"id": re.compile("msg-content-[0-9]*")})
@@ -423,7 +477,7 @@ def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instanc
     for x in range(0,len(html_content)):
         article=html_content[x]
         article['class']="toggle-visibility-element article-content"
-        html_content_offline.append(dl_dependencies(article.prettify(),os.path.join(output, "home"),"home"))
+        html_content_offline.append(dl_dependencies(article.prettify(),os.path.join(output, "home"),"home",instance_url))
     jinja(
         os.path.join(output,"index.html"),
         "home.html",
@@ -560,7 +614,7 @@ def run():
     course_root=None
     for x in blocks["blocks"]:
         if "block_id" not in blocks["blocks"][x]:
-            sys.exit("Sorry this instance API hasn't info available")
+            blocks["blocks"][x]["block_id"]=slugify(blocks["blocks"][x]["display_name"])
         if blocks["blocks"][x]["type"] == "course":
             course_root=x
 
@@ -568,7 +622,7 @@ def run():
     block_id_id="block_id"
     #TODO : we need to do something because some instance/course doesn't have block_id
     logging.info("Make folder tree")
-    json_tree=make_json_tree_and_folder_tree(course_root,blocks["blocks"], headers, output,block_id_id) 
+    json_tree=make_json_tree_and_folder_tree(course_root,blocks["blocks"], headers, output,block_id_id,conf["instance_url"]) 
 
     logging.info("Get content")
     json_tree_content=get_content(json_tree, headers,output,block_id_id,conf["instance_url"],course_id) 
@@ -576,7 +630,7 @@ def run():
 
     logging.info("Render course")
     render_course(json_tree_content,vertical_path_list,output,"",0,0,block_id_id)
-    make_welcome_page(vertical_path_list[0],output,arguments["<course_url>"],headers,info["name"],instance)
+    make_welcome_page(vertical_path_list[0],output,arguments["<course_url>"],headers,info["name"],instance,conf["instance_url"])
 
     logging.info("Create zim")
     copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(output, 'static'))
