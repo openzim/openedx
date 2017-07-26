@@ -30,3 +30,9 @@
   border-color: green;
   border-radius: 5px;
 }
+
+.solution-span{
+  border-color: black;
+  border-style: dotted;
+  padding: 1%;
+}

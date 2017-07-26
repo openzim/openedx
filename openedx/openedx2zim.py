@@ -159,6 +159,8 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
                     print("TODO youtube")
                 except:
                     logging.warning("Sorry we can't get video from" +data["student_view_url"])
+        elif data["type"] == "video":
+            data["student_view_data"]["transcripts_vtt"]=False
     return data
 
 #########################
@@ -209,9 +211,13 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
                     json.dump(answers_content, f)
                 #data["answers"]=os.path.join(data[block_id_id],"problem_show")
                 data["answers"]=[]
+                data["explanation"]=[]
                 for qid in answers_content["answers"]:
-                    for response in answers_content["answers"][qid]:
-                        data["answers"].append("input_" + qid + "_" + response)
+                    if not "solution" in qid:
+                        for response in answers_content["answers"][qid]:
+                            data["answers"].append("input_" + qid + "_" + response)
+                    else:
+                        data["explanation"].append({ "name": "solution_" + qid, "value": json.dumps(answers_content["answers"][qid])})
                 data["problem_id"]=sha256(str(random.random()).encode('utf-8')).hexdigest()
 
 
@@ -233,10 +239,10 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             video_final_path=os.path.join(path,"video.webm")
             if not os.path.exists(video_final_path):
                 if "fallback" in data["student_view_data"]["encoded_videos"]:
-                    download(data["student_view_data"]["encoded_videos"]["fallback"]["url"], video_path)
+                    download(data["student_view_data"]["encoded_videos"]["fallback"]["url"], video_path,instance_url)
                     convert_video_to_webm(video_path, video_final_path)
                 elif "mobile_low" in data["student_view_data"]["encoded_videos"]:
-                    download(data["student_view_data"]["encoded_videos"]["mobile_low"]["url"], video_path)
+                    download(data["student_view_data"]["encoded_videos"]["mobile_low"]["url"], video_path,instance_url)
                     convert_video_to_webm(video_path, video_final_path)
                 elif "youtube" in data["student_view_data"]["encoded_videos"]:
                     download_youtube(data["student_view_data"]["encoded_videos"]["youtube"]["url"], video_path)
@@ -250,9 +256,11 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
     return data
 
 
-def download(url, output, timeout=None):
+def download(url, output, instance_url,timeout=None,):
     if url[0:2] == "//":
             url="http:"+url
+    elif url[0] == "/":
+            url= instance_url + url
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -314,15 +322,13 @@ def dl_dependencies(content,path, folder_name,instance_url):
     imgs = body.xpath('//img')
     for img in imgs:
         src = img.attrib['src']
-        if src[0] == "/":
-            src=instance_url+src
         ext = os.path.splitext(src.split("?")[0])[1]
         filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
         out = os.path.join(path, filename)
         # download the image only if it's not already downloaded
         if not os.path.exists(out): 
             try:
-                headers=download(src, out, timeout=180)
+                headers=download(src, out,instance_url, timeout=180)
                 type_of_file=get_filetype(headers,out)
                 # update post's html
                 resize_one(out,type_of_file,"540")
@@ -336,8 +342,6 @@ def dl_dependencies(content,path, folder_name,instance_url):
     docs = body.xpath('//a')
     for a in docs:
         src = a.attrib['href']
-        if src[0] == "/":
-            src=instance_url+src
         ext = os.path.splitext(src.split("?")[0])[1]
         filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
         out = os.path.join(path, filename)
@@ -345,7 +349,7 @@ def dl_dependencies(content,path, folder_name,instance_url):
         if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF"]: #TODO better solution for extention (black list?)
             if not os.path.exists(out):
                 try:
-                    headers=download(src, out, timeout=180)
+                    headers=download(src, out,instance_url, timeout=180)
                 except :
                     logging.warning("error with " + src)
                     pass
@@ -355,14 +359,12 @@ def dl_dependencies(content,path, folder_name,instance_url):
     for css in csss:
         if "href" in css.attrib:
             src = css.attrib['href']
-            if src[0] == "/":
-                src=instance_url+src
             ext = os.path.splitext(src.split("?")[0])[1]
             filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 try:
-                    headers=download(src, out, timeout=180)
+                    headers=download(src, out,instance_url, timeout=180)
                 except :
                     logging.warning("error with " + src)
                     pass
@@ -372,14 +374,12 @@ def dl_dependencies(content,path, folder_name,instance_url):
     for js in jss:
         if "src" in js.attrib:
             src = js.attrib['src']
-            if src[0] == "/":
-                src=instance_url+src
             ext = os.path.splitext(src.split("?")[0])[1]
             filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 try:
-                    headers=download(src, out, timeout=180)
+                    headers=download(src, out,instance_url, timeout=180)
                 except :
                     logging.warning("error with " + src)
                     pass
@@ -479,17 +479,20 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
 
 def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instance,instance_url):
     content=get_page(course_url,headers).decode('utf-8')
-    soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
-    html_content=soup.find_all('div', attrs={"id": re.compile("msg-content-[0-9]*")})
-    if len(html_content) == 0:
-        html_content=soup.find_all('div', attrs={"class": re.compile("info-wrapper")})
     if not os.path.exists(os.path.join(output,"home")):
         os.makedirs(os.path.join(output,"home"))
     html_content_offline=[]
-    for x in range(0,len(html_content)):
-        article=html_content[x]
-        article['class']="toggle-visibility-element article-content"
-        html_content_offline.append(dl_dependencies(article.prettify(),os.path.join(output, "home"),"home",instance_url))
+    soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+    #html_content=soup.find_all('div', attrs={"id": re.compile("msg-content-[0-9]*")})
+    html_content=soup.find('div', attrs={"class": "welcome-message" })
+    if html_content is None:
+        html_content=soup.find_all('div', attrs={"class": re.compile("info-wrapper")})
+        for x in range(0,len(html_content)):
+            article=html_content[x]
+            article['class']="toggle-visibility-element article-content"
+            html_content_offline.append(dl_dependencies(article.prettify(),os.path.join(output, "home"),"home",instance_url))
+    else:
+            html_content_offline.append(dl_dependencies(html_content.prettify(),os.path.join(output, "home"),"home",instance_url))
     jinja(
         os.path.join(output,"index.html"),
         "home.html",
@@ -498,7 +501,7 @@ def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instanc
         messages=html_content_offline,
         mooc_name=mooc_name
     )
-    download("https://www.google.com/s2/favicons?domain=" + instance,os.path.join(output,"favicon.png"))
+    download("https://www.google.com/s2/favicons?domain=" + instance,os.path.join(output,"favicon.png"),instance_url)
 
 def jinja(output, template, deflate, **context):
     template = ENV.get_template(template)
