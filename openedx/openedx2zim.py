@@ -167,6 +167,22 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
 #   Content Extractor   #
 ########################
 
+def get_discussion(headers,instance_url,course_id):
+    url="/courses/" + course_id + "/discussion/forum/?ajax=1&page=1&sort_key=activity&sort_order=desc"
+    data=get_api_json(instance_url,url, headers)
+    threads=data["discussion_data"]
+    for i in range(1,data["num_pages"]):
+        url="/courses/" + course_id + "/discussion/forum/?ajax=1&page=" + str(i+1) + "&sort_key=activity&sort_order=desc"
+        data=get_api_json(instance_url,url, headers)
+        threads+=data["discussion_data"]
+
+    for thread in threads:
+        url = "/courses/" + course_id + "/discussion/forum/course/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100"
+        thread["data_thread"]=get_api_json(instance_url,url,headers)
+
+    return threads
+
+
 def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
     path=os.path.join(parent_path, data[block_id_id])
     if "descendants" in data:
@@ -476,6 +492,26 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         rooturl="../../../..",
         all_data=all_data
     )
+def render_forum(threads,output):
+    path=os.path.join(output,"forum")
+    if not os.path.exists(path):
+        os.makedirs(path)
+    jinja(
+            os.path.join(path,"index.html"),
+            "home_discussion.html",
+            False,
+            threads=threads
+    )
+    for thread in threads:
+        if not os.path.exists(os.path.join(path,thread["id"])):
+            os.makedirs(os.path.join(path,thread["id"]))
+        jinja(
+                os.path.join(path,thread["id"],"index.html"),
+                "thread.html",
+                False,
+                thread=thread
+        )
+
 
 def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instance,instance_url):
     content=get_page(course_url,headers).decode('utf-8')
@@ -622,12 +658,17 @@ def run():
     if not os.path.exists(output):
         os.makedirs(output)
 
+    logging.info("Get discussion")
+    threads=get_discussion(headers,conf["instance_url"],course_id)
+
     logging.info("Get course blocks")
     blocks=get_api_json(conf["instance_url"], "/api/courses/v1/blocks/?course_id=" + course_id + "&username="+username +"&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3", headers)
 
     logging.info("Find root block")
     course_root=None
     for x in blocks["blocks"]:
+        if "block_id" not in blocks["blocks"][x]:
+            blocks["blocks"][x]["block_id"] =sha256(str(random.random()).encode('utf-8')).hexdigest()
         blocks["blocks"][x]["folder_id"]=slugify(blocks["blocks"][x]["display_name"])
         if blocks["blocks"][x]["type"] == "course":
             blocks["blocks"][x]["folder_id"]="course"
@@ -635,7 +676,6 @@ def run():
 
 
     block_id_id="folder_id"
-    #TODO : we need to do something because some instance/course doesn't have block_id
     logging.info("Make folder tree")
     json_tree=make_json_tree_and_folder_tree(course_root,blocks["blocks"], headers, output,block_id_id,conf["instance_url"]) 
 
@@ -643,8 +683,10 @@ def run():
     json_tree_content=get_content(json_tree, headers,output,block_id_id,conf["instance_url"],course_id) 
     vertical_path_list=vertical_list(json_tree_content,"/",block_id_id)
 
-    logging.info("Render course")
+    logging.info("Render course, forum and wiki")
     render_course(json_tree_content,vertical_path_list,output,"",0,0,block_id_id)
+    render_forum(threads,output)
+    #TODO render wiki
     make_welcome_page(vertical_path_list[0],output,arguments["<course_url>"],headers,info["name"],instance,conf["instance_url"])
 
     logging.info("Create zim")

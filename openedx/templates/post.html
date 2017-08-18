@@ -1,0 +1,32 @@
+<div class="post">
+  <div class="post-container">
+    <div class="reputation">
+      {% if post["votes"]["up_count"] >= 0 %}
+        <div class="score">
+          <p><i class="glyphicon glyphicon-triangle-top"></i></p>
+          <p>{{ post["votes"]["point"] }}</p>
+        </div>
+      {% else %}
+        <div class="score">
+          <p><i class="glyphicon glyphicon-triangle-bottom"></i></p>
+          <p>{{ post["votes"]["point"] }}</p>
+        </div>
+      {% endif %}
+    </div>
+    <div class="body">{{ post["body"] }}</div>
+  </div>
+    <div class="author">
+      <p> {{ post["username"] }} </p>
+    </div>
+    <div class="date">
+      <p> {{ post["created_at"] }} </p>
+    </div>
+  {% if post["children"] %}
+    <div class="comments">
+      {% for comment in post["children"] %}
+            {% set post = comment %}
+            {% include "post.html" %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
