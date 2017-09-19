@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}forum{% endblock %}
+
+{% block title %} Forum {% endblock %}
+
+{% block body %}
+  <ul>
+  {% for cat in category %}
+    <li><a href="{{ cat }}/index.html"> {{ category[cat] }}</a></li>
+  {% endfor %}
+  </ul>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}wiki-page{% endblock %}
+
+{% block title %}{{ content["title"] }}{% endblock %}
+
+{% block body %}
+  <p>  {{ content["text"] }} </p>
+  <a href="_dir/index.html"> See sub page</a>
+{% endblock %}
+

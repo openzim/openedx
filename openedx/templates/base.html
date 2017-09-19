@@ -52,6 +52,12 @@
     <script type="text/javascript" src="{{ rooturl }}/static/MathJax.js?config=TeX-MML-AM_SVG"></script>
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
+    <div class="topbar">
+      <p>
+        {% for elem in top %}
+          <a href="{{ rooturl }}/{{ elem }}"> {{ top[elem] }}</a> 
+        {% endfor %}
+      <p>
     <div class="container">
       {% block body %}{% endblock %}
     </div>

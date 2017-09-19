@@ -24,6 +24,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import (
     urlencode,
     quote_plus,
+    unquote,
 )
 from urllib.request import (
     urlopen,
@@ -114,8 +115,7 @@ def get_username(url, headers):
     return re.search('"/u/[^"]*"', str(content)).group(0).split("/")[-1][:-1]
 
 def get_config(instance):
-    #configuration = { "courses.edx.org" : { "login_page" : "/login_ajax", "account_page": "/account/settings", "course_page_name": "/info", "course_prefix": "/courses/", "instance_url": "https://courses.edx.org" } }
-    configuration={}
+    configuration = { "courses.edx.org" : { "login_page" : "/login_ajax", "account_page": "/account/settings", "course_page_name": "/course", "course_prefix": "/courses/", "instance_url": "https://courses.edx.org" } }
     if instance not in configuration:
         return { "login_page" : "/login_ajax", "account_page": "/account/settings", "course_page_name": "/info", "course_prefix": "/courses/", "instance_url": "https://" + instance }
     else:
@@ -168,6 +168,7 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
 ########################
 
 def get_discussion(headers,instance_url,course_id):
+    
     url="/courses/" + course_id + "/discussion/forum/?ajax=1&page=1&sort_key=activity&sort_order=desc"
     data=get_api_json(instance_url,url, headers)
     threads=data["discussion_data"]
@@ -177,10 +178,108 @@ def get_discussion(headers,instance_url,course_id):
         threads+=data["discussion_data"]
 
     for thread in threads:
-        url = "/courses/" + course_id + "/discussion/forum/course/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100"
+        url = "/courses/" + course_id + "/discussion/forum/" + thread["commentable_id"] + "/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100"
         thread["data_thread"]=get_api_json(instance_url,url,headers)
 
-    return threads
+    headers["X-Requested-With"] = ""
+    content=get_page(instance_url + "/courses/" +  course_id + "/discussion/forum",headers).decode('utf-8')
+    soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+    all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
+    category={}
+    for cat in all_category:
+        if cat.has_attr("data-discussion-id"):
+            category[cat["data-discussion-id"]] = str(cat.text)
+
+    return [threads, category]
+
+def get_wiki(headers,instance_url,course_id, output):
+    page_to_visit=[instance_url + "/courses/" +  course_id + "/course_wiki"]
+    page_already_visit={}
+
+    while page_to_visit:
+        url = page_to_visit.pop()
+        content=get_page(url,headers).decode('utf-8')
+        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        text=soup.find("div", attrs={"class": "wiki-article"})
+        page_already_visit[url]={}
+        if "/course_wiki" in url:
+            path=os.path.join(output,"wiki")
+        else:
+            path=os.path.join(output, "wiki", url.replace(instance_url + "/wiki/",""))
+        if not os.path.exists(path):
+            os.makedirs(path)
+        page_already_visit[url]["path"] = path
+        rooturl=""
+        for x in range(0,len(path.split("/"))):
+            rooturl+="../"
+        page_already_visit[url]["rooturl"]= rooturl
+
+        if text != None : #If it's a page (and not a list of page)
+
+            #Find new wiki page in page content
+            all_link=text.find_all("a")
+            for link in all_link:
+                if link.has_attr("href") and instance_url + "/wiki/" in link["href"]:
+                    if link not in page_already_visit and link not in page_to_visit:
+                        page_to_visit.append(link["href"])
+                    link["href"] = rooturl + link["href"].replace(instance_url,"")
+
+            page_already_visit[url]["path"] = path
+            page_already_visit[url]["text"] = dl_dependencies(str(text),path,"",instance_url)
+            page_already_visit[url]["title"] = soup.find("title").text 
+
+        #find new url of wiki in the page
+        allpage_url=str(soup.find('div', attrs={"class": "see-children"}).find("a")["href"])
+        page_already_visit[url]["dir"] = allpage_url #TODO utile ?
+        content=get_page(instance_url + allpage_url,headers)
+        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        table=soup.find("table")
+        if table != None:
+            for link in table.find_all("a"):
+                if link.has_attr("class") and link["class"] == "list-children":
+                    pass
+                else:
+                    if link["href"] not in page_already_visit and link["href"] not in page_to_visit:
+                        page_to_visit.append(instance_url + link["href"])
+                        if "decoule" in page_already_visit[url]:
+                            page_already_visit[url]["decoule"].append(instance_url + link["href"])
+                        else:
+                            page_already_visit[url]["decoule"]= [ instance_url + link["href"] ]
+    return page_already_visit
+
+def get_and_save_specific_pages(headers,instance_url,course_id, output):
+    content=get_page(instance_url + "/courses/" +  course_id,headers).decode('utf-8')
+    soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+    specific_pages=soup.find('ol', attrs={"class": "course-tabs"}).find_all('li')
+    link_on_top={ "course" : "Course"}
+    page_to_save={}
+    for page in specific_pages:
+        link=page.find("a")["href"]
+        sub_dir=link.replace("/courses/" + unquote(course_id) + "/","")
+        if "course_wiki" in sub_dir:
+            link_on_top["wiki"]="Wiki"
+        elif "discussion/forum" in sub_dir:
+            link_on_top["forum"]="Discussion"
+        elif "course" not in sub_dir and "edxnotes" not in sub_dir and "progress" not in sub_dir :
+            link_on_top[sub_dir] = page.text
+            if not os.path.exists(os.path.join(output,sub_dir)):
+                os.makedirs(os.path.join(output,sub_dir))
+            page_content=get_page(instance_url + link,headers).decode('utf-8')
+            soup_page=BeautifulSoup.BeautifulSoup(page_content, 'html.parser')
+            good_part_of_page_content=str(soup.find('section', attrs={"class": "container"}))
+            html_content=dl_dependencies(good_part_of_page_content,os.path.join(output,sub_dir),sub_dir,instance_url)
+            page_to_save[sub_dir]=html_content
+    #Now we have all link on top
+    for sub_dir in page_to_save:
+            jinja(
+                os.path.join(output,sub_dir,"index.html"),
+                "specific_page.html",
+                False,
+                top=link_on_top,
+                content=page_to_save[sub_dir],
+                rooturl=".."
+            )
+    return link_on_top
 
 
 def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
@@ -225,7 +324,6 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             else:
                 with open(path_answers,"w") as f:
                     json.dump(answers_content, f)
-                #data["answers"]=os.path.join(data[block_id_id],"problem_show")
                 data["answers"]=[]
                 data["explanation"]=[]
                 for qid in answers_content["answers"]:
@@ -239,6 +337,7 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
 
 
         elif data["type"] == "discussion":
+            #TODO
             data["html_content"]="<h3> Sorry, this is not available </h3>"
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
@@ -442,13 +541,13 @@ def vertical_list(data,parent_path,block_id_id):
     return vertical_path_list
 
 
-def render_course(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,block_id_id):
+def render_course(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,block_id_id,link_on_top):
     path=os.path.join(parent_path, data[block_id_id])
     all_data=data
     for des in data["descendants"]:
-        vertical_num_start=render_chapter(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id)
+        vertical_num_start=render_chapter(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top)
 
-def render_chapter(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,block_id_id):
+def render_chapter(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top):
     path=os.path.join(parent_path, data[block_id_id])
     jinja(
         os.path.join(output_path,path,"index.html"),
@@ -456,22 +555,23 @@ def render_chapter(data,vertical_path_list,output_path,parent_path,vertical_num_
         False,
         chapter=data,
         all_data=all_data,
+        top=link_on_top,
         rooturl="../.."
     )
     for des in data["descendants"]:
-        vertical_num_start=render_sequential(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id)
+        vertical_num_start=render_sequential(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top)
     return vertical_num_start
 
-def render_sequential(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,block_id_id):
+def render_sequential(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top):
     path=os.path.join(parent_path, data[block_id_id])
     vertical_num_stop=vertical_num_start+len(data["descendants"])
     next_in_sequence=1
     for des in data["descendants"]:
-        render_vertical(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id)
+        render_vertical(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top)
         next_in_sequence+=1
     return vertical_num_stop
 
-def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id):
+def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top):
     path=os.path.join(parent_path, data[block_id_id])
     if vertical_num_start == 0:
         pred_seq=None
@@ -489,31 +589,88 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         sequential=vertical_path_list[vertical_num_start:vertical_num_stop],
         next_seq=next_seq,
         vertical=data,
+        top=link_on_top,
         rooturl="../../../..",
         all_data=all_data
     )
-def render_forum(threads,output):
+def render_forum(threads,threads_category,output,link_on_top):
     path=os.path.join(output,"forum")
     if not os.path.exists(path):
         os.makedirs(path)
     jinja(
             os.path.join(path,"index.html"),
-            "home_discussion.html",
+            "home_category.html",
             False,
-            threads=threads
+            category=threads_category,
+            top=link_on_top,
+            rooturl=".."
     )
-    for thread in threads:
-        if not os.path.exists(os.path.join(path,thread["id"])):
-            os.makedirs(os.path.join(path,thread["id"]))
+    thread_by_category={}
+    for thread in threads: 
+        if thread["commentable_id"] not in thread_by_category:
+            thread_by_category[thread["commentable_id"]]=[thread]
+        else:
+            thread_by_category[thread["commentable_id"]].append(thread)
+    for category in thread_by_category:
+        if not os.path.exists(os.path.join(path, thread["commentable_id"])):
+            os.makedirs(os.path.join(path, thread["commentable_id"]))
         jinja(
-                os.path.join(path,thread["id"],"index.html"),
+                os.path.join(path,category,"index.html"),
+                "home_discussion.html",
+                False,
+                threads=thread_by_category[category],
+                rooturl="../.."
+        )
+    for thread in threads:
+        if not os.path.exists(os.path.join(path,thread["commentable_id"],thread["id"])):
+            os.makedirs(os.path.join(path,thread["commentable_id"],thread["id"]))
+        jinja(
+                os.path.join(path,thread["commentable_id"],thread["id"],"index.html"),
                 "thread.html",
                 False,
-                thread=thread
+                thread=thread,
+                rooturl="../../.."
         )
 
+def render_wiki(wiki_data, instance_url,course_id,output,link_on_top):
+    path=os.path.join(output,"wiki")
+    if not os.path.exists(path):
+        os.makedirs(path)
 
-def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instance,instance_url):
+    for page in wiki_data:
+        if "text" in wiki_data[page]: #In this it's a page
+            jinja(
+                os.path.join(wiki_data[page]["path"],"index.html"),
+                "wiki_page.html",
+                False,
+                content=wiki_data[page],
+                dir=wiki_data[page]["dir"].replace(instance_url + "/wiki/","") + "index.html",
+                top=link_on_top,
+                rooturl=wiki_data[page]["rooturl"]
+            )
+    
+        elif "decoule" in wiki_data[page]:
+            page_to_list=[]
+            for sub_page in wiki_data[page]["decoule"]:
+                page_to_list.append({ "url": sub_page.replace(instance_url + "/wiki/",""), "title": wiki_data[sub_page]})
+            jinja(
+                os.path.join(wiki_data[page]["path"],"index.html"),
+                "wiki_list.html",
+                False,
+                pages=page_to_list,
+                top=link_on_top,
+                rooturl=wiki_data[page]["rooturl"]
+            )
+        else: #list page with no sub page
+            jinja(
+                os.path.join(wiki_data[page]["path"],"index.html"),
+                "wiki_list_none.html",
+                False,
+                top=link_on_top,
+                rooturl=wiki_data[page]["rooturl"]
+            )
+
+def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instance,instance_url,link_on_top):
     content=get_page(course_url,headers).decode('utf-8')
     if not os.path.exists(os.path.join(output,"home")):
         os.makedirs(os.path.join(output,"home"))
@@ -535,6 +692,7 @@ def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instanc
         False,
         first_vertical=first_vertical,
         messages=html_content_offline,
+        top=link_on_top,
         mooc_name=mooc_name
     )
     download("https://www.google.com/s2/favicons?domain=" + instance,os.path.join(output,"favicon.png"),instance_url)
@@ -659,7 +817,17 @@ def run():
         os.makedirs(output)
 
     logging.info("Get discussion")
-    threads=get_discussion(headers,conf["instance_url"],course_id)
+    #threads, threads_category =get_discussion(headers,conf["instance_url"],course_id)
+
+
+    logging.info("Try to get specific page of mooc")
+    link_on_top=get_and_save_specific_pages(headers,conf["instance_url"],course_id,output)
+
+    if "wiki" in link_on_top:
+        logging.info("Get wiki")
+        wiki_page=get_wiki(headers,conf["instance_url"],course_id,output)
+        render_wiki(wiki_page, conf["instance_url"],course_id,output,link_on_top)
+
 
     logging.info("Get course blocks")
     blocks=get_api_json(conf["instance_url"], "/api/courses/v1/blocks/?course_id=" + course_id + "&username="+username +"&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3", headers)
@@ -674,7 +842,6 @@ def run():
             blocks["blocks"][x]["folder_id"]="course"
             course_root=x
 
-
     block_id_id="folder_id"
     logging.info("Make folder tree")
     json_tree=make_json_tree_and_folder_tree(course_root,blocks["blocks"], headers, output,block_id_id,conf["instance_url"]) 
@@ -683,11 +850,10 @@ def run():
     json_tree_content=get_content(json_tree, headers,output,block_id_id,conf["instance_url"],course_id) 
     vertical_path_list=vertical_list(json_tree_content,"/",block_id_id)
 
-    logging.info("Render course, forum and wiki")
-    render_course(json_tree_content,vertical_path_list,output,"",0,0,block_id_id)
-    render_forum(threads,output)
-    #TODO render wiki
-    make_welcome_page(vertical_path_list[0],output,arguments["<course_url>"],headers,info["name"],instance,conf["instance_url"])
+    logging.info("Render course, forum")
+    render_course(json_tree_content,vertical_path_list,output,"",0,0,block_id_id,link_on_top)
+    render_forum(threads,threads_category,output,link_on_top)
+    make_welcome_page(vertical_path_list[0],output,arguments["<course_url>"],headers,info["name"],instance,conf["instance_url"],link_on_top)
 
     logging.info("Create zim")
     copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(output, 'static'))
