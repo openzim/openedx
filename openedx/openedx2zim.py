@@ -179,7 +179,14 @@ def get_discussion(headers,instance_url,course_id):
 
     for thread in threads:
         url = "/courses/" + course_id + "/discussion/forum/" + thread["commentable_id"] + "/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100"
-        thread["data_thread"]=get_api_json(instance_url,url,headers)
+        try:
+            thread["data_thread"]=get_api_json(instance_url,url,headers)
+        except:
+            try:
+                thread["data_thread"]=get_api_json(instance_url,url,headers)
+            except:
+                logging.log("Can not get " + instance_url + url + "discussion")
+
 
     headers["X-Requested-With"] = ""
     content=get_page(instance_url + "/courses/" +  course_id + "/discussion/forum",headers).decode('utf-8')
@@ -203,14 +210,15 @@ def get_wiki(headers,instance_url,course_id, output):
         text=soup.find("div", attrs={"class": "wiki-article"})
         page_already_visit[url]={}
         if "/course_wiki" in url:
-            path=os.path.join(output,"wiki")
+            web_path="wiki"
         else:
-            path=os.path.join(output, "wiki", url.replace(instance_url + "/wiki/",""))
+            web_path=os.path.join("wiki", url.replace(instance_url + "/wiki/",""))
+        path=os.path.join(output, web_path)
         if not os.path.exists(path):
             os.makedirs(path)
         page_already_visit[url]["path"] = path
         rooturl=""
-        for x in range(0,len(path.split("/"))):
+        for x in range(0,len(web_path.split("/"))):
             rooturl+="../"
         page_already_visit[url]["rooturl"]= rooturl
 
@@ -337,15 +345,11 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
 
 
         elif data["type"] == "discussion":
-            #TODO
             data["html_content"]="<h3> Sorry, this is not available </h3>"
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             discussion_id=str(soup.find('div', attrs={"class": "discussion-module"})['data-discussion-id'])
-            path_discussion=os.path.join(path,"discussion")
-            discussion_content=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=1&ajax=1", headers)
-            with open(path_discussion,"w") as f:
-                json.dump(discussion_content, f)
+            data["discussion"]=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=1&ajax=1", headers)
 
 
 
@@ -817,7 +821,7 @@ def run():
         os.makedirs(output)
 
     logging.info("Get discussion")
-    #threads, threads_category =get_discussion(headers,conf["instance_url"],course_id)
+    threads, threads_category =get_discussion(headers,conf["instance_url"],course_id)
 
 
     logging.info("Try to get specific page of mooc")

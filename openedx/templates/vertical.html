@@ -23,8 +23,16 @@
   <div id="content">
     <div id="vertical">
       {% for elem  in vertical["descendants"] %}
-        {% if elem["type"] == "html" or elem["type"] == "problem" or elem["type"] == "discussion" %}
+        {% if elem["type"] == "html" or elem["type"] == "problem" %}
           {{ elem["html_content"] }}
+        {% endif %}
+        {% if elem["type"] == "discussion" %}
+          {% if elem["discussion"]["discussion_data"] != [] %}
+            <h1> Discussions </h1>
+            {% for thread in elem["discussion"]["discussion_data"] %}
+                <a href="{{ rooturl}}/forum/{{ thread["commentable_id" }}/{{ thread["id"] }}/index.html>{{ thread["title"] }} by {{ thread["username"] }}</a>
+            {% endfor %}
+          {% endif %}
         {% endif %}
         {% if elem["type"] == "problem" and elem["answers"] %}
           <script>

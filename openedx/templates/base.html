@@ -14,16 +14,9 @@
    {# <link rel="icon" type="image/png" href="images/favicon.png"> #}
     <script type="text/x-mathjax-config">
       MathJax.Hub.Config({
-        tex2jax: {
-          inlineMath: [
-            ["\\(","\\)"],
-            ['[mathjaxinline]','[/mathjaxinline]']
-          ],
-          displayMath: [
-            ["\\[","\\]"],
-            ['[mathjax]','[/mathjax]']
-          ]
-        }
+          tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"]],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"]]}
       });
     </script>
     <script type="text/x-mathjax-config">
@@ -55,7 +48,7 @@
     <div class="topbar">
       <p>
         {% for elem in top %}
-          <a href="{{ rooturl }}/{{ elem }}"> {{ top[elem] }}</a> 
+          <a href="{{ rooturl }}/{{ elem }}/index.html"> {{ top[elem] }}</a> 
         {% endfor %}
       <p>
     <div class="container">
