@@ -129,7 +129,7 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
     data["block_name"]=id
     path=os.path.join(parent_path, data[block_id_id])
     if not os.path.exists(path):
-        os.makedirs(path)
+        os.path.makedirs(path)
     if "descendants" in data:
         new=[]
         for des in data["descendants"]:
@@ -167,7 +167,7 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
 #   Content Extractor   #
 ########################
 
-def get_discussion(headers,instance_url,course_id):
+def get_forum(headers,instance_url,course_id,output):
     
     url="/courses/" + course_id + "/discussion/forum/?ajax=1&page=1&sort_key=activity&sort_order=desc"
     data=get_api_json(instance_url,url, headers)
@@ -179,6 +179,8 @@ def get_discussion(headers,instance_url,course_id):
 
     for thread in threads:
         url = "/courses/" + course_id + "/discussion/forum/" + thread["commentable_id"] + "/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100"
+        if not os.path.exists(os.path.join(output,"forum",thread["commentable_id"])):
+            os.makedirs(os.path.join(output,"forum",thread["commentable_id"]))
         try:
             thread["data_thread"]=get_api_json(instance_url,url,headers)
         except:
@@ -230,7 +232,9 @@ def get_wiki(headers,instance_url,course_id, output):
                 if link.has_attr("href") and instance_url + "/wiki/" in link["href"]:
                     if link not in page_already_visit and link not in page_to_visit:
                         page_to_visit.append(link["href"])
-                    link["href"] = rooturl + link["href"].replace(instance_url,"")
+                    print(link["href"])
+                    link["href"] = rooturl + link["href"].replace(instance_url,"") + "/index.html"
+                    print(link["href"])
 
             page_already_visit[url]["path"] = path
             page_already_visit[url]["text"] = dl_dependencies(str(text),path,"",instance_url)
@@ -274,17 +278,20 @@ def get_and_save_specific_pages(headers,instance_url,course_id, output):
                 os.makedirs(os.path.join(output,sub_dir))
             page_content=get_page(instance_url + link,headers).decode('utf-8')
             soup_page=BeautifulSoup.BeautifulSoup(page_content, 'html.parser')
-            good_part_of_page_content=str(soup.find('section', attrs={"class": "container"}))
+            good_part_of_page_content=str(soup_page.find('section', attrs={"class": "container"}))
             html_content=dl_dependencies(good_part_of_page_content,os.path.join(output,sub_dir),sub_dir,instance_url)
-            page_to_save[sub_dir]=html_content
+            page_to_save[sub_dir]={}
+            page_to_save[sub_dir]["content"]=html_content
+            page_to_save[sub_dir]["title"]=str(soup_page.find('title').text)
     #Now we have all link on top
     for sub_dir in page_to_save:
             jinja(
                 os.path.join(output,sub_dir,"index.html"),
                 "specific_page.html",
                 False,
+                title=page_to_save[sub_dir]["title"],
                 top=link_on_top,
-                content=page_to_save[sub_dir],
+                content=page_to_save[sub_dir]["content"],
                 rooturl=".."
             )
     return link_on_top
@@ -440,40 +447,42 @@ def dl_dependencies(content,path, folder_name,instance_url):
     body = string2html(content)
     imgs = body.xpath('//img')
     for img in imgs:
-        src = img.attrib['src']
-        ext = os.path.splitext(src.split("?")[0])[1]
-        filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
-        out = os.path.join(path, filename)
-        # download the image only if it's not already downloaded
-        if not os.path.exists(out): 
-            try:
-                headers=download(src, out,instance_url, timeout=180)
-                type_of_file=get_filetype(headers,out)
-                # update post's html
-                resize_one(out,type_of_file,"540")
-                optimize_one(out,type_of_file)
-            except :
-                logging.warning("error with " + src)
-                pass
-        src = os.path.join(folder_name,filename)
-        img.attrib['src'] = src
-        img.attrib['style']= "max-width:100%"
-    docs = body.xpath('//a')
-    for a in docs:
-        src = a.attrib['href']
-        ext = os.path.splitext(src.split("?")[0])[1]
-        filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
-        out = os.path.join(path, filename)
-        # download the image only if it's not already downloaded
-        if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF"]: #TODO better solution for extention (black list?)
-            if not os.path.exists(out):
+        if "src" in img.attrib:
+            src = img.attrib['src']
+            ext = os.path.splitext(src.split("?")[0])[1]
+            filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
+            out = os.path.join(path, filename)
+            # download the image only if it's not already downloaded
+            if not os.path.exists(out): 
                 try:
                     headers=download(src, out,instance_url, timeout=180)
+                    type_of_file=get_filetype(headers,out)
+                    # update post's html
+                    resize_one(out,type_of_file,"540")
+                    optimize_one(out,type_of_file)
                 except :
                     logging.warning("error with " + src)
                     pass
-            src = os.path.join(folder_name,filename )
-            a.attrib['href'] = src
+            src = os.path.join(folder_name,filename)
+            img.attrib['src'] = src
+            img.attrib['style']= "max-width:100%"
+    docs = body.xpath('//a')
+    for a in docs:
+        if "href" in a.attrib:
+            src = a.attrib['href']
+            ext = os.path.splitext(src.split("?")[0])[1]
+            filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
+            out = os.path.join(path, filename)
+            # download the image only if it's not already downloaded
+            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF"]: #TODO better solution for extention (black list?)
+                if not os.path.exists(out):
+                    try:
+                        headers=download(src, out,instance_url, timeout=180)
+                    except : 
+                        logging.warning("error with " + src)
+                        pass
+                src = os.path.join(folder_name,filename )
+                a.attrib['href'] = src
     csss = body.xpath('//link')
     for css in csss:
         if "href" in css.attrib:
@@ -550,6 +559,15 @@ def render_course(data,vertical_path_list,output_path,parent_path,vertical_num_s
     all_data=data
     for des in data["descendants"]:
         vertical_num_start=render_chapter(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top)
+    jinja(
+        os.path.join(output_path,path,"index.html"),
+        "chapter_menu.html",
+        False,
+        chapter=data,
+        all_data=all_data,
+        top=link_on_top,
+        rooturl=".."
+    )
 
 def render_chapter(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top):
     path=os.path.join(parent_path, data[block_id_id])
@@ -820,12 +838,11 @@ def run():
     if not os.path.exists(output):
         os.makedirs(output)
 
-    logging.info("Get discussion")
-    threads, threads_category =get_discussion(headers,conf["instance_url"],course_id)
-
-
     logging.info("Try to get specific page of mooc")
     link_on_top=get_and_save_specific_pages(headers,conf["instance_url"],course_id,output)
+
+    logging.info("Get discussion")
+    threads, threads_category =get_forum(headers,conf["instance_url"],course_id,output)
 
     if "wiki" in link_on_top:
         logging.info("Get wiki")

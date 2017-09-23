@@ -30,7 +30,7 @@
           {% if elem["discussion"]["discussion_data"] != [] %}
             <h1> Discussions </h1>
             {% for thread in elem["discussion"]["discussion_data"] %}
-                <a href="{{ rooturl}}/forum/{{ thread["commentable_id" }}/{{ thread["id"] }}/index.html>{{ thread["title"] }} by {{ thread["username"] }}</a>
+                <a href="{{ rooturl}}/forum/{{ thread["commentable_id"] }}/{{ thread["id"] }}/index.html">{{ thread["title"] }} by {{ thread["username"] }}</a><br/>
             {% endfor %}
           {% endif %}
         {% endif %}
