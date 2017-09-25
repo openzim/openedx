@@ -102,7 +102,10 @@ def get_page(url,headers):
     if DEBUG:
         print(url)
     request = Request(url, None, headers)
-    response = urlopen(request)
+    try:
+        response = urlopen(request)
+    except:
+        response = urlopen(request)
     return response.read()
 
 def get_course_id(url, course_page_name, course_prefix, instance_url):
@@ -227,36 +230,40 @@ def get_wiki(headers,instance_url,course_id, output):
         if text != None : #If it's a page (and not a list of page)
 
             #Find new wiki page in page content
-            all_link=text.find_all("a")
-            for link in all_link:
-                if link.has_attr("href") and instance_url + "/wiki/" in link["href"]:
+            for link in text.find_all("a"):
+                if link.has_attr("href") and "/wiki/" in link["href"]:
                     if link not in page_already_visit and link not in page_to_visit:
-                        page_to_visit.append(link["href"])
-                    print(link["href"])
-                    link["href"] = rooturl + link["href"].replace(instance_url,"") + "/index.html"
-                    print(link["href"])
+                        if not link["href"][0:4] == "http":
+                            page_to_visit.append(instance_url + link["href"])
+                        else:
+                            page_to_visit.append(link["href"])
+
+                    if not link["href"][0:4] == "http":
+                        link["href"] = rooturl[:-1] + link["href"].replace(instance_url,"") + "/index.html"
 
             page_already_visit[url]["path"] = path
             page_already_visit[url]["text"] = dl_dependencies(str(text),path,"",instance_url)
             page_already_visit[url]["title"] = soup.find("title").text 
 
         #find new url of wiki in the page
-        allpage_url=str(soup.find('div', attrs={"class": "see-children"}).find("a")["href"])
-        page_already_visit[url]["dir"] = allpage_url #TODO utile ?
-        content=get_page(instance_url + allpage_url,headers)
-        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
-        table=soup.find("table")
-        if table != None:
-            for link in table.find_all("a"):
-                if link.has_attr("class") and link["class"] == "list-children":
-                    pass
-                else:
-                    if link["href"] not in page_already_visit and link["href"] not in page_to_visit:
-                        page_to_visit.append(instance_url + link["href"])
-                        if "decoule" in page_already_visit[url]:
-                            page_already_visit[url]["decoule"].append(instance_url + link["href"])
-                        else:
-                            page_already_visit[url]["decoule"]= [ instance_url + link["href"] ]
+        see_children=soup.find('div', attrs={"class": "see-children"})
+        if see_children:
+            allpage_url=str(see_children.find("a")["href"])
+            page_already_visit[url]["dir"] = allpage_url #TODO utile ?
+            content=get_page(instance_url + allpage_url,headers)
+            soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+            table=soup.find("table")
+            if table != None:
+                for link in table.find_all("a"):
+                    if link.has_attr("class") and link["class"] == "list-children":
+                        pass
+                    else:
+                        if link["href"] not in page_already_visit and link["href"] not in page_to_visit:
+                            page_to_visit.append(instance_url + link["href"])
+                            if "decoule" in page_already_visit[url]:
+                                page_already_visit[url]["decoule"].append(instance_url + link["href"])
+                            else:
+                                page_already_visit[url]["decoule"]= [ instance_url + link["href"] ]
     return page_already_visit
 
 def get_and_save_specific_pages(headers,instance_url,course_id, output):
@@ -282,7 +289,7 @@ def get_and_save_specific_pages(headers,instance_url,course_id, output):
             html_content=dl_dependencies(good_part_of_page_content,os.path.join(output,sub_dir),sub_dir,instance_url)
             page_to_save[sub_dir]={}
             page_to_save[sub_dir]["content"]=html_content
-            page_to_save[sub_dir]["title"]=str(soup_page.find('title').text)
+            page_to_save[sub_dir]["title"]=soup_page.find('title').text
     #Now we have all link on top
     for sub_dir in page_to_save:
             jinja(
@@ -352,11 +359,11 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
 
 
         elif data["type"] == "discussion":
-            data["html_content"]="<h3> Sorry, this is not available </h3>"
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             discussion_id=str(soup.find('div', attrs={"class": "discussion-module"})['data-discussion-id'])
             data["discussion"]=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=1&ajax=1", headers)
+            #TODO get more that 20
 
 
 
@@ -561,9 +568,9 @@ def render_course(data,vertical_path_list,output_path,parent_path,vertical_num_s
         vertical_num_start=render_chapter(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top)
     jinja(
         os.path.join(output_path,path,"index.html"),
-        "chapter_menu.html",
+        "course_menu.html",
         False,
-        chapter=data,
+        course=data,
         all_data=all_data,
         top=link_on_top,
         rooturl=".."
@@ -616,9 +623,12 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         all_data=all_data
     )
 def render_forum(threads,threads_category,output,link_on_top):
+    #TODO Does not work
     path=os.path.join(output,"forum")
     if not os.path.exists(path):
         os.makedirs(path)
+    print("thread category")
+    print(threads_category)
     jinja(
             os.path.join(path,"index.html"),
             "home_category.html",
@@ -641,6 +651,7 @@ def render_forum(threads,threads_category,output,link_on_top):
                 "home_discussion.html",
                 False,
                 threads=thread_by_category[category],
+                top=link_on_top,
                 rooturl="../.."
         )
     for thread in threads:
@@ -651,6 +662,7 @@ def render_forum(threads,threads_category,output,link_on_top):
                 "thread.html",
                 False,
                 thread=thread,
+                top=link_on_top,
                 rooturl="../../.."
         )
 
@@ -674,7 +686,8 @@ def render_wiki(wiki_data, instance_url,course_id,output,link_on_top):
         elif "decoule" in wiki_data[page]:
             page_to_list=[]
             for sub_page in wiki_data[page]["decoule"]:
-                page_to_list.append({ "url": sub_page.replace(instance_url + "/wiki/",""), "title": wiki_data[sub_page]})
+                if "title" in wiki_data[sub_page]:
+                    page_to_list.append({ "url": wiki_data[page]["rooturl"] + sub_page.replace(instance_url,""), "title": wiki_data[sub_page]["title"]})
             jinja(
                 os.path.join(wiki_data[page]["path"],"index.html"),
                 "wiki_list.html",

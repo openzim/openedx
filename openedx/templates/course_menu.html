@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}menu_chapter{% endblock %}
+
+{% block title %}{{ course["display_name"] }}{% endblock %}
+
+{% block body %}
+  <div id="#top">
+    {% include "menu.html" %}
+  </div>
+
+  <div id="menu_chapter" style="display:inline-block, width=70%;">
+    <ul>
+      {% for chapter in course["descendants"] %}
+        <li><a href="{{ rooturl }}/course//{{ chapter["folder_id"] }}/index.html" >{{ chapter["display_name"] }} </a></li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}
+
