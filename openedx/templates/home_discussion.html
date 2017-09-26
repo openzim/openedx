@@ -7,7 +7,7 @@
 {% block body %}
   <ul>
   {% for thread in threads %}
-    <li><a href="{{ thread["id"] }}/index.html"> {{ thread["title"] }}</a></li>
+    <li><a href="{{ thread["id"] }}/index.html"> {{ thread["title"] }} by {{ thread["username"] }}</a></li>
   {% endfor %}
   </ul>
 {% endblock %}

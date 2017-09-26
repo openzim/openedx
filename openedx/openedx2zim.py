@@ -171,7 +171,6 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
 ########################
 
 def get_forum(headers,instance_url,course_id,output):
-    
     url="/courses/" + course_id + "/discussion/forum/?ajax=1&page=1&sort_key=activity&sort_order=desc"
     data=get_api_json(instance_url,url, headers)
     threads=data["discussion_data"]
@@ -192,15 +191,19 @@ def get_forum(headers,instance_url,course_id,output):
             except:
                 logging.log("Can not get " + instance_url + url + "discussion")
 
-
     headers["X-Requested-With"] = ""
     content=get_page(instance_url + "/courses/" +  course_id + "/discussion/forum",headers).decode('utf-8')
-    soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+    good_content=BeautifulSoup.BeautifulSoup(content, 'html.parser').find("script", attrs={"id": "thread-list-template"}).text #TODO same pour edx ?
+    soup=BeautifulSoup.BeautifulSoup(good_content, 'html.parser')
     all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
     category={}
     for cat in all_category:
         if cat.has_attr("data-discussion-id"):
-            category[cat["data-discussion-id"]] = str(cat.text)
+            if cat.parent.parent.name=="li" and cat.parent.parent["class"][0] == "forum-nav-browse-menu-item":
+                big_cat=cat.parent.parent.find("a").text.replace("\n","")
+                category[cat["data-discussion-id"]]=str(big_cat) + " : " + str(cat.text).replace("\n","")
+            else:
+                category[cat["data-discussion-id"]] = str(cat.text).replace("\n","")
 
     return [threads, category]
 
@@ -623,7 +626,6 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         all_data=all_data
     )
 def render_forum(threads,threads_category,output,link_on_top):
-    #TODO Does not work
     path=os.path.join(output,"forum")
     if not os.path.exists(path):
         os.makedirs(path)
