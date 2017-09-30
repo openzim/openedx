@@ -6,6 +6,8 @@
 
 {% block body %}
   <p>  {{ content["text"] }} </p>
-  <a href="_dir/index.html"> See sub page</a>
+  {% if content["sub_page"] %}
+    <a href="_dir/index.html"> See sub page</a>
+  {% endif %}
 {% endblock %}
 

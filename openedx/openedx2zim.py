@@ -196,10 +196,14 @@ def get_forum(headers,instance_url,course_id,output):
     good_content=BeautifulSoup.BeautifulSoup(content, 'html.parser').find("script", attrs={"id": "thread-list-template"}).text #TODO same pour edx ?
     soup=BeautifulSoup.BeautifulSoup(good_content, 'html.parser')
     all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
+    if len(all_category) == 0:
+        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
+        
     see=[]
     category={}
     for cat in all_category:
-        if not cat.has_attr("data-discussion-id"):
+        if not cat.has_attr("data-discussion-id") and cat.find("a") != None:
             random_id=sha256(str(random.random()).encode('utf-8')).hexdigest()
             category[random_id]={"name" : cat.find("a").text.replace("\n",""), "sub_cat":[]}
             bs_sub_cat=cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"});
@@ -212,7 +216,6 @@ def get_forum(headers,instance_url,course_id,output):
             if cat["data-discussion-id"] not in see:
                 category[cat["data-discussion-id"]] = {"title": str(cat.text).replace("\n","")}
 
-    print(category)
     return [threads, category]
 
 def get_wiki(headers,instance_url,course_id, output):
@@ -254,13 +257,14 @@ def get_wiki(headers,instance_url,course_id, output):
 
             page_already_visit[url]["path"] = path
             page_already_visit[url]["text"] = dl_dependencies(str(text),path,"",instance_url)
-            page_already_visit[url]["title"] = soup.find("title").text 
+            page_already_visit[url]["title"] = soup.find("title").text
+            page_already_visit[url]["sub_page"] = False
 
         #find new url of wiki in the page
         see_children=soup.find('div', attrs={"class": "see-children"})
         if see_children:
             allpage_url=str(see_children.find("a")["href"])
-            page_already_visit[url]["dir"] = allpage_url #TODO utile ?
+            page_already_visit[url]["dir"] = allpage_url 
             content=get_page(instance_url + allpage_url,headers)
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             table=soup.find("table")
@@ -269,6 +273,7 @@ def get_wiki(headers,instance_url,course_id, output):
                     if link.has_attr("class") and link["class"] == "list-children":
                         pass
                     else:
+                        page_already_visit[url]["sub_page"]=True
                         if link["href"] not in page_already_visit and link["href"] not in page_to_visit:
                             page_to_visit.append(instance_url + link["href"])
                             if "decoule" in page_already_visit[url]:
@@ -330,7 +335,6 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             html_content=dl_dependencies(html_content,path,data[block_id_id],instance_url)
             data["html_content"]=str(html_content)
         elif data["type"] == "problem":
-            data["html_content"]="<h3> Sorry, problem are not available for the moment</h3>"
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             try:
@@ -379,7 +383,6 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             if minimal_discussion["num_pages"] != 1:
                 for i in range(2,minimal_discussion["num_pages"]+1):
                     data["discussion"]["discussion_data"]+=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=" + str(i) + "&ajax=1", headers)["discussion_data"]
-            #mal_discussionTODO get more that 20
 
 
 
