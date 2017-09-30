@@ -200,13 +200,9 @@ def get_forum(headers,instance_url,course_id,output):
     category={}
     for cat in all_category:
         if not cat.has_attr("data-discussion-id"):
-            print("---")
-            print(cat)
-            print("---")
             random_id=sha256(str(random.random()).encode('utf-8')).hexdigest()
             category[random_id]={"name" : cat.find("a").text.replace("\n",""), "sub_cat":[]}
             bs_sub_cat=cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"});
-            print(bs_sub_cat)
             for sub_cat in cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"}):
                 if sub_cat.has_attr("data-discussion-id"):
                     category[random_id]["sub_cat"].append({"data-discussion-id": sub_cat["data-discussion-id"], "title" :str(sub_cat.text).replace("\n","")})
@@ -377,8 +373,13 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             discussion_id=str(soup.find('div', attrs={"class": "discussion-module"})['data-discussion-id'])
-            data["discussion"]=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=1&ajax=1", headers)
-            #TODO get more that 20
+            minimal_discussion=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=1&ajax=1", headers)
+            data["discussion"]={}
+            data["discussion"]["discussion_data"]=minimal_discussion["discussion_data"]
+            if minimal_discussion["num_pages"] != 1:
+                for i in range(2,minimal_discussion["num_pages"]+1):
+                    data["discussion"]["discussion_data"]+=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=" + str(i) + "&ajax=1", headers)["discussion_data"]
+            #mal_discussionTODO get more that 20
 
 
 
@@ -686,7 +687,7 @@ def render_wiki(wiki_data, instance_url,course_id,output,link_on_top):
         os.makedirs(path)
 
     for page in wiki_data:
-        if "text" in wiki_data[page]: #In this it's a page
+        if "text" in wiki_data[page]: #this is a page
             jinja(
                 os.path.join(wiki_data[page]["path"],"index.html"),
                 "wiki_page.html",
@@ -697,7 +698,7 @@ def render_wiki(wiki_data, instance_url,course_id,output,link_on_top):
                 rooturl=wiki_data[page]["rooturl"]
             )
     
-        elif "decoule" in wiki_data[page]:
+        elif "decoule" in wiki_data[page]: #this is a list page
             page_to_list=[]
             for sub_page in wiki_data[page]["decoule"]:
                 if "title" in wiki_data[sub_page]:

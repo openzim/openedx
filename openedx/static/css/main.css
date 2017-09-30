@@ -36,3 +36,11 @@
   border-style: dotted;
   padding: 1%;
 }
+
+
+#elemtopbar {
+  display: inline-block;
+	border: 2px solid black;
+	border-radius: 5px;
+	margin: 2%;
+}

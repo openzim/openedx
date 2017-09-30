@@ -46,11 +46,12 @@
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
     <div class="topbar">
-      <p>
-        {% for elem in top %}
+      {% for elem in top %}
+        <div id="elemtopbar">
           <a href="{{ rooturl }}/{{ elem }}/index.html"> {{ top[elem] }}</a> 
-        {% endfor %}
-      </p>
+        </div>
+      {% endfor %}
+    </div>
     <div class="container">
       {% block body %}{% endblock %}
     </div>
