@@ -13,20 +13,23 @@
         </div>
       {% endif %}
     </div>
-    <div class="body">{{ post["body"] }}</div>
-  </div>
+    <div class="body">
+      <p>{{ post["body"] | markdown }}</p>
+    </div>
     <div class="author">
       <p> {{ post["username"] }} </p>
+      <p>Posted <span class="date" title="{{ post["created_at"] | remove_newline }}">{{ post["created_at"] | remove_newline }}</span></p>
     </div>
-    <div class="date">
-      <p> {{ post["created_at"] }} </p>
-    </div>
-  {% if post["children"] %}
-    <div class="comments">
-      {% for comment in post["children"] %}
-            {% set post = comment %}
-            {% include "post.html" %}
-      {% endfor %}
-    </div>
-  {% endif %}
+  </div>
+    {% if post["children"] %}
+      <div class="comments">
+        {% for comment in post["children"] %}
+          <div class="comment">
+            <p>
+              <span class="text">{{ comment["body"] | markdown }}</span> – {{ comment["username"] }} – <span class="date" title="{{ comment["created_at"] | remove_newline }}">{{ comment["created_at"] | remove_newline }}</span>
+              </p>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
 </div>

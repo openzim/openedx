@@ -19,7 +19,8 @@ setup(
         'webvtt-py',
         'youtube-dl',
         'awesome-slugify',
-        'jinja2'
+        'jinja2',
+        'mistune'
         ],
     zip_safe=False,
     platforms='Linux',

@@ -56,6 +56,7 @@ from distutils.dir_util import copy_tree
 import datetime
 import logging
 import random
+import mistune #markdown
 
 DEBUG=True
 #########################
@@ -407,6 +408,15 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
 
     return data
 
+#########################
+# Tools                 #
+#########################
+
+def markdown(text):
+    return MARKDOWN(text)[3:-5]
+
+def remove_newline(text):
+    return text.replace("\n", "")
 
 def download(url, output, instance_url,timeout=None,):
     if url[0:2] == "//":
@@ -645,8 +655,6 @@ def render_forum(threads,threads_category,output,link_on_top):
     path=os.path.join(output,"forum")
     if not os.path.exists(path):
         os.makedirs(path)
-    print("thread category")
-    print(threads_category)
     jinja(
             os.path.join(path,"index.html"),
             "home_category.html",
@@ -769,7 +777,11 @@ def jinja_init(templates):
     global ENV
     templates = os.path.abspath(templates)
     ENV = Environment(loader=FileSystemLoader((templates,)))
-    filters = dict(slugify=slugify)
+    filters = dict(
+            slugify=slugify,
+            markdown=markdown,
+            remove_newline=remove_newline,
+        )
     ENV.filters.update(filters)
 
 #########################
@@ -862,6 +874,9 @@ def run():
     username=get_username(conf["instance_url"] + conf["account_page"], headers)
     course_id=get_course_id(arguments["<course_url>"], conf["course_page_name"], conf["course_prefix"], conf["instance_url"])
     course_id=quote_plus(course_id)
+
+    global MARKDOWN
+    MARKDOWN = mistune.Markdown()
 
     logging.info("Get info about course")
     info=get_api_json(conf["instance_url"], "/api/courses/v1/courses/" + course_id + "?username="+username, headers)
