@@ -133,7 +133,7 @@ def make_json_tree_and_folder_tree(id,source_json, headers,parent_path,block_id_
     data["block_name"]=id
     path=os.path.join(parent_path, data[block_id_id])
     if not os.path.exists(path):
-        os.path.makedirs(path)
+        os.makedirs(path)
     if "descendants" in data:
         new=[]
         for des in data["descendants"]:
