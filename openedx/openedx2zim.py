@@ -887,8 +887,9 @@ def run():
     logging.info("Try to get specific page of mooc")
     link_on_top=get_and_save_specific_pages(headers,conf["instance_url"],course_id,output)
 
-    logging.info("Get discussion")
-    threads, threads_category =get_forum(headers,conf["instance_url"],course_id,output)
+    if "forum" in link_on_top:
+        logging.info("Get discussion")
+        threads, threads_category =get_forum(headers,conf["instance_url"],course_id,output)
 
     if "wiki" in link_on_top:
         logging.info("Get wiki")
