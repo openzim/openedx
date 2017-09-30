@@ -196,15 +196,27 @@ def get_forum(headers,instance_url,course_id,output):
     good_content=BeautifulSoup.BeautifulSoup(content, 'html.parser').find("script", attrs={"id": "thread-list-template"}).text #TODO same pour edx ?
     soup=BeautifulSoup.BeautifulSoup(good_content, 'html.parser')
     all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
+    see=[]
     category={}
     for cat in all_category:
+        if not cat.has_attr("data-discussion-id"):
+            print("---")
+            print(cat)
+            print("---")
+            random_id=sha256(str(random.random()).encode('utf-8')).hexdigest()
+            category[random_id]={"name" : cat.find("a").text.replace("\n",""), "sub_cat":[]}
+            bs_sub_cat=cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"});
+            print(bs_sub_cat)
+            for sub_cat in cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"}):
+                if sub_cat.has_attr("data-discussion-id"):
+                    category[random_id]["sub_cat"].append({"data-discussion-id": sub_cat["data-discussion-id"], "title" :str(sub_cat.text).replace("\n","")})
+                    see.append(sub_cat["data-discussion-id"])
+    for cat in all_category:
         if cat.has_attr("data-discussion-id"):
-            if cat.parent.parent.name=="li" and cat.parent.parent["class"][0] == "forum-nav-browse-menu-item":
-                big_cat=cat.parent.parent.find("a").text.replace("\n","")
-                category[cat["data-discussion-id"]]=str(big_cat) + " : " + str(cat.text).replace("\n","")
-            else:
-                category[cat["data-discussion-id"]] = str(cat.text).replace("\n","")
+            if cat["data-discussion-id"] not in see:
+                category[cat["data-discussion-id"]] = {"title": str(cat.text).replace("\n","")}
 
+    print(category)
     return [threads, category]
 
 def get_wiki(headers,instance_url,course_id, output):
