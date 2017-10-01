@@ -590,7 +590,7 @@ def vertical_list(data,parent_path,block_id_id):
             type_icon="glyphicon glyphicon-comment"
         else:
             type_icon="glyphicon glyphicon-book"
-        vertical_path_list.append({ "url" :path, "type_icon": type_icon, "title": data["display_name"]})
+        vertical_path_list.append({ "url" :path, "type_icon": type_icon, "title": data["display_name"], "my_id": data[block_id_id]})
     return vertical_path_list
 
 
