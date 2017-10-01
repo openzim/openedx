@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 
+{% block addcss %} <link href="{{ rooturl }}/static/css/thread.css" rel="stylesheet" type="text/css" /> {% endblock %}
+
 {% block bodyclass %}forum{% endblock %}
 
 {% block title %} Forum {% endblock %}
 
 {% block body %}
-  <ul>
+<div class="row">
+  <div class="col-md-8">
   {% for cat in category %}
     {% if "sub_cat" in category[cat] %}
-      <li> {{ category[cat]["name"] }}
-        <ul>
+      <h4> {{ category[cat]["name"] }} : </h4>
           {% for sub_cat in category[cat]["sub_cat"] %}
-            <li><a href="{{ sub_cat["data-discussion-id"]  }}/index.html"> {{ sub_cat["title"] }}</a></li> 
+            <p class="question">    <a href="{{ sub_cat["data-discussion-id"] }}/index.html">{{ sub_cat["title"] }}</a></p>
           {% endfor %}
-        </ul>
-      </li>
     {% else %}
-        <li><a href="{{ cat }}/index.html"> {{ category[cat]["title"] }}</a></li>
+        <p class="question"><a href="{{ cat }}/index.html">{{ category[cat]["title"] }}</a></p>
     {% endif %}
   {% endfor %}
-  </ul>
+  </div>
+</div>
 {% endblock %}

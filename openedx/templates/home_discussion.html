@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 
+{% block addcss %} <link href="{{ rooturl }}/static/css/thread.css" rel="stylesheet" type="text/css" /> {% endblock %}
+
 {% block bodyclass %}forum{% endblock %}
 
 {% block title %} Forum {% endblock %}
 
 {% block body %}
-  <ul>
-  {% for thread in threads %}
-    <li><a href="{{ thread["id"] }}/index.html"> {{ thread["title"] }} by {{ thread["username"] }}</a></li>
-  {% endfor %}
-  </ul>
+  <div class="row">
+    <div class="col-md-8">
+    {% for thread in threads %}
+      <p class="question"><a href="{{ thread["id"] }}/index.html">{{ thread["title"] }}</a> by {{ thread["username"] }}</p>
+    {% endfor %}
+    </div>
+  </div>
 {% endblock %}
