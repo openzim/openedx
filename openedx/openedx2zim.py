@@ -435,13 +435,17 @@ def download(url, output, instance_url,timeout=None,):
 def download_and_convert_subtitles(path,transcripts_data,already_in_vtt,headers):
     for lang in transcripts_data:
         path_lang=os.path.join(path,lang + ".vtt")
-        subtitle=get_page(transcripts_data[lang],headers).decode('utf-8')
-        with open(path_lang, 'w') as f:
-            f.write(str(subtitle))
-        if not already_in_vtt:
-            exec_cmd("sed -i 's/^0$/1/' " + path_lang) #This little hack is use because WebVTT.from_srt check is the first line is 1
-            webvtt = WebVTT().from_srt(path_lang)
-            webvtt.save()
+        try:
+            subtitle=get_page(transcripts_data[lang],headers).decode('utf-8')
+            with open(path_lang, 'w') as f:
+                f.write(str(subtitle))
+            if not already_in_vtt:
+                exec_cmd("sed -i 's/^0$/1/' " + path_lang) #This little hack is use because WebVTT.from_srt check is the first line is 1
+                webvtt = WebVTT().from_srt(path_lang)
+                webvtt.save()
+        except HTTPError as e:
+            if e.code == 404 or e.code == 403:
+                pass
 
 def download_youtube(youtube_url, video_path):
     parametre={"outtmpl" : video_path, 'progress_hooks': [hook_youtube_dl], 'preferredcodec': 'mp4', 'format' : 'mp4'}
@@ -731,7 +735,7 @@ def render_wiki(wiki_data, instance_url,course_id,output,link_on_top):
                 rooturl=wiki_data[page]["rooturl"]
             )
 
-def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instance,instance_url,link_on_top):
+def make_welcome_page(output,course_url,headers,mooc_name,instance,instance_url,link_on_top):
     content=get_page(course_url,headers).decode('utf-8')
     if not os.path.exists(os.path.join(output,"home")):
         os.makedirs(os.path.join(output,"home"))
@@ -751,7 +755,6 @@ def make_welcome_page(first_vertical,output,course_url,headers,mooc_name,instanc
         os.path.join(output,"index.html"),
         "home.html",
         False,
-        first_vertical=first_vertical,
         messages=html_content_offline,
         top=link_on_top,
         mooc_name=mooc_name
@@ -890,6 +893,7 @@ def run():
     if "forum" in link_on_top:
         logging.info("Get discussion")
         threads, threads_category =get_forum(headers,conf["instance_url"],course_id,output)
+        render_forum(threads,threads_category,output,link_on_top)
 
     if "wiki" in link_on_top:
         logging.info("Get wiki")
@@ -918,10 +922,12 @@ def run():
     json_tree_content=get_content(json_tree, headers,output,block_id_id,conf["instance_url"],course_id) 
     vertical_path_list=vertical_list(json_tree_content,"/",block_id_id)
 
-    logging.info("Render course, forum")
-    render_course(json_tree_content,vertical_path_list,output,"",0,0,block_id_id,link_on_top)
-    render_forum(threads,threads_category,output,link_on_top)
-    make_welcome_page(vertical_path_list[0],output,arguments["<course_url>"],headers,info["name"],instance,conf["instance_url"],link_on_top)
+    if len(vertical_path_list) != 0:
+        logging.info("Render course")
+        render_course(json_tree_content,vertical_path_list,output,"",0,0,block_id_id,link_on_top)
+    else:
+        logging.warning("This course has no content")
+    make_welcome_page(output,arguments["<course_url>"],headers,info["name"],instance,conf["instance_url"],link_on_top)
 
     logging.info("Create zim")
     copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(output, 'static'))
