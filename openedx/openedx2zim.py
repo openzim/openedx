@@ -355,7 +355,13 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
 
             #Save json answers
             path_answers=os.path.join(path,"problem_show")
-            answers_content=get_api_json(instance_url,"/courses/" + course_id + "/xblock/" + data["block_name"] + "/handler/xmodule_handler/problem_show", headers)
+            answers_content={"success": None}
+            retry=0
+            while "success" in answers_content and retry < 6: #We use our check to finally get anwers
+                answers_content=get_api_json(instance_url,"/courses/" + course_id + "/xblock/" + data["block_name"] + "/handler/xmodule_handler/problem_show", headers)
+                if "success" in answers_content:
+                    get_api_json(instance_url,"/courses/" + course_id + "/xblock/" + data["block_name"] + "/handler/xmodule_handler/problem_check", headers)
+                    retry+=1
             if "success" in answers_content:
                 logging.warning(" fail to get answers to this problem : " + data["block_name"])
                 data["answers"]=None
