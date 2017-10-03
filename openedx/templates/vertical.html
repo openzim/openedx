@@ -49,6 +49,7 @@
                 } catch(e) {}
               {% endfor %}
               {% for ans in elem["explanation"] %}
+                  document.getElementById("{{ ans["name"] }}").parentNode.style.display= "block";
                   document.getElementById("{{ ans["name"] }}").innerHTML= {{ ans["value"] }};
               {% endfor %}
               }

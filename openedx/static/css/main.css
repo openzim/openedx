@@ -32,6 +32,7 @@
 }
 
 .solution-span{
+  display: none;
   border-color: black;
   border-style: dotted;
   padding: 1%;
