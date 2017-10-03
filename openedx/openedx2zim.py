@@ -618,7 +618,7 @@ def render_chapter(data,vertical_path_list,output_path,parent_path,vertical_num_
         chapter=data,
         all_data=all_data,
         top=link_on_top,
-        rooturl="../.."
+        rooturl="../../.."
     )
     for des in data["descendants"]:
         vertical_num_start=render_sequential(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top)
@@ -899,7 +899,6 @@ def run():
         logging.info("Get wiki")
         wiki_page=get_wiki(headers,conf["instance_url"],course_id,output)
         render_wiki(wiki_page, conf["instance_url"],course_id,output,link_on_top)
-
 
     logging.info("Get course blocks")
     blocks=get_api_json(conf["instance_url"], "/api/courses/v1/blocks/?course_id=" + course_id + "&username="+username +"&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3", headers)
