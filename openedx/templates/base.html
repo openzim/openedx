@@ -44,17 +44,40 @@
       }
     </script>
     <script type="text/javascript" src="{{ rooturl }}/static/MathJax.js?config=TeX-MML-AM_SVG"></script>
+    <script>
+      /* Toggle between adding and removing the "responsive" class to topnav when the user clicks on the icon */
+      function myMenu() {
+        var x = document.getElementById("topnav");
+        if (x.className === "topnav") {
+          x.className += " responsive";
+        } else {
+          x.className = "topnav";
+        }
+      }
+
+      /* Set the width of the side navigation to 250px */
+      function openSideNav() {
+            try{document.getElementById("mySidenav").style.width = "250px";}catch(e) {}
+            try{document.getElementById("container").style.marginLeft = "250px";}catch(e) {}
+      }
+
+      /* Set the width of the side navigation to 0 */
+      function closeSideNav() {
+            try{document.getElementById("mySidenav").style.width = "0";}catch(e) {}
+            try{document.getElementById("container").style.marginLeft = "0";}catch(e) {}
+      } 
+    </script>
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
-    <div class="topbar">
+    <div class="topnav" id="topnav">
+      {% if sidenav %}
+        <a href="javascript:void(0);"  onclick="openSideNav()" >&#9776;</a>
+      {% endif %}
       {% for elem in top %}
-        <div id="elemtopbar">
           <a href="{{ rooturl }}/{{ elem }}/index.html"> {{ top[elem] }}</a> 
-        </div>
       {% endfor %}
+      <a href="javascript:void(0);" class="icon" onclick="myMenu()"><span class="glyphicon glyphicon-chevron-down"></span></a>
     </div>
-    <div class="container">
       {% block body %}{% endblock %}
-    </div>
   </body>
 </html>
