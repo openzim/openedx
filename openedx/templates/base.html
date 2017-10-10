@@ -54,30 +54,25 @@
           x.className = "topnav";
         }
       }
-
-      /* Set the width of the side navigation to 250px */
-      function openSideNav() {
-            try{document.getElementById("mySidenav").style.width = "250px";}catch(e) {}
-            try{document.getElementById("container").style.marginLeft = "250px";}catch(e) {}
-      }
-
-      /* Set the width of the side navigation to 0 */
-      function closeSideNav() {
-            try{document.getElementById("mySidenav").style.width = "0";}catch(e) {}
-            try{document.getElementById("container").style.marginLeft = "0";}catch(e) {}
-      } 
     </script>
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
-    <div class="topnav" id="topnav">
+    <div class="wrapper">
       {% if sidenav %}
-        <a href="javascript:void(0);"  onclick="openSideNav()" >&#9776;</a>
+          {% include "menu.html" %}
       {% endif %}
-      {% for elem in top %}
-          <a href="{{ rooturl }}/{{ elem }}/index.html"> {{ top[elem] }}</a> 
-      {% endfor %}
-      <a href="javascript:void(0);" class="icon" onclick="myMenu()"><span class="glyphicon glyphicon-chevron-down"></span></a>
-    </div>
-      {% block body %}{% endblock %}
+      <div id="content">
+        <div class="topnav" id="topnav">
+          {% if sidenav %}
+            <a href="javascript:void(0);" onclick="$('#sidebar').toggleClass('active');" style="text-decoration: none;">&#9776;</a>
+          {% endif %}
+
+          {% for elem in top %}
+              <a href="{{ rooturl }}/{{ elem }}/index.html"> {{ top[elem] }}</a> 
+          {% endfor %}
+          <a href="javascript:void(0);" class="icon" onclick="myMenu()"><span class="glyphicon glyphicon-chevron-down"></span></a>
+        </div>
+        {% block body %}{% endblock %}
+      </div>
   </body>
 </html>

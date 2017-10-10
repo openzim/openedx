@@ -312,7 +312,6 @@ def get_and_save_specific_pages(headers,instance_url,course_id, output):
             page_to_save[sub_dir]={}
             page_to_save[sub_dir]["content"]=html_content
             page_to_save[sub_dir]["title"]=soup_page.find('title').text
-            #TODO remove \n
     #Now we have all link on top
     for sub_dir in page_to_save:
             jinja(
@@ -322,7 +321,7 @@ def get_and_save_specific_pages(headers,instance_url,course_id, output):
                 title=page_to_save[sub_dir]["title"],
                 top=link_on_top,
                 content=page_to_save[sub_dir]["content"],
-                rooturl=".."
+                rooturl="../.."
             )
     return link_on_top
 

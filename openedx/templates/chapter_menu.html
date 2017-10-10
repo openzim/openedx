@@ -5,9 +5,7 @@
 {% block title %}{{ chapter["display_name"] }}{% endblock %}
 
 {% block body %}
-  {% include "menu.html" %}
 <div id="container">
-
   <div id="menu_chapter" style="display:inline-block, width=70%;">
     <ul>
       {% for sequential in chapter["descendants"] %}

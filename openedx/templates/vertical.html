@@ -5,7 +5,6 @@
 {% block title %}{{ vertical["display_name"] }}{% endblock %}
 
 {% block body %}
-  {% include "menu.html" %}
   <div id="container">
     <div id="vertical-of-sequential" class="btn-group" role="group" aria-label="...">
       {% if pred_seq %}
@@ -23,56 +22,54 @@
         <a href="{{ rooturl }}/{{ next_seq["url"] }}/index.html" title="{{ next_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
       {% endif %}
     </div>
-    <div id="content">
-      <div id="vertical">
-        {% for elem  in vertical["descendants"] %}
-          {% if elem["type"] == "html" or elem["type"] == "problem" %}
+    <div id="vertical">
+      {% for elem  in vertical["descendants"] %}
+        {% if elem["type"] == "html" or elem["type"] == "problem" %}
+          {{ elem["html_content"] }}
+        {% endif %}
+        {% if elem["type"] == "discussion" %}
+          {% if elem["discussion"]["discussion_data"] != [] %}
+            <h1> Discussions </h1>
+            {% for thread in elem["discussion"]["discussion_data"] %}
+                <a href="{{ rooturl}}/forum/{{ thread["commentable_id"] }}/{{ thread["id"] }}/index.html">{{ thread["title"] }} by {{ thread["username"] }}</a><br/>
+            {% endfor %}
+          {% endif %}
+        {% endif %}
+        {% if elem["type"] == "problem" %}
+          {% if elem["answers"] %}
+            <script>
+              function show_answers_of_{{ elem["problem_id"] }}(){
+              {% for ans in elem["answers"] %}
+                try{
+                  document.getElementById("{{ ans }}").parentNode.className += " show_answers_right";
+                } catch(e) {}
+              {% endfor %}
+              {% for ans in elem["explanation"] %}
+                  document.getElementById("{{ ans["name"] }}").parentNode.style.display= "block";
+                  document.getElementById("{{ ans["name"] }}").innerHTML= {{ ans["value"] }};
+              {% endfor %}
+              }
+            </script>
+            <button onclick="show_answers_of_{{ elem["problem_id"] }}()">Show answers</button> 
+          {% else %}
+            </br>
+            <p> Sorry, we haven't answers</p>
+          {% endif %}
+        {% endif %}
+        {% if elem["type"] == "video" %}
+          {% if "html_content" not in elem %}
+            <video class="video-js vjs-default-skin" controls preload="auto" width="480px" height="270px" data-setup='{"autoplay": true, "preload": "true"}' >
+              <source src="{{ elem["folder_id"] }}/video.webm" type="video/webm" />
+              {% for language in elem["transcripts_file"] %}
+                <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
+              {% endfor %}
+            </video>
+          {% else %}
             {{ elem["html_content"] }}
           {% endif %}
-          {% if elem["type"] == "discussion" %}
-            {% if elem["discussion"]["discussion_data"] != [] %}
-              <h1> Discussions </h1>
-              {% for thread in elem["discussion"]["discussion_data"] %}
-                  <a href="{{ rooturl}}/forum/{{ thread["commentable_id"] }}/{{ thread["id"] }}/index.html">{{ thread["title"] }} by {{ thread["username"] }}</a><br/>
-              {% endfor %}
-            {% endif %}
-          {% endif %}
-          {% if elem["type"] == "problem" %}
-            {% if elem["answers"] %}
-              <script>
-                function show_answers_of_{{ elem["problem_id"] }}(){
-                {% for ans in elem["answers"] %}
-                  try{
-                    document.getElementById("{{ ans }}").parentNode.className += " show_answers_right";
-                  } catch(e) {}
-                {% endfor %}
-                {% for ans in elem["explanation"] %}
-                    document.getElementById("{{ ans["name"] }}").parentNode.style.display= "block";
-                    document.getElementById("{{ ans["name"] }}").innerHTML= {{ ans["value"] }};
-                {% endfor %}
-                }
-              </script>
-              <button onclick="show_answers_of_{{ elem["problem_id"] }}()">Show answers</button> 
-            {% else %}
-              </br>
-              <p> Sorry, we haven't answers</p>
-            {% endif %}
-          {% endif %}
-          {% if elem["type"] == "video" %}
-            {% if "html_content" not in elem %}
-              <video class="video-js vjs-default-skin" controls preload="auto" width="480px" height="270px" data-setup='{"autoplay": true, "preload": "true"}' >
-                <source src="{{ elem["folder_id"] }}/video.webm" type="video/webm" />
-                {% for language in elem["transcripts_file"] %}
-                  <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
-                {% endfor %}
-              </video>
-            {% else %}
-              {{ elem["html_content"] }}
-            {% endif %}
-          {% endif %}
-          <hr>
-        {% endfor %}
-      </div>
+        {% endif %}
+        <hr>
+      {% endfor %}
     </div>
   </div>
 {% endblock %}
