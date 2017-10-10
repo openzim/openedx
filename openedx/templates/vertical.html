@@ -5,8 +5,7 @@
 {% block title %}{{ vertical["display_name"] }}{% endblock %}
 
 {% block body %}
-  <div id="top">
-    {% include "menu.html" %}
+  <div id="container">
     <div id="vertical-of-sequential" class="btn-group" role="group" aria-label="...">
       {% if pred_seq %}
         <a href="{{ rooturl }}/{{ pred_seq["url"] }}/index.html" title="{{ pred_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button></a>
@@ -23,9 +22,6 @@
         <a href="{{ rooturl }}/{{ next_seq["url"] }}/index.html" title="{{ next_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
       {% endif %}
     </div>
-  </div>
-
-  <div id="content">
     <div id="vertical">
       {% for elem  in vertical["descendants"] %}
         {% if elem["type"] == "html" or elem["type"] == "problem" %}
@@ -76,5 +72,4 @@
       {% endfor %}
     </div>
   </div>
-    
 {% endblock %}

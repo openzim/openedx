@@ -225,7 +225,12 @@ def get_wiki(headers,instance_url,course_id, output):
 
     while page_to_visit:
         url = page_to_visit.pop()
-        content=get_page(url,headers).decode('utf-8')
+        try:
+            content=get_page(url,headers).decode('utf-8')
+        except HTTPError as e:
+            if e.code == 404 or e.code == 403:
+                pass
+
         soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
         text=soup.find("div", attrs={"class": "wiki-article"})
         page_already_visit[url]={}
@@ -316,7 +321,7 @@ def get_and_save_specific_pages(headers,instance_url,course_id, output):
                 title=page_to_save[sub_dir]["title"],
                 top=link_on_top,
                 content=page_to_save[sub_dir]["content"],
-                rooturl=".."
+                rooturl="../.."
             )
     return link_on_top
 
@@ -346,8 +351,15 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             soup=BeautifulSoup.BeautifulSoup(html_content_from_div, 'html.parser')
             for div in soup.find_all('div', attrs={"class": "notification"}):
                 div.decompose()
+            for input_tag in soup.find_all('input'):
+                if input_tag.has_attr("value"):
+                    input_tag["value"]=""
+                if input_tag.has_attr("checked"):
+                        del input_tag.attrs['checked']
             soup.find('div', attrs={"class": "action"}).decompose()
             for span in soup.find_all('span', attrs={"class" : "unanswered"}):
+                span.decompose()
+            for span in soup.find_all('span', attrs={"class" : "sr"}):
                 span.decompose()
             html_content=str(soup)
             html_content=dl_dependencies(html_content,path,data[block_id_id],instance_url)
@@ -397,17 +409,19 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
             video_path=os.path.join(path,"video.mp4")
             video_final_path=os.path.join(path,"video.webm")
             if not os.path.exists(video_final_path):
-                if "fallback" in data["student_view_data"]["encoded_videos"]:
+                try:
                     download(data["student_view_data"]["encoded_videos"]["fallback"]["url"], video_path,instance_url)
                     convert_video_to_webm(video_path, video_final_path)
-                elif "mobile_low" in data["student_view_data"]["encoded_videos"]:
-                    download(data["student_view_data"]["encoded_videos"]["mobile_low"]["url"], video_path,instance_url)
-                    convert_video_to_webm(video_path, video_final_path)
-                elif "youtube" in data["student_view_data"]["encoded_videos"]:
-                    download_youtube(data["student_view_data"]["encoded_videos"]["youtube"]["url"], video_path)
-                else:
-                    data["html_content"]="<h3> Sorry, this video is not available </h3>"
-                    return data
+                except Exception as e:
+                    try:
+                        download(data["student_view_data"]["encoded_videos"]["mobile_low"]["url"], video_path,instance_url)
+                        convert_video_to_webm(video_path, video_final_path)
+                    except Exception as e:
+                        try:
+                            download_youtube(data["student_view_data"]["encoded_videos"]["youtube"]["url"], video_path)
+                        except Exception as e:
+                            data["html_content"]="<h3> Sorry, this video is not available </h3>"
+                            return data
                 download_and_convert_subtitles(path,data["student_view_data"]["transcripts"],data["student_view_data"]["transcripts_vtt"],headers)
             data["video_path"]=os.path.join(data[block_id_id], "video.webm")
             data["transcripts_file"]=[ {"file": os.path.join(data[block_id_id], lang + ".vtt"), "code": lang } for lang in data["student_view_data"]["transcripts"] ]
@@ -610,6 +624,7 @@ def render_course(data,vertical_path_list,output_path,parent_path,vertical_num_s
         "course_menu.html",
         False,
         course=data,
+        sidenav=True,
         all_data=all_data,
         top=link_on_top,
         rooturl=".."
@@ -623,6 +638,7 @@ def render_chapter(data,vertical_path_list,output_path,parent_path,vertical_num_
         False,
         chapter=data,
         all_data=all_data,
+        sidenav=True,
         top=link_on_top,
         rooturl="../../.."
     )
@@ -658,6 +674,7 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         next_seq=next_seq,
         vertical=data,
         top=link_on_top,
+        sidenav=True,
         rooturl="../../../..",
         all_data=all_data
     )

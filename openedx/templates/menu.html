@@ -1,15 +1,23 @@
-<div id="menu" class="dropdown">
-  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-      <span class="glyphicon glyphicon-menu-hamburger" aria-hidden="true"></span>
-    </button>
-  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <h3>Menu</h3>
+  </div>
+  <ul class="list-unstyled components">
     {% for chapter in all_data["descendants"] %}
+      {% if chapter["descendants"]|length > 0 %}
+        <li>
+          <a href="#{{ chapter["block_id"] }}" data-toggle="collapse" aria-expanded="false">{{ chapter["display_name"] }}</a>
+          <ul class="collapse list-unstyled" id="{{ chapter["block_id"] }}">
+          {% for sequential in chapter["descendants"] %}
+            {% if sequential["descendants"]|length > 0 %}
+              <li><a href="{{ rooturl }}/course/{{ chapter["folder_id"] }}/{{ sequential["folder_id"] }}/{{ sequential["descendants"][0]["folder_id"] }}/index.html" >{{ sequential["display_name"] }}</a></li>
+            {% endif %}
+          {% endfor %}
+          </ul>
+        </li>
+      {% else %}
         <li><a href="{{ rooturl }}/course/{{ chapter["folder_id"] }}/index.html" >{{ chapter["display_name"] }}</a></li>
-        <ul>
-        {% for sequential in chapter["descendants"] %}
-          <li><a href="{{ rooturl }}/course/{{ chapter["folder_id"] }}/{{ sequential["folder_id"] }}/{{ sequential["descendants"][0]["folder_id"] }}/index.html" >{{ sequential["display_name"] }}</a></li>
-        {% endfor %}
-        </ul>
+      {% endif %}
     {% endfor %}
   </ul>
-</div>
+</nav>

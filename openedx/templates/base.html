@@ -44,17 +44,35 @@
       }
     </script>
     <script type="text/javascript" src="{{ rooturl }}/static/MathJax.js?config=TeX-MML-AM_SVG"></script>
+    <script>
+      /* Toggle between adding and removing the "responsive" class to topnav when the user clicks on the icon */
+      function myMenu() {
+        var x = document.getElementById("topnav");
+        if (x.className === "topnav") {
+          x.className += " responsive";
+        } else {
+          x.className = "topnav";
+        }
+      }
+    </script>
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
-    <div class="topbar">
-      {% for elem in top %}
-        <div id="elemtopbar">
-          <a href="{{ rooturl }}/{{ elem }}/index.html"> {{ top[elem] }}</a> 
+    <div class="wrapper">
+      {% if sidenav %}
+          {% include "menu.html" %}
+      {% endif %}
+      <div id="content">
+        <div class="topnav" id="topnav">
+          {% if sidenav %}
+            <a href="javascript:void(0);" onclick="$('#sidebar').toggleClass('active');" style="text-decoration: none;">&#9776;</a>
+          {% endif %}
+
+          {% for elem in top %}
+              <a href="{{ rooturl }}/{{ elem }}/index.html"> {{ top[elem] }}</a> 
+          {% endfor %}
+          <a href="javascript:void(0);" class="icon" onclick="myMenu()"><span class="glyphicon glyphicon-chevron-down"></span></a>
         </div>
-      {% endfor %}
-    </div>
-    <div class="container">
-      {% block body %}{% endblock %}
-    </div>
+        {% block body %}{% endblock %}
+      </div>
   </body>
 </html>

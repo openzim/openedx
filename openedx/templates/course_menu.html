@@ -5,10 +5,7 @@
 {% block title %}{{ course["display_name"] }}{% endblock %}
 
 {% block body %}
-  <div id="#top">
-    {% include "menu.html" %}
-  </div>
-
+<div id="container">
   <div id="menu_chapter" style="display:inline-block, width=70%;">
     <ul>
       {% for chapter in course["descendants"] %}
@@ -16,5 +13,6 @@
       {% endfor %}
     </ul>
   </div>
+</div>
 {% endblock %}
 
