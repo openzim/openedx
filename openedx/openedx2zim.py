@@ -457,10 +457,10 @@ def download_and_convert_subtitles(path,transcripts_data,already_in_vtt,headers)
         path_lang=os.path.join(path,lang + ".vtt")
         try:
             subtitle=get_page(transcripts_data[lang],headers).decode('utf-8')
+            subtitle=re.sub(r'^0$', '1', str(subtitle), flags=re.M)
             with open(path_lang, 'w') as f:
-                f.write(str(subtitle))
+                f.write(subtitle)
             if not already_in_vtt:
-                exec_cmd("sed -i 's/^0$/1/' " + path_lang) #This little hack is use because WebVTT.from_srt check is the first line is 1
                 webvtt = WebVTT().from_srt(path_lang)
                 webvtt.save()
         except HTTPError as e:
@@ -874,7 +874,7 @@ def run():
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     if not arguments['--nozim'] and not bin_is_present("zimwriterfs"):
         sys.exit("zimwriterfs is not available, please install it.")
-    for bin in [ "jpegoptim", "pngquant", "advdef", "gifsicle", "mogrify", "sed" ]:
+    for bin in [ "jpegoptim", "pngquant", "advdef", "gifsicle", "mogrify"]:
         if not bin_is_present(bin):
             sys.exit(bin + " is not available, please install it.")
     if not (bin_is_present("ffmpeg") or bin_is_present("avconv")):
