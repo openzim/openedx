@@ -6,8 +6,14 @@
     {% for chapter in all_data["descendants"] %}
       {% if chapter["descendants"]|length > 0 %}
         <li>
-          <a href="#{{ chapter["block_id"] }}" data-toggle="collapse" aria-expanded="false">{{ chapter["display_name"] }}</a>
-          <ul class="collapse list-unstyled" id="{{ chapter["block_id"] }}">
+          {% if sidenav_chapter and chapter["folder_id"] == sidenav_chapter %}
+            <a href="#{{ chapter["block_id"] }}" data-toggle="collapse" class=".in" aria-expanded="true">{{ chapter["display_name"] }}</a>
+            <ul class="collapse list-unstyled in" id="{{ chapter["block_id"] }}" aria-expanded="true">
+
+          {%else%}
+            <a href="#{{ chapter["block_id"] }}" data-toggle="collapse" aria-expanded="false">{{ chapter["display_name"] }}</a>
+            <ul class="collapse list-unstyled" id="{{ chapter["block_id"] }}">
+          {%endif%}
           {% for sequential in chapter["descendants"] %}
             {% if sequential["descendants"]|length > 0 %}
               <li><a href="{{ rooturl }}/course/{{ chapter["folder_id"] }}/{{ sequential["folder_id"] }}/{{ sequential["descendants"][0]["folder_id"] }}/index.html" >{{ sequential["display_name"] }}</a></li>
