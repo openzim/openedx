@@ -6,7 +6,7 @@
     {% for chapter in all_data["descendants"] %}
       {% if chapter["descendants"]|length > 0 %}
         <li>
-          {% if vertical and chapter["folder_id"] == sidenav_chapter %}
+          {% if sidenav_chapter and chapter["folder_id"] == sidenav_chapter %}
             <a href="#{{ chapter["block_id"] }}" data-toggle="collapse" class=".in" aria-expanded="true">{{ chapter["display_name"] }}</a>
             <ul class="collapse list-unstyled in" id="{{ chapter["block_id"] }}" aria-expanded="true">
 
