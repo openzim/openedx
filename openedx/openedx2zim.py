@@ -639,23 +639,24 @@ def render_chapter(data,vertical_path_list,output_path,parent_path,vertical_num_
         chapter=data,
         all_data=all_data,
         sidenav=True,
+        sidenav_chapter=data[block_id_id],
         top=link_on_top,
         rooturl="../../.."
     )
     for des in data["descendants"]:
-        vertical_num_start=render_sequential(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top)
+        vertical_num_start=render_sequential(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top,data[block_id_id])
     return vertical_num_start
 
-def render_sequential(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top):
+def render_sequential(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,block_id_id,link_on_top,chapter):
     path=os.path.join(parent_path, data[block_id_id])
     vertical_num_stop=vertical_num_start+len(data["descendants"])
     next_in_sequence=1
     for des in data["descendants"]:
-        render_vertical(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top)
+        render_vertical(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top,chapter)
         next_in_sequence+=1
     return vertical_num_stop
 
-def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top):
+def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top,chapter):
     path=os.path.join(parent_path, data[block_id_id])
     if vertical_num_start == 0:
         pred_seq=None
@@ -664,7 +665,7 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
     if vertical_num_start+next_in_sequence >= len(vertical_path_list):
         next_seq=None
     else:
-        next_seq=vertical_path_list[vertical_num_start+next_in_sequence] 
+        next_seq=vertical_path_list[vertical_num_start+next_in_sequence]
     jinja(
         os.path.join(output_path,path,"index.html"),
         "vertical.html",
@@ -675,6 +676,7 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         vertical=data,
         top=link_on_top,
         sidenav=True,
+        sidenav_chapter=chapter,
         rooturl="../../../..",
         all_data=all_data
     )
