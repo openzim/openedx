@@ -16,18 +16,16 @@
   padding: 20px;
 }
 
-.show_answers_false{
-  border-style: solid;
-  border-width: 5px;
-  border-color: red;
-  border-radius: 5px;
+.show_answers_invalid{
+  color:red;
 }
 
-.show_answers_right{
-  border-style: solid;
-  border-width: 5px;
-  border-color: green;
-  border-radius: 5px;
+.show_answers_valid{
+  color:green;
+}
+
+.no_answers{
+  color:grey;
 }
 
 .solution-span{
