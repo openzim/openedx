@@ -24,7 +24,7 @@
     </div>
     <div id="vertical">
       {% for elem  in vertical["descendants"] %}
-        {% if elem["type"] == "html" or elem["type"] == "problem" %}
+        {% if elem["type"] == "html"%}
           {{ elem["html_content"] }}
         {% endif %}
         {% if elem["type"] == "discussion" %}
@@ -36,9 +36,45 @@
           {% endif %}
         {% endif %}
         {% if elem["type"] == "problem" %}
+          <div id="{{ elem["problem_id"] }}">
+            {{ elem["html_content"] }}
+          </div>
           {% if elem["answers"] %}
             <script>
+              function check_answers_of_{{ elem["problem_id"] }}(){
+                valid_answers=[ {% for ans in elem["answers"] %}"{{ ans }}", {% endfor %} ];
+                inputs = document.getElementById("{{ elem["problem_id"] }}").getElementsByTagName('input');
+                for (index = 0; index < inputs.length; ++index) {
+                      inputs[index].parentNode.classList.remove("show_answers_right");
+                      inputs[index].parentNode.classList.remove("show_answers_false");
+                }
+                var not_available = document.createElement("span");
+                not_available.classList.add("glyphicon");
+                not_available.classList.add("glyphicon-question-sign");
+                not_available.title="This answers can't be check";
+
+                for (index = 0; index < inputs.length; ++index) {
+                  if(inputs[index].getAttribute('type') == 'checkbox'){
+                    if(inputs[index].checked){
+                      console.log(inputs[index].id);
+                      if (valid_answers.indexOf(inputs[index].id) > -1){
+                        inputs[index].parentNode.classList.add("show_answers_right");
+                      }else{
+                        inputs[index].parentNode.classList.add("show_answers_false");
+                      }
+                    }
+                  }else{
+                    inputs[index].parentNode.appendChild(not_available);
+                  }
+                }
+              }
+
               function show_answers_of_{{ elem["problem_id"] }}(){
+                inputs = document.getElementById("{{ elem["problem_id"] }}").getElementsByTagName('input');
+                for (index = 0; index < inputs.length; ++index) {
+                      inputs[index].parentNode.classList.remove("show_answers_right");
+                      inputs[index].parentNode.classList.remove("show_answers_false");
+                }
               {% for ans in elem["answers"] %}
                 try{
                   document.getElementById("{{ ans }}").parentNode.className += " show_answers_right";
@@ -50,7 +86,8 @@
               {% endfor %}
               }
             </script>
-            <button onclick="show_answers_of_{{ elem["problem_id"] }}()">Show answers</button> 
+            <button onclick="check_answers_of_{{ elem["problem_id"] }}()">Check answers</button> 
+            <button onclick="show_answers_of_{{ elem["problem_id"] }}()">Show answers and explanation</button> 
           {% else %}
             </br>
             <p> Sorry, we haven't answers</p>
