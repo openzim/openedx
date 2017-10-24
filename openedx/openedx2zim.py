@@ -666,6 +666,10 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         next_seq=None
     else:
         next_seq=vertical_path_list[vertical_num_start+next_in_sequence]
+    video=False
+    for elem in data["descendants"]:
+        if elem["type"] == "video":
+            video=True
     jinja(
         os.path.join(output_path,path,"index.html"),
         "vertical.html",
@@ -678,6 +682,7 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         sidenav=True,
         sidenav_chapter=chapter,
         rooturl="../../../..",
+        video=video,
         all_data=all_data
     )
 def render_forum(threads,threads_category,output,link_on_top):

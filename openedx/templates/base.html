@@ -7,6 +7,9 @@
     <meta name="author" content="kiwix team"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link href="{{ rooturl }}/static/css/main.css" rel="stylesheet" type="text/css" />
+    {% if video == True %}
+      <link href="{{ rooturl }}/static/css/video-js.css" rel="stylesheet" type="text/css">
+    {% endif %}
     {% block addcss %}{% endblock %}
     <link rel="stylesheet" href="{{ rooturl }}/static/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ rooturl }}/static/bootstrap/css/bootstrap-theme.min.css">
@@ -74,5 +77,8 @@
         </div>
         {% block body %}{% endblock %}
       </div>
+      {% if video == True %}
+        <script src="{{ rooturl }}/static/video.js"></script>
+      {% endif %}
   </body>
 </html>
