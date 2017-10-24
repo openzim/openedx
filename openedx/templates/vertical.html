@@ -74,13 +74,13 @@
                     if(inputs_input[index].checked){
                       console.log(index);
                       if (valid_answers.indexOf(inputs_input[index].id) > -1){
-                        inputs_input[index].parentNode.appendChild(valid);
+                        inputs_input[index].parentNode.appendChild(valid.cloneNode(true));
                       }else{
-                        inputs_input[index].parentNode.appendChild(invalid);
+                        inputs_input[index].parentNode.appendChild(invalid.cloneNode(true));
                       }
                     }
                   }else{
-                    inputs_input[index].parentNode.appendChild(not_available);
+                    inputs_input[index].parentNode.appendChild(not_available.cloneNode(true));
                   }
                 }
               }
@@ -101,7 +101,7 @@
 
               {% for ans in elem["answers"] %}
                 try{
-                  document.getElementById("{{ ans }}").parentNode.appendChild(valid);
+                  document.getElementById("{{ ans }}").parentNode.appendChild(valid.cloneNode(true));
                 } catch(e) {}
               {% endfor %}
               {% for ans in elem["explanation"] %}
