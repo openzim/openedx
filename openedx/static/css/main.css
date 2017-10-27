@@ -2,12 +2,15 @@
   display:inline-block;
   transition: margin-left .5s;
   padding: 20px;
+  max-width:100%;
 }
 #vertical {
   padding: 20px;
+  max-width:100%;
 }
 #content {
   width:100%;
+  max-width:100%;
 }
 #menu_chapter {
   display:inline-block;
@@ -35,7 +38,9 @@
   padding: 1%;
 }
 
-
+.video-js{
+  max-width:100%;
+}
 
 
 /* Top nav */
@@ -109,6 +114,11 @@
     color: #f2f2f2;
     transition: all 0.3s;
     text-decoration:none;
+}
+
+#sidebar a:hover {
+    background-color: #ddd;
+    color: black;
 }
 
 #sidebar * a , #sidebar * a.active{

@@ -5,9 +5,11 @@
 {% block title %}{{ content["title"] }}{% endblock %}
 
 {% block body %}
-  <p>  {{ content["text"] }} </p>
-  {% if content["sub_page"] %}
-    <a href="_dir/index.html"> See sub page</a>
-  {% endif %}
+  <div style="padding:2%">
+    <p>  {{ content["text"] }} </p>
+    {% if content["sub_page"] %}
+      <a href="_dir/index.html"> See sub page</a>
+    {% endif %}
+  </div>
 {% endblock %}
 

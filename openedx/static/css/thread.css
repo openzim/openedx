@@ -8,6 +8,12 @@ a[href*="//"]:after {  /* all external links are absolute */
 .h1, .h2, .h3, h1, h2, h3 {
     margin-top: 10px;
 }	
+
+.row{
+  margin-top:1%;
+  padding:2%;
+}
+
 p.description {
 	  padding: 20px;
 	  border-bottom: 1px solid white;
@@ -305,14 +311,14 @@ a.button {
 
 /* tag */
 
-.tag p.question {
+.forum-discussion p.question {
     padding: 15px;
 	background-color:white;
 	border-radius:8px;
 	padding-bottom: 20px;
 }
 
-.tag p.question .score {
+.forum-discussion p.question .score {
     height: 2em;
     width: 4em;
     padding: 5px;
@@ -322,19 +328,19 @@ a.button {
     margin-right: 15px;
 }
 
-.tag p.question .score.negative {
+.forum-discussion p.question .score.negative {
     background: hsl(10, 90%, 80%);
 }
 
-.tag p.question .score.positive {
+.forum-discussion p.question .score.positive {
     background: hsl(33, 97%, 76%);
 }
 
-.tag p.question .score.good {
+.forum-discussion p.question .score.good {
     background: hsl(33, 97%, 66%);
 }
 
-.tag p.question .score.verygood {
+.forum-discussion p.question .score.verygood {
     background: hsl(33, 97%, 56%);
 }
 
