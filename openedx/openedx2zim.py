@@ -302,7 +302,9 @@ def get_and_save_specific_pages(headers,instance_url,course_id, output):
         elif "discussion/forum" in sub_dir:
             link_on_top["forum"]="Discussion"
         elif "course" not in sub_dir and "edxnotes" not in sub_dir and "progress" not in sub_dir :
-            link_on_top[sub_dir] = page.text
+            if page.span:
+                page.span.clear()
+            link_on_top[sub_dir] = page.text.strip()
             if not os.path.exists(os.path.join(output,sub_dir)):
                 os.makedirs(os.path.join(output,sub_dir))
             page_content=get_page(instance_url + link,headers).decode('utf-8')
