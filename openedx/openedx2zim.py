@@ -448,7 +448,9 @@ def download(url, output, instance_url,timeout=None,):
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    response = urlopen(url, timeout=timeout, context=ctx)
+    request_headers={'User-Agent': 'Mozilla/5.0'}
+    request = Request(url, headers=request_headers)
+    response = urlopen(request, timeout=timeout, context=ctx)
     output_content = response.read()
     with open(output, 'wb') as f:
         f.write(output_content)
