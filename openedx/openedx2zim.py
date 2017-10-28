@@ -288,11 +288,14 @@ def get_wiki(headers,instance_url,course_id, output):
                                 page_already_visit[url]["decoule"]= [ instance_url + link["href"] ]
     return page_already_visit
 
-def get_and_save_specific_pages(headers,instance_url,course_id, output):
+def get_and_save_specific_pages(headers,instance_url,course_id, output,first_page):
     content=get_page(instance_url + "/courses/" +  course_id,headers).decode('utf-8')
     soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
     specific_pages=soup.find('ol', attrs={"class": "course-tabs"}).find_all('li')
-    link_on_top={ "course" : "Course"}
+    if first_page:
+        link_on_top={ first_page : "Course"}
+    else:
+        link_on_top={}
     page_to_save={}
     for page in specific_pages:
         link=page.find("a")["href"]
@@ -921,18 +924,6 @@ def run():
     if not os.path.exists(output):
         os.makedirs(output)
 
-    logging.info("Try to get specific page of mooc")
-    link_on_top=get_and_save_specific_pages(headers,conf["instance_url"],course_id,output)
-
-    if "forum" in link_on_top:
-        logging.info("Get discussion")
-        threads, threads_category =get_forum(headers,conf["instance_url"],course_id,output)
-        render_forum(threads,threads_category,output,link_on_top)
-
-    if "wiki" in link_on_top:
-        logging.info("Get wiki")
-        wiki_page=get_wiki(headers,conf["instance_url"],course_id,output)
-        render_wiki(wiki_page, conf["instance_url"],course_id,output,link_on_top)
 
     logging.info("Get course blocks")
     blocks=get_api_json(conf["instance_url"], "/api/courses/v1/blocks/?course_id=" + course_id + "&username="+username +"&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3", headers)
@@ -956,10 +947,25 @@ def run():
     vertical_path_list=vertical_list(json_tree_content,"/",block_id_id)
 
     if len(vertical_path_list) != 0:
+        logging.info("Try to get specific page of mooc")
+        link_on_top=get_and_save_specific_pages(headers,conf["instance_url"],course_id,output,vertical_path_list[0]["url"])
         logging.info("Render course")
         render_course(json_tree_content,vertical_path_list,output,"",0,0,block_id_id,link_on_top)
     else:
+        logging.info("Try to get specific page of mooc")
+        link_on_top=get_and_save_specific_pages(headers,conf["instance_url"],course_id,output,False)
         logging.warning("This course has no content")
+
+    if "forum" in link_on_top:
+        logging.info("Get discussion")
+        threads, threads_category =get_forum(headers,conf["instance_url"],course_id,output)
+        render_forum(threads,threads_category,output,link_on_top)
+
+    if "wiki" in link_on_top:
+        logging.info("Get wiki")
+        wiki_page=get_wiki(headers,conf["instance_url"],course_id,output)
+        render_wiki(wiki_page, conf["instance_url"],course_id,output,link_on_top)
+
     make_welcome_page(output,arguments["<course_url>"],headers,info["name"],instance,conf["instance_url"],link_on_top)
 
     logging.info("Create zim")
