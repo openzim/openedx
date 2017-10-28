@@ -195,7 +195,7 @@ def get_forum(headers,instance_url,course_id,output):
 
     headers["X-Requested-With"] = ""
     content=get_page(instance_url + "/courses/" +  course_id + "/discussion/forum",headers).decode('utf-8')
-    good_content=BeautifulSoup.BeautifulSoup(content, 'html.parser').find("script", attrs={"id": "thread-list-template"}).text #TODO same pour edx ?
+    good_content=BeautifulSoup.BeautifulSoup(content, 'html.parser').find("script", attrs={"id": "thread-list-template"}).text
     soup=BeautifulSoup.BeautifulSoup(good_content, 'html.parser')
     all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
     if len(all_category) == 0:
