@@ -138,7 +138,7 @@ a[aria-expanded="false"]::before, a[aria-expanded="true"]::before {
     content: '\e259';
     display: block;
     position: absolute;
-    right: 20px;
+    right: 10px;
     font-family: 'Glyphicons Halflings';
     font-size: 0.6em;
 }
