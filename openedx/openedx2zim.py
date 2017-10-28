@@ -3,7 +3,7 @@
 """openedx2zim.
 
 Usage:
-  openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>]
+  openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex]
   openedx2zim (-h | --help)
   openedx2zim --version
 
@@ -13,6 +13,7 @@ Options:
   --password=<pass> you can specify password as arguments or you'll be asked for password
   --nozim       doesn't make zim file, output will be in work/ in normal html
   --zimpath=<zimpath>   Final path of the zim file
+  --nofulltextindex        Dont index content
 
 """
 import json
@@ -848,7 +849,7 @@ def bin_is_present(binary):
     else:
         return True
 
-def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_path):
+def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_path,noindex):
     if zim_path == None:
         zim_path = os.path.join("output/", "{title}_{lang}_all_{date}.zim".format(title=slugify(title),lang=lang_input,date=datetime.datetime.now().strftime('%Y-%m')))
     if description == "":
@@ -868,7 +869,14 @@ def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_p
         'zim': zim_path
     }
 
-    cmd = ('zimwriterfs --welcome="{home}" --favicon="{favicon}" '
+    if noindex:
+        cmd = ('zimwriterfs --welcome="{home}" --favicon="{favicon}" '
+           '--language="{languages}" --title="{title}" '
+           '--description="{description}" '
+           '--creator="{creator}" --publisher="{publisher}" "{static}" "{zim}"'
+           .format(**context))
+    else:
+        cmd = ('zimwriterfs --withFullTextIndex --welcome="{home}" --favicon="{favicon}" '
            '--language="{languages}" --title="{title}" '
            '--description="{description}" '
            '--creator="{creator}" --publisher="{publisher}" "{static}" "{zim}"'
@@ -971,7 +979,7 @@ def run():
     logging.info("Create zim")
     copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(output, 'static'))
     if not arguments['--nozim']:
-        done=create_zims(info["name"],"eng",arguments["<publisher>"],info["short_description"], info["org"],output,arguments["--zimpath"])
+        done=create_zims(info["name"],"eng",arguments["<publisher>"],info["short_description"], info["org"],output,arguments["--zimpath"],arguments["--nofulltextindex"])
 
 
 if __name__ == '__main__':
