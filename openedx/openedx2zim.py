@@ -59,7 +59,7 @@ import logging
 import random
 import mistune #markdown
 
-DEBUG=True
+DEBUG=False
 #########################
 # Interact with website #
 #########################
