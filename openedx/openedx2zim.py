@@ -277,7 +277,7 @@ def get_wiki(headers,instance_url,course_id, output):
             table=soup.find("table")
             if table != None:
                 for link in table.find_all("a"):
-                    if link.has_attr("class") and link["class"] == "list-children":
+                    if link.has_attr("class") and "list-children" in link["class"]:
                         pass
                     else:
                         page_already_visit[url]["sub_page"]=True
@@ -751,26 +751,28 @@ def render_wiki(wiki_data, instance_url,course_id,output,link_on_top):
                 rooturl=wiki_data[page]["rooturl"]
             )
     
-        elif "decoule" in wiki_data[page]: #this is a list page
+        if not os.path.exists(os.path.join(wiki_data[page]["path"],"_dir")):
+                os.makedirs(os.path.join(wiki_data[page]["path"],"_dir"))
+        if "decoule" in wiki_data[page]: #this is a list page
             page_to_list=[]
             for sub_page in wiki_data[page]["decoule"]:
                 if "title" in wiki_data[sub_page]:
-                    page_to_list.append({ "url": wiki_data[page]["rooturl"] + sub_page.replace(instance_url,""), "title": wiki_data[sub_page]["title"]})
+                    page_to_list.append({ "url": wiki_data[page]["rooturl"]+ "/.." + sub_page.replace(instance_url,""), "title": wiki_data[sub_page]["title"]})
             jinja(
-                os.path.join(wiki_data[page]["path"],"index.html"),
+                os.path.join(wiki_data[page]["path"],"_dir","index.html"),
                 "wiki_list.html",
                 False,
                 pages=page_to_list,
                 top=link_on_top,
-                rooturl=wiki_data[page]["rooturl"]
+                rooturl=wiki_data[page]["rooturl"] + "/.."
             )
         else: #list page with no sub page
             jinja(
-                os.path.join(wiki_data[page]["path"],"index.html"),
+                os.path.join(wiki_data[page]["path"],"_dir","index.html"),
                 "wiki_list_none.html",
                 False,
                 top=link_on_top,
-                rooturl=wiki_data[page]["rooturl"]
+                rooturl=wiki_data[page]["rooturl"] + "/.."
             )
 
 def make_welcome_page(output,course_url,headers,mooc_name,instance,instance_url,link_on_top):
