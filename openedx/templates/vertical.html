@@ -132,5 +132,14 @@
         <hr>
       {% endfor %}
     </div>
+    <div id="vertical-of-sequential-bottom" class="btn-group" role="group" aria-label="...">
+      {% if pred_seq %}
+        <a href="{{ rooturl }}/{{ pred_seq["url"] }}/index.html" title="{{ pred_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button></a>
+      {% endif %}
+      {% if next_seq %}
+        <a href="{{ rooturl }}/{{ next_seq["url"] }}/index.html" title="{{ next_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
+      {% endif %}
+    </div>
+
   </div>
 {% endblock %}

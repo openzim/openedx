@@ -4,6 +4,15 @@
   padding: 20px;
   max-width:100%;
 }
+#vertical-of-sequential-bottom {
+  display:block;
+  transition: margin-left .5s;
+  padding: 20px;
+  max-width:100%;
+  margin:auto;
+  text-align:center;
+  width:100%;
+}
 #vertical {
   padding: 20px;
   max-width:100%;
