@@ -428,7 +428,7 @@ def get_content(data, headers,parent_path,block_id_id,instance_url, course_id):
                         except Exception as e:
                             data["html_content"]="<h3> Sorry, this video is not available </h3>"
                             return data
-                download_and_convert_subtitles(path,data["student_view_data"]["transcripts"],data["student_view_data"]["transcripts_vtt"],headers)
+            download_and_convert_subtitles(path,data["student_view_data"]["transcripts"],data["student_view_data"]["transcripts_vtt"],headers)
             data["video_path"]=os.path.join(data[block_id_id], "video.webm")
             data["transcripts_file"]=[ {"file": os.path.join(data[block_id_id], lang + ".vtt"), "code": lang } for lang in data["student_view_data"]["transcripts"] ]
 
@@ -463,17 +463,18 @@ def download(url, output, instance_url,timeout=None,):
 def download_and_convert_subtitles(path,transcripts_data,already_in_vtt,headers):
     for lang in transcripts_data:
         path_lang=os.path.join(path,lang + ".vtt")
-        try:
-            subtitle=get_page(transcripts_data[lang],headers).decode('utf-8')
-            subtitle=re.sub(r'^0$', '1', str(subtitle), flags=re.M)
-            with open(path_lang, 'w') as f:
-                f.write(subtitle)
-            if not already_in_vtt:
-                webvtt = WebVTT().from_srt(path_lang)
-                webvtt.save()
-        except HTTPError as e:
-            if e.code == 404 or e.code == 403:
-                pass
+        if not os.path.exists(path_lang):
+            try:
+                subtitle=get_page(transcripts_data[lang],headers).decode('utf-8')
+                subtitle=re.sub(r'^0$', '1', str(subtitle), flags=re.M)
+                with open(path_lang, 'w') as f:
+                    f.write(subtitle)
+                if not already_in_vtt:
+                    webvtt = WebVTT().from_srt(path_lang)
+                    webvtt.save()
+            except HTTPError as e:
+                if e.code == 404 or e.code == 403:
+                    pass
 
 def download_youtube(youtube_url, video_path):
     parametre={"outtmpl" : video_path, 'progress_hooks': [hook_youtube_dl], 'preferredcodec': 'mp4', 'format' : 'mp4'}
