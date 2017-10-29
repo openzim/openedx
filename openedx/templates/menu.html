@@ -16,7 +16,11 @@
           {%endif%}
           {% for sequential in chapter["descendants"] %}
             {% if sequential["descendants"]|length > 0 %}
-              <li><a href="{{ rooturl }}/course/{{ chapter["folder_id"] }}/{{ sequential["folder_id"] }}/{{ sequential["descendants"][0]["folder_id"] }}/index.html" >{{ sequential["display_name"] }}</a></li>
+              {% if sidenav_sequential and sequential["folder_id"] == sidenav_sequential %}
+                <li style="background-color:#ddd;"><a style="color:black;" href="{{ rooturl }}/course/{{ chapter["folder_id"] }}/{{ sequential["folder_id"] }}/{{ sequential["descendants"][0]["folder_id"] }}/index.html" >{{ sequential["display_name"] }}</a></li>
+              {% else %}
+                <li><a href="{{ rooturl }}/course/{{ chapter["folder_id"] }}/{{ sequential["folder_id"] }}/{{ sequential["descendants"][0]["folder_id"] }}/index.html" >{{ sequential["display_name"] }}</a></li>
+              {% endif %}
             {% endif %}
           {% endfor %}
           </ul>

@@ -660,11 +660,11 @@ def render_sequential(data,vertical_path_list,output_path,parent_path,vertical_n
     vertical_num_stop=vertical_num_start+len(data["descendants"])
     next_in_sequence=1
     for des in data["descendants"]:
-        render_vertical(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top,chapter)
+        render_vertical(des,vertical_path_list,output_path,path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top,chapter,data[block_id_id])
         next_in_sequence+=1
     return vertical_num_stop
 
-def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top,chapter):
+def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num_start,vertical_num_stop,all_data,next_in_sequence,block_id_id,link_on_top,chapter,sequential):
     path=os.path.join(parent_path, data[block_id_id])
     if vertical_num_start == 0:
         pred_seq=None
@@ -689,6 +689,7 @@ def render_vertical(data,vertical_path_list,output_path,parent_path,vertical_num
         top=link_on_top,
         sidenav=True,
         sidenav_chapter=chapter,
+        sidenav_sequential=sequential,
         rooturl="../../../..",
         video=video,
         all_data=all_data
