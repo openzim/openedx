@@ -896,7 +896,7 @@ def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_p
 
 
 def run():
-    arguments = docopt(__doc__, version='0.0')
+    arguments = docopt(__doc__, version='0.1')
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     if not arguments['--nozim'] and not bin_is_present("zimwriterfs"):
         sys.exit("zimwriterfs is not available, please install it.")

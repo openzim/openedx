@@ -3,7 +3,7 @@ from pip.req import parse_requirements
 
 setup(
     name='openedx2zim',
-        version='0.0',
+        version='0.1',
     description="Make zimfile from open edx MOOCs",
     long_description=open('README.md').read(),
     author='dattaz',
@@ -32,6 +32,6 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3'
+        'Programming Language :: Python :: 3.4'
     ],
 )
