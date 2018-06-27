@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+
+{% block bodyclass %}vertical{% endblock %}
+
+{% block title %}{{ vertical.display_name }}{% endblock %}
+
+{% block body %}
+  <div id="container">
+    
+    <div id="vertical-of-sequential" class="btn-group" role="group" aria-label="...">
+      {% if pred_vertical %}
+        <a href="{{ rooturl }}{{ pred_vertical.path }}/index.html" title="{{ pred_vertical.display_name }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button></a>
+      {% endif %}
+
+      {% for vertical_ in sequential.descendants %}
+        {% if vertical_.id != vertical.id %}
+          <a href="{{ rooturl }}{{ vertical_.path }}/index.html" title="{{ vertical_.display_name }}"><button type="button" class="btn btn-default"><span class="{{ vertical_.icon_type }}" aria-hidden="true"></button></span></a>
+        {% else %}
+          <a href="{{ rooturl }}{{ vertical_.path }}/index.html" title="{{ vertical_.display_name }}"><button type="button" class="btn btn-default" style="border-bottom: 3px solid #0075b4;"><span class="{{ vertical_.icon_type }}" aria-hidden="true"></button></span></a>
+
+        {% endif %}
+      {% endfor %}
+      {% if next_vertical %}
+        <a href="{{ rooturl }}{{ next_vertical.path }}/index.html" title="{{ next_vertical.display_name }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
+      {% endif %}
+    </div>
+
+
+    <div id="vertical">
+      {% for elem  in vertical_content %}
+        {{ elem }}
+        <hr>
+      {% endfor %}
+    </div>
+
+
+    <div id="vertical-of-sequential-bottom" class="btn-group" role="group" aria-label="...">
+      {% if pred_vertical %}
+        <a href="{{ rooturl }}{{ pred_vertical.path }}/index.html" title="{{ pred_vertical.display_name }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button></a>
+      {% endif %}
+
+      {% if next_vertical %}
+        <a href="{{ rooturl }}{{ next_vertical.path }}/index.html" title="{{ next_vertical.display_name }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

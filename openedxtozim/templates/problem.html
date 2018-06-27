@@ -1,42 +1,4 @@
-{% extends "base.html" %}
-
-{% block bodyclass %}vertical{% endblock %}
-
-{% block title %}{{ vertical["display_name"] }}{% endblock %}
-
-{% block body %}
-  <div id="container">
-    <div id="vertical-of-sequential" class="btn-group" role="group" aria-label="...">
-      {% if pred_seq %}
-        <a href="{{ rooturl }}/{{ pred_seq["url"] }}/index.html" title="{{ pred_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button></a>
-      {% endif %}
-      {% for verti in sequential %}
-        {% if verti["my_id"] != vertical["folder_id"] %} 
-          <a href="{{ rooturl }}/{{ verti["url"] }}/index.html" title="{{ verti["title"] }}"><button type="button" class="btn btn-default"><span class="{{ verti["type_icon"] }}" aria-hidden="true"></button></span></a>
-        {% else %}
-          <a href="{{ rooturl }}/{{ verti["url"] }}/index.html" title="{{ verti["title"] }}"><button type="button" class="btn btn-default" style="border-bottom: 3px solid #0075b4;"><span class="{{ verti["type_icon"] }}" aria-hidden="true"></button></span></a>
-
-        {% endif %}
-      {% endfor %}
-      {% if next_seq %}
-        <a href="{{ rooturl }}/{{ next_seq["url"] }}/index.html" title="{{ next_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
-      {% endif %}
-    </div>
-    <div id="vertical">
-      {% for elem  in vertical["descendants"] %}
-        {% if elem["type"] == "html"%}
-          {{ elem["html_content"] }}
-        {% endif %}
-        {% if elem["type"] == "discussion" %}
-          {% if elem["discussion"]["discussion_data"] != [] %}
-            <h1> Discussions </h1>
-            {% for thread in elem["discussion"]["discussion_data"] %}
-                <a href="{{ rooturl}}/forum/{{ thread["commentable_id"] }}/{{ thread["id"] }}/index.html">{{ thread["title"] }} by {{ thread["username"] }}</a><br/>
-            {% endfor %}
-          {% endif %}
-        {% endif %}
-        {% if elem["type"] == "problem" %}
-          <div id="{{ elem["problem_id"] }}">
+{#          <div id="{{ elem["problem_id"] }}">
             {{ elem["html_content"] }}
           </div>
           {% if elem["answers"] %}
@@ -116,30 +78,4 @@
             </br>
             <p> Sorry, we haven't answers</p>
           {% endif %}
-        {% endif %}
-        {% if elem["type"] == "video" %}
-          {% if "html_content" not in elem %}
-            <video class="video-js vjs-default-skin" controls preload="auto" width="480px" height="270px" data-setup='{"autoplay": false, "preload": "true", "playbackRates": [0.5, 0.75, 1, 1.25, 1.5, 2, 4, 8]}' >
-              <source src="{{ elem["folder_id"] }}/video.webm" type="video/webm" />
-              {% for language in elem["transcripts_file"] %}
-                <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
-              {% endfor %}
-            </video>
-          {% else %}
-            {{ elem["html_content"] }}
-          {% endif %}
-        {% endif %}
-        <hr>
-      {% endfor %}
-    </div>
-    <div id="vertical-of-sequential-bottom" class="btn-group" role="group" aria-label="...">
-      {% if pred_seq %}
-        <a href="{{ rooturl }}/{{ pred_seq["url"] }}/index.html" title="{{ pred_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></button></a>
-      {% endif %}
-      {% if next_seq %}
-        <a href="{{ rooturl }}/{{ next_seq["url"] }}/index.html" title="{{ next_seq["title"] }}"><button type="button" class="btn btn-default"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></button></a>
-      {% endif %}
-    </div>
-
-  </div>
-{% endblock %}
+#}

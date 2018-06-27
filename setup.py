@@ -18,7 +18,7 @@ setup(
         'lxml',
         'webvtt-py',
         'youtube-dl',
-        'awesome-slugify',
+        'python-slugify',
         'jinja2',
         'mistune'
         ],
