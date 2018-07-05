@@ -3,7 +3,7 @@
 """openedx2zim.
 
 Usage:
-  openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex]
+  openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex] [--transcode2webm] [--ignore-unsupported-xblocks]
   openedx2zim (-h | --help)
   openedx2zim --version
 
@@ -14,6 +14,8 @@ Options:
   --nozim       doesn't make zim file, output will be in work/ in normal html
   --zimpath=<zimpath>   Final path of the zim file
   --nofulltextindex        Dont index content
+  --transcode2webm  Transcode videos in webm
+  --ignore-unsupported-xblocks  Ignore unsupported content (xblock)
 
 """
 """
@@ -70,11 +72,12 @@ def run():
 
     jinja_init(os.path.join(os.path.abspath(os.path.dirname(__file__)),"openedxtozim","templates/"))
 
-    mooc=Mooc(c,arguments["<course_url>"])
+    mooc=Mooc(c,arguments["<course_url>"], arguments["--transcode2webm"], arguments["--ignore-unsupported-xblocks"])
     mooc.parser_json()
     mooc.download(c)
     mooc.annexe(c)
     mooc.render()
+    mooc.make_welcome_page(c)
     if not arguments['--nozim']:
         mooc.zim("eng",arguments["<publisher>"],arguments["--zimpath"],arguments["--nofulltextindex"])
 

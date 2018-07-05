@@ -44,9 +44,9 @@ class Connection:
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         install_opener(opener)
         opener.open(self.conf["instance_url"])
-        for cookie in cookiejar:
-            if cookie.name == 'csrftoken':
-                break
+        for cookie_ in cookiejar:
+            if cookie_.name == 'csrftoken':
+                cookie = cookie_
         self.headers = {
             'User-Agent': 'Mozilla/5.0',
             'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -58,24 +58,22 @@ class Connection:
         post_data = urlencode({'email': email,
                             'password': self.pw,
                             'remember': False}).encode('utf-8')
-        self.connection=self.get_api_json(self.conf["login_page"],post_data)
+        self.connection=self.get_api_json(self.conf["login_page"],post_data) # We can also use API login : /user_api/v1/account/login_session/
         if not self.connection.get('success', False):
             sys.exit("error at connection (Email or password is incorrect)")
         else:
             logging.info("Your login is ok!")
-        """
-        if self.instance != "courses.edraak.org":
-            content=self.get_page(self.conf["instance_url"] + self.conf["account_page"])
+        for cookie_ in cookiejar:
+            if cookie_.name == 'edx-user-info' or cookie_.name == 'prod-edx-user-info':
+                self.user=json.loads(json.loads(cookie_.value.replace(r'\054', ',')))["username"]
 
-            self.user=re.search('"/u/[^"]*"', str(content)).group(0).split("/")[-1][:-1] #TODO via API ?
-            #self.user=self.get_api_json("/api/user/v1/accounts")[0]["username"]
+    def get_api_json(self,page, post=None, referer=None):
+        if referer:
+            tmp_headers = self.headers
+            tmp_headers['Referer'] = referer
+            request = Request(self.conf["instance_url"] + page, post, tmp_headers)
         else:
-            self.user="KiwixOffline"
-        """
-        self.user=self.get_api_json("/api/user/v1/accounts")[0]["username"]
-
-    def get_api_json(self,page, post=None):
-        request = Request(self.conf["instance_url"] + page, post, self.headers)
+            request = Request(self.conf["instance_url"] + page, post, self.headers)
         response = urlopen(request)
         resp = json.loads(response.read().decode('utf-8'))
         return resp
@@ -115,7 +113,7 @@ class Connection:
                 page_content=get_page(instance_url + link,headers).decode('utf-8')
                 soup_page=BeautifulSoup.BeautifulSoup(page_content, 'html.parser')
                 good_part_of_page_content=str(soup_page.find('section', attrs={"class": "container"}))
-                html_content=dl_dependencies(good_part_of_page_content,os.path.join(output,sub_dir),sub_dir,instance_url)
+                html_content=dl_dependencies(good_part_of_page_content,os.path.join(output,sub_dir),sub_dir,c)
                 page_to_save[sub_dir]={}
                 page_to_save[sub_dir]["content"]=html_content
                 page_to_save[sub_dir]["title"]=soup_page.find('title').text

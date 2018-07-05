@@ -6,6 +6,16 @@ import logging
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from slugify import slugify
+import ssl
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen,Request
+from lxml.etree import parse as string2xml
+from lxml.html import fromstring as string2html
+from lxml.html import tostring as html2string
+from hashlib import sha256
+from webvtt import WebVTT
+import youtube_dl
+import re
 
 def exec_cmd(cmd, timeout=None):
     try:
@@ -37,11 +47,12 @@ def check_missing_binary(no_zim):
     if not (bin_is_present("ffmpeg") or bin_is_present("avconv")):
         sys.exit("You should install ffmpeg or avconv")
 
-def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_path,noindex):
+def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_path,noindex,home):
     if zim_path == None:
         zim_path = os.path.join("output/", "{title}_{lang}_all_{date}.zim".format(title=slugify(title),lang=lang_input,date=datetime.datetime.now().strftime('%Y-%m')))
+
     if description == "":
-        description = "Sorry, no description provided"
+        description = " "
 
     logging.info("Writting ZIM for {}".format(title))
 
@@ -51,7 +62,7 @@ def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_p
         'description': description,
         'creator': creator,
         'publisher': publisher,
-        'home': 'index.html',
+        'home': home,
         'favicon': 'favicon.png',
         'static': html_dir,
         'zim': zim_path
@@ -84,47 +95,55 @@ def markdown(text):
 def remove_newline(text):
     return text.replace("\n", "")
 
-def download(url, output, instance_url,timeout=None,):
+def download(url, output, instance_url,timeout=20,retry=2):
     if url[0:2] == "//":
             url="http:"+url
     elif url[0] == "/":
             url= instance_url + url
+#    print(url)
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
     request_headers={'User-Agent': 'Mozilla/5.0'}
-    request = Request(url, headers=request_headers)
-    response = urlopen(request, timeout=timeout, context=ctx)
-    output_content = response.read()
-    with open(output, 'wb') as f:
-        f.write(output_content)
-    return response.headers
+    try:
+        request = Request(url, headers=request_headers)
+        response = urlopen(request, timeout=timeout, context=ctx)
+        output_content = response.read()
+        with open(output, 'wb') as f:
+            f.write(output_content)
+        return response.headers
+    except Exception as e:
+        print("fail dl ")
+        print(url)
+        print(e)
+        print(output)
+        if retry >= 0:
+            logging.warning("Retry download")
+            download(url, output, instance_url,timeout=timeout,retry=retry-1)
+        else:
+            return False
 
-def download_and_convert_subtitles(path,transcripts_data,already_in_vtt,headers):
-    for lang in transcripts_data:
+def download_and_convert_subtitles(path,lang_and_url,c):
+    for lang in lang_and_url:
         path_lang=os.path.join(path,lang + ".vtt")
         if not os.path.exists(path_lang):
             try:
-                subtitle=get_page(transcripts_data[lang],headers).decode('utf-8')
+                subtitle=c.get_page(lang_and_url[lang]).decode('utf-8')
                 subtitle=re.sub(r'^0$', '1', str(subtitle), flags=re.M)
                 with open(path_lang, 'w') as f:
                     f.write(subtitle)
-                if not already_in_vtt:
+                if not False: #already_in_vtt: #TODO Find way to know is they are already in vtt or not
                     webvtt = WebVTT().from_srt(path_lang)
                     webvtt.save()
             except HTTPError as e:
                 if e.code == 404 or e.code == 403:
+                    logging.error("Fail to get or convert subtitle from {}".format(lang_and_url[lang]))
                     pass
 
 def download_youtube(youtube_url, video_path):
-    parametre={"outtmpl" : video_path, 'progress_hooks': [hook_youtube_dl], 'preferredcodec': 'mp4', 'format' : 'mp4'}
+    parametre={"outtmpl" : video_path, 'preferredcodec': 'mp4', 'format' : 'mp4'}
     with youtube_dl.YoutubeDL(parametre)  as ydl:
         ydl.download([youtube_url])
-
-def hook_youtube_dl(data):
-    if data["status"] == "finished":
-        video_final_path=re.sub(r'\.mp4$', '.webm', data["filename"])
-        convert_video_to_webm(data["filename"], video_final_path)
 
 def convert_video_to_webm(video_path, video_final_path):
     logging.info("convert " + video_path + "to webm")
@@ -171,6 +190,7 @@ def jinja(output, template,deflate, **context):
     if output == None:
         return page  #TODO encode ?
     else:
+#        print("Write to {}".format(output))
         with open(output, 'w') as f:
             if deflate:
                 f.write(zlib.compress(page.encode('utf-8')))
@@ -194,7 +214,7 @@ def jinja_init(templates):
         )
     ENV.filters.update(filters)
 
-def dl_dependencies(content,path, folder_name,instance_url):
+def dl_dependencies(content, path, folder_name, c):
     body = string2html(content)
     imgs = body.xpath('//img')
     for img in imgs:
@@ -206,12 +226,13 @@ def dl_dependencies(content,path, folder_name,instance_url):
             # download the image only if it's not already downloaded
             if not os.path.exists(out): 
                 try:
-                    headers=download(src, out,instance_url, timeout=180)
+                    headers=download(src, out,c.conf["instance_url"], timeout=180)
                     type_of_file=get_filetype(headers,out)
                     # update post's html
                     resize_one(out,type_of_file,"540")
                     optimize_one(out,type_of_file)
-                except :
+                except Exception as e:
+                    print(e)
                     logging.warning("error with " + src)
                     pass
             src = os.path.join(folder_name,filename)
@@ -224,11 +245,11 @@ def dl_dependencies(content,path, folder_name,instance_url):
             ext = os.path.splitext(src.split("?")[0])[1]
             filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
             out = os.path.join(path, filename)
-            # download the image only if it's not already downloaded
-            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF"]: #TODO better solution for extention (black list?)
+            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF", ".mp4", ".MP4", ".webm", ".WEBM", ".mp3", ".MP3"]: #TODO better solution for extention (black list?) ; TODO make list from moocs
+            #if ext not in ["", ".HTML", ".html", ".PHP", ".php", ".shtml", ".SHTML", ".xhtml", ".XHTML", ".aspx", ".ASPX", ".htm", ".HTM" ]: #black list
                 if not os.path.exists(out):
                     try:
-                        headers=download(src, out,instance_url, timeout=180)
+                        download(src, out,c.conf["instance_url"] , timeout=180)
                     except : 
                         logging.warning("error with " + src)
                         pass
@@ -243,7 +264,7 @@ def dl_dependencies(content,path, folder_name,instance_url):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 try:
-                    headers=download(src, out,instance_url, timeout=180)
+                    download(src, out,c.conf["instance_url"], timeout=180)
                 except :
                     logging.warning("error with " + src)
                     pass
@@ -258,7 +279,7 @@ def dl_dependencies(content,path, folder_name,instance_url):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 try:
-                    headers=download(src, out,instance_url, timeout=180)
+                    download(src, out,c.conf["instance_url"], timeout=180)
                 except :
                     logging.warning("error with " + src)
                     pass

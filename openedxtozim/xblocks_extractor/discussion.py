@@ -9,8 +9,6 @@ class Discussion:
         self.path=path
         self.rooturl=rooturl
         self.id=id
-        self.descendants=descendants
-        self.top=self.mooc.top
         self.output_path=self.mooc.output_path
         path = os.path.join(self.output_path,self.path,slugify(json["display_name"]))
         make_dir(path)
@@ -29,6 +27,6 @@ class Discussion:
                     data["discussion"]["discussion_data"]+=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=" + str(i) + "&ajax=1", headers)["discussion_data"]
         """
     def render(self):
-            return "TODO"
+            return "TODO when we support annexe content"
 
 

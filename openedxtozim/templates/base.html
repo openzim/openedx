@@ -15,8 +15,10 @@
 {#
     <link rel="stylesheet" href="{{ rooturl }}static/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ rooturl }}static/bootstrap/css/bootstrap-theme.min.css">
-    <script src="{{ rooturl }}static/jquery-2.1.4.min.js"></script>
-    <script src="{{ rooturl }}static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{ rooturl }}static/jquery-2.1.4.min.js"></script> #}
+    <script src="{{ rooturl }}static/xblocks.js"></script>
+
+{#    <script src="{{ rooturl }}static/bootstrap/js/bootstrap.min.js"></script>
    {# <link rel="icon" type="image/png" href="images/favicon.png"> }
     <script type="text/x-mathjax-config">
       MathJax.Hub.Config({
@@ -74,7 +76,7 @@
           {% endif %}
 #}
           {% for elem_name in mooc.top %}
-              <a href="{{ rooturl }}{{ mooc.top[elem_name] }}/index.html"> {{ elem_name }}</a> 
+              <a href="{{ rooturl }}{{ mooc.top[elem_name] }}"> {{ elem_name }}</a>
           {% endfor %}
 {#
           <a href="javascript:void(0);" class="icon" onclick="myMenu()"><span class="glyphicon glyphicon-chevron-down"></span></a>
