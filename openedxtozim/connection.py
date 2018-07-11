@@ -39,12 +39,12 @@ class Connection:
         if self.conf == None:
             sys.exit("No configuation found for this instance, please open a issue https://github.com/openzim/openedx/issues")
         #Make headers
-        cookiejar = LWPCookieJar()
-        opener = build_opener(HTTPCookieProcessor(cookiejar))
+        self.cookiejar = LWPCookieJar()
+        opener = build_opener(HTTPCookieProcessor(self.cookiejar))
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         install_opener(opener)
         opener.open(self.conf["instance_url"])
-        for cookie_ in cookiejar:
+        for cookie_ in self.cookiejar:
             if cookie_.name == 'csrftoken':
                 cookie = cookie_
         self.headers = {
@@ -53,7 +53,7 @@ class Connection:
             'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
             'Referer': self.conf["instance_url"] + self.conf["login_page"],
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': cookie.value,
+            'X-CSRFToken': cookie.value
         }
         post_data = urlencode({'email': email,
                             'password': self.pw,
@@ -63,7 +63,7 @@ class Connection:
             sys.exit("error at connection (Email or password is incorrect)")
         else:
             logging.info("Your login is ok!")
-        for cookie_ in cookiejar:
+        for cookie_ in self.cookiejar:
             if cookie_.name == 'edx-user-info' or cookie_.name == 'prod-edx-user-info':
                 self.user=json.loads(json.loads(cookie_.value.replace(r'\054', ',')))["username"]
 

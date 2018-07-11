@@ -9,6 +9,7 @@ from slugify import slugify
 import ssl
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen,Request
+import urllib.parse
 from lxml.etree import parse as string2xml
 from lxml.html import fromstring as string2html
 from lxml.html import tostring as html2string
@@ -100,7 +101,12 @@ def download(url, output, instance_url,timeout=20,retry=2):
             url="http:"+url
     elif url[0] == "/":
             url= instance_url + url
-#    print(url)
+
+    #for IRI
+    split_url = list(urllib.parse.urlsplit(url))
+    split_url[2] = urllib.parse.quote(split_url[2])    # the third component is the path of the URL/IRI
+    url = urllib.parse.urlunsplit(split_url)
+
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -188,7 +194,7 @@ def jinja(output, template,deflate, **context):
     template = ENV.get_template(template)
     page = template.render(**context)
     if output == None:
-        return page  #TODO encode ?
+        return page
     else:
 #        print("Write to {}".format(output))
         with open(output, 'w') as f:
@@ -237,7 +243,10 @@ def dl_dependencies(content, path, folder_name, c):
                     pass
             src = os.path.join(folder_name,filename)
             img.attrib['src'] = src
-            img.attrib['style']= "max-width:100%"
+            if 'style' in img.attrib:
+                img.attrib['style']+= " max-width:100%"
+            else:
+                img.attrib['style'] = " max-width:100%"
     docs = body.xpath('//a')
     for a in docs:
         if "href" in a.attrib:

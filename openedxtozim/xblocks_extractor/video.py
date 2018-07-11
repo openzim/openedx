@@ -2,6 +2,9 @@ import bs4 as BeautifulSoup
 from openedxtozim.utils import make_dir, jinja,download_and_convert_subtitles, download, download_youtube, convert_video_to_webm
 import os
 from slugify import slugify
+import logging
+import json
+import re
 class Video:
     def __init__(self,json,path,rooturl,id,descendants,mooc):
         self.mooc=mooc
@@ -10,6 +13,7 @@ class Video:
         self.rooturl=rooturl
         self.id=id
         self.is_video=True
+        self.no_video=False
         self.folder_name = slugify(json["display_name"])
         self.output_path = os.path.join(self.mooc.output_path,self.path)
         make_dir(self.output_path)
@@ -38,7 +42,22 @@ class Video:
                 url = self.json["student_view_data"]["encoded_videos"]["youtube"]["url"]
                 youtube=True
             else:
-                logging.error("Cannot get video for {}".format(self.json["lms_web_url"]))
+                content=c.get_page(self.json["student_view_url"]).decode('utf-8')
+                soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+                youtube_json=soup.find('div', attrs={ "id" : re.compile("^video_") })
+                print(youtube_json["data-metadata"])
+                print(youtube_json.has_attr("data-metadata"))
+                if youtube_json and youtube_json.has_attr("data-metadata"):
+                    youtube_json=json.loads(youtube_json["data-metadata"])
+                    url="https://www.youtube.com/watch?v=" + youtube_json["streams"].split(":")[-1]
+                    youtube=True
+                    #TODO transcript : from youtube ? "transcriptAvailableTranslationsUrl" ou "transcriptTranslationUrl" + ?videoId=
+
+                else:
+                    self.no_video=True
+                    logging.error("Cannot get video for {}".format(self.json["lms_web_url"]))
+                    logging.error(self.json)
+                    return
             subs_lang = self.json["student_view_data"]["transcripts"]
 
         if self.mooc.convert_in_webm:
@@ -52,7 +71,7 @@ class Video:
                     download(url, video_path,c)
                 if self.mooc.convert_in_webm:
                     convert_video_to_webm(video_path, video_path)
-        download_and_convert_subtitles(self.output_path,self.json["student_view_data"]["transcripts"],c)
+        download_and_convert_subtitles(self.output_path,subs_lang,c)
         self.subs=[ {"file": os.path.join(self.folder_name, lang + ".vtt"), "code": lang } for lang in subs_lang ]
 
     def render(self):
@@ -62,5 +81,6 @@ class Video:
                 False,
                 format="webm" if self.mooc.convert_in_webm else "mp4",
                 folder_name=self.folder_name,
+                title=json["display_name"],
                 subs=self.subs
             )

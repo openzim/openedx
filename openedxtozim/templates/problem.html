@@ -3,7 +3,7 @@
           </div>
           {% if problem.has_hint %}
             <script>
-              problem_hint_array["{{ problem.problem_id }}"] = [ {% for ans in problem.answers %}"{{ ans }}", {% endfor %} ];
+              problem_hint_array["{{ problem.problem_id }}"] = [ {% for ans in problem.hint %}"{{ ans }}", {% endfor %} ];
             </script>
             <div class="notification problem-hint notification-hint is-hidden" tabindex="-1" hint_index="0" style="display:none;" id="hint-{{ problem.problem_id }}">
                 <span class="icon fa fa-question" aria-hidden="true"></span>

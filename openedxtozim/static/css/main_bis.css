@@ -1,0 +1,598 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:300,400,400i,600,700,");
+* {
+  transition: all 0.5s ease 0s;
+}
+
+
+body{
+  min-height:100%;
+  height:100%;
+  margin:0;
+  font-size:1em;
+  font-style:normal;
+  line-height:1em;
+  /* color:#5d5e70 */
+
+/* TODO direction:ltr */
+}
+
+article, aside, details, figcaption, figure, footer, header, hgroup, nav, section {
+    display: block;
+}
+
+body a:link, body a:visited {
+    line-height: 1.4em;
+    color: #1ca3a6;
+}
+body a:link, body a:visited {
+    line-height: 1.4em;
+    color: #1ca3a6;
+}
+a, a:visited {
+    color: #1ca3a6;
+    font: inherit;
+        font-weight: inherit;
+        font-size: inherit;
+        line-height: inherit;
+    text-decoration: none;
+    transition: all 0.1s linear 0s;
+}
+a {
+    text-decoration: none;
+    color: #4a90e2;
+}
+a {
+    color: #005584;
+}
+a, a:visited {
+    color: #1ca3a6;
+    font: inherit;
+    text-decoration: none;
+    transition: all 0.1s linear 0s;
+}
+a {
+    text-decoration: none;
+    color: #4a90e2;
+}
+a {
+    color: #005584;
+}
+.content-wrapper{
+  flex:1;
+  border:none;
+  width:100%;
+  margin:0 auto;
+  transition: all 0.5s ease 0s;
+
+}
+
+nav ul, nav ol {
+    list-style: none;
+        list-style-image: none;
+    list-style-image: none;
+    margin: 0;
+        margin-left: 0px;
+    padding: 0;
+}
+
+span {
+      font: inherit;
+                    font-weight: inherit;
+                            font-size: inherit;
+                                    line-height: inherit;
+                                            font-family: inherit;
+                                                color: inherit;
+}
+p {
+    color: inherit;
+    margin: 0;
+}
+nav ul, nav ol {
+    list-style: none;
+        list-style-image: none;
+    list-style-image: none;
+    margin: 0;
+    padding: 0;
+}
+nav ul, nav ol {
+    list-style: none;
+    list-style-image: none;
+    margin: 0;
+    padding: 0;
+}
+ul, ol {
+    margin: 1em 0;
+    padding: 0 0 0 40px;
+}
+ul, ol {
+    margin: 1em 0;
+    padding: 0 0 0 40px;
+}
+
+h1 {
+    color: #3c3c3c;
+    font: normal 2em/1.4em "Droid Arabic Naskh","Open Sans",sans-serif;
+        font-style: normal;
+        font-weight: normal;
+        font-size: 2em;
+        font-family: "Droid Arabic Naskh", "Open Sans", sans-serif;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.wrapper-course-materiel, .wrapper-preview-menu{
+  padding:0;
+  box-sizing:border-box;
+  border-bottom:none;
+margin: 0 auto 0;
+  width:100%;
+}
+.course-material, .preview-menu{
+width: auto;
+padding: 15px 2%;
+margin: 0 auto;
+max-width: 1180px;
+width: 100%;
+overflow: auto;
+}
+
+.wrapper-course-material .course-material .course-tabs {
+      padding: 0;
+}
+
+.wrapper-course-material ol.course-tabs {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    margin-left: 10px;
+    padding: 15px 0 15px 0;
+}
+
+ol.course-tabs li {
+  float: left;
+  list-style: none;
+  margin-right: 6px;
+}
+
+
+ol.course-tabs li a.active {
+    background-color: rgba(0,0,0,0.4);
+    background-image: linear-gradient(to bottom,rgba(0,0,0,0.4),rgba(0,0,0,0.25));
+    background-color: transparent;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.5),0 1px 1px rgba(0,0,0,0.3) inset;
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+}
+ol.course-tabs li a {
+    border-radius: 3px;
+    color: #555;
+    display: block;
+    text-align: center;
+    padding: 10px 13px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.sr {
+    background: #fff;
+    color: #000;
+}
+.sr, .nav-contents, .nav-skip, .view-teams .page-header-search .search-label {
+    border: 0;
+    clip: rect(1px 1px 1px 1px);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+.sr {
+    background: #fff;
+    color: #000;
+}
+
+
+.container {
+    max-width: none;
+    min-width: initial;
+    width: auto;
+    padding: 0 2%;
+    box-sizing: border-box;
+    margin: 0 auto 0;
+}
+
+div.course-wrapper {
+    position: relative;
+}
+
+.container > div {
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+    border-radius: 3px;
+    border: 1px solid #aaa;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.course-index {
+    transition: all 0.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s;
+    border-right: 1px solid #c8c8c8;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 3px;
+    display: table-cell;
+}
+
+.course-index .accordion .course-navigation .button-chapter {
+    transition: all 3s ease-in-out;
+    box-sizing: border-box;
+    background-color: rgba(255,255,255,0.5);
+    background-image: linear-gradient(to bottom,rgba(255,255,255,0.5),rgba(255,255,255,0));
+    transition: background-color 0.1s linear 0s;
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: 0 1px 0 #fff inset,0 -1px 0 rgba(0,0,0,0.1) inset;
+    background-color: #f6f6f6;
+    color: #1ca3a6;
+    cursor:pointer;
+}
+
+.course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item {
+      margin: 4px 0;
+      background: inherit;
+      font-weight:600;
+
+}
+.course-index .accordion .course-navigation .button-chapter .group-heading {
+    position: relative;
+    display: block;
+    padding: 15px 0;
+        padding-right: 0px;
+        padding-left: 0px;
+    padding-left: 40px;
+    padding-right: 20px;
+    text-align: left;
+}
+
+.course-index .accordion .course-navigation .button-chapter .group-heading .icon {
+    position: absolute; /* TODO*/
+    left: 20px;
+    top: 20px;
+    font-size: 0.875em;
+    color: #c8c8c8;
+}
+
+.course-index .accordion .course-navigation .chapter-content-container {
+      background: #fff;
+}
+
+.course-index .accordion .course-navigation .chapter-content-container .chapter-menu {
+/*    display: none;*/
+    padding: 0 14px;
+    overflow: hidden;
+}
+.course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item {
+    margin: 4px 0;
+    background: inherit;
+}
+.course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item a {
+    position: relative;
+    display: block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: #3c3c3c;
+}
+.course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item.active a {
+    background: #e3e3e3;
+}
+.btn-link, .proctored_exam_status .exam-timer .exam-button-turn-in-exam, .course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item a {
+    font-size: 14px;
+    line-height: 20.72px;
+}
+div.course-wrapper section.course-content {
+    padding: 40px 3%;
+    line-height: 1.6;
+}
+.content, div.course-wrapper section.course-content, div.info-wrapper section.updates, div.book-wrapper .book, .profile-wrapper .course-info, div.gradebook-wrapper section.gradebook-content, .view-student-notes .wrapper-student-notes .student-notes, .instructor-dashboard-wrapper section.instructor-dashboard-content, .instructor-dashboard-content-2 {
+    box-sizing: border-box;
+    display: table-cell;
+    padding: 2em 2.5em;
+    vertical-align: top;
+    width: 76.27119%;
+}
+.course-content {
+    margin-top: 30px;
+}
+div.course-wrapper section.course-content .xblock {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+div.course-wrapper section.course-content {
+    line-height: 1.6;
+}
+
+
+.xmodule_display.xmodule_SequenceModule .sequence-nav {
+    margin: -4px 0 30px;
+    position: relative;
+    border-bottom: none;
+    z-index: 0;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav-button.disabled {
+    cursor: normal;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav-button.button-previous {
+    border-top-left-radius: 35px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 35px;
+    left: 0;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav-button {
+    transition: all 0.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s;
+    position: absolute;
+    display: block;
+    top: 0;
+    width: 40px;
+    height: 46px;
+    padding: 0;
+}
+.nav-utilities, .xmodule_display.xmodule_CourseModule .sequence-nav-button, .xmodule_display.xmodule_VideoModule .a11y-menu-container .a11y-menu-list, .xmodule_display.xmodule_VideoModule .video .video-pre-roll, .xmodule_display.xmodule_SequenceModule .sequence-nav-button, .modal-backdrop {
+    z-index: 1000;
+}
+.light-button:disabled, div.history-controls input[type="submit"]:disabled, a.light-button:disabled, .gray-button:disabled, body .xmodule_display.xmodule_CapaModule div.problem .action .save:disabled, input[type="reset"]:disabled, input[type="submit"]:disabled, input[type="button"]:disabled, button:disabled, .button:disabled, .xmodule_display.xmodule_LTIModule div.lti .wrapper-lti-link .lti-link .link_lti_new_window:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+button[disabled], input[disabled] {
+    cursor: default;
+}
+input[type="submit"]:disabled, input[type="submit"].is-disabled, input[type="submit"].disabled, input[type="button"]:disabled, input[type="button"].is-disabled, input[type="button"].disabled, button:disabled, button.is-disabled, button.disabled, .button:disabled, .button.is-disabled, .button.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+input[type="submit"]:disabled, input[type="button"]:disabled, button:disabled, .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+button[disabled], input[disabled] {
+    cursor: default;
+}
+.light-button, div.history-controls input[type="submit"], a.light-button, .gray-button, body .xmodule_display.xmodule_CapaModule div.problem .action .save, input[type="reset"], input[type="submit"], input[type="button"], button, .button, form input[type="reset"], form input[type="submit"], form input[type="button"], form button, form .button, .xmodule_display.xmodule_LTIModule div.lti .wrapper-lti-link .lti-link .link_lti_new_window {
+    border: 1px solid #cdcdcd;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 0 0 #fff;
+    color: #333;
+    display: inline-block;
+    font-size: inherit;
+    font-weight: bold;
+    background-color: #f1f1f1;
+    background-image: linear-gradient(#f1f1f1,#d5d5d5);
+    padding: 7px 18px;
+    text-decoration: none;
+    text-shadow: 0 1px 0 #fbfbfb;
+    background-clip: padding-box;
+    border: 1px solid #d2c9c9;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 0 0 #fff;
+    color: #333;
+    display: inline-block;
+    font-size: inherit;
+    font-weight: bold;
+    background-color: #f1f1f1;
+    background-image: linear-gradient(#f1f1f1,#d9d1d1);
+    padding: 7px 18px;
+    text-decoration: none;
+    text-shadow: 0 1px 0 #fcfbfb;
+    background-clip: padding-box;
+    font-size: 0.8125em;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav .sequence-list-wrapper {
+    background-color: #ddd;
+    background-image: linear-gradient(to bottom,#ddd,#eee);
+    position: relative;
+    border: 1px solid #c8c8c8;
+    height: 44px;
+    margin: 0 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) inset;
+}
+.help-tab, .xmodule_display.xmodule_CourseModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_CourseModule .sequence-nav ol li a p, .xmodule_display.xmodule_SequenceModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p, div.timer-main, .view-teams .team-profile .page-content-secondary .member-profile p {
+    z-index: 100;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav ol {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    display: table;
+    height: 100%;
+    margin: 0;
+    padding: 0 10px;
+    width: 100%;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav ol li {
+    display: table-cell;
+    min-width: 20px;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a.active {
+    background-color: #fff;
+}
+.xmodule_display.xmodule_CourseModule .sequence-nav ol li a.active, .xmodule_display.xmodule_CapaModule div.problem .CodeMirror pre.CodeMirror-cursor, .xmodule_display.xmodule_VideoModule .video .video-wrapper .video-controls .secondary-controls .menu-container .menu, .xmodule_display.xmodule_VideoModule .video .video-wrapper .video-controls .secondary-controls .volume .volume-slider-container, .xmodule_display.xmodule_ConditionalModule div.problem .CodeMirror pre.CodeMirror-cursor, .xmodule_display.xmodule_SequenceModule .sequence-nav ol li a.active, .edx-notes-wrapper .annotator-editor .annotator-controls, .instructor-dashboard-wrapper-2 section.idash-section#cohort_management .wrapper-tabs {
+    z-index: 10;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a {
+    transition: none;
+    width: 100%;
+    height: 42px;
+    margin: 0;
+    background-position: center 14px;
+    background-repeat: no-repeat;
+    border: 1px solid transparent;
+    display: block;
+    padding: 0;
+    position: relative;
+    text-align: center;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a .icon {
+    line-height: 42px;
+    font-size: 90%;
+    color: #0a0a0a;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p { /* Title top bar in black/gray when we are in this vertical TODO*/
+    background: #333;
+    color: #fff;
+    line-height: 1.41575em;
+    right: 0;
+    opacity: 0.0;
+    padding: 6px;
+    position: absolute;
+    top: 48px;
+    text-shadow: 0 -1px 0 #222544;
+    transition: all 0.1s cubic-bezier(0.77, 0, 0.175, 1) 0s;
+    white-space: pre;
+    visibility: hidden;
+    pointer-events: none;
+}
+.help-tab, .xmodule_display.xmodule_CourseModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_CourseModule .sequence-nav ol li a p, .xmodule_display.xmodule_SequenceModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p, div.timer-main, .view-teams .team-profile .page-content-secondary .member-profile p {
+    z-index: 100;
+}
+div.course-wrapper section.course-content p {
+    margin-bottom: 1.41575em;
+}
+.left-shadow {
+    background-color: rgba(0,0,0,0.2);
+    background-image: linear-gradient(to right,rgba(0,0,0,0.2),transparent);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 46px;
+    background-color: transparent;
+    pointer-events: none;
+}
+.right-shadow {
+    background-color: rgba(0,0,0,0.2);
+    background-image: linear-gradient(to left,rgba(0,0,0,0.2),transparent);
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 46px;
+    background-color: transparent;
+    pointer-events: none;
+}
+.xmodule_display.xmodule_SequenceModule .sequence-nav-button.button-next {
+    border-top-left-radius: 0;
+    border-top-right-radius: 35px;
+    border-bottom-right-radius: 35px;
+    border-bottom-left-radius: 0;
+    right: 0;
+}
+div.course-wrapper section.course-content .vert-mod {
+    padding: 0;
+    margin: 0;
+    line-height: 1.4;
+    list-style: none;
+}
+div.course-wrapper section.course-content .vert-mod > div:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+div.course-wrapper section.course-content .vert-mod .vert > .xblock-student_view {
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 15px;
+    padding: 0 0 15px;
+}
+.video {
+    background: #f0f3f5;
+    display: block;
+    margin: 0 -12px;
+    padding: 12px;
+    border-radius: 5px;
+    outline: none;
+}
+.content-wrapper .course-license, .content-wrapper .xblock-license {
+    text-align: right;
+    display: block;
+    width: auto;
+    padding: 5px 0;
+    color: #5e5e5e;
+}
+.xmodule_display.xmodule_SequenceModule nav.sequence-bottom {
+    position: relative;
+    width: 79px;
+    height: 1px;
+    margin: 2.8315em auto;
+    text-align: center;
+}
+nav.sequence-bottom {
+    position: relative;
+    width: 79px;
+    height: 1px;
+    margin: 2.8315em auto;
+    text-align: center;
+}
+
+.window-wrap {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+}
+body.view-in-course .info-wrapper {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+div.info-wrapper section.updates {
+    line-height: 1.41575em;
+}
+div.info-wrapper section.updates > ol, div.info-wrapper section.updates section {
+    list-style: none;
+    margin-bottom: 1.41575em;
+    padding-left: 30px;
+}
+div.info-wrapper section.updates > ol > li, div.info-wrapper section.updates > ol article, div.info-wrapper section.updates section > li, div.info-wrapper section.updates section article {
+    border-bottom: 1px solid rgba(177,177,177,0.32);
+    list-style-type: none;
+    margin-bottom: 2.12363em;
+    padding-bottom: 1.06181em;
+}
+div.info-wrapper section.handouts {
+    padding: 20px 30px;
+    padding-left: 30px;
+    margin: 0;
+    border-radius: 0 4px 4px 0;
+    border-left: 1px solid #ddd;
+    box-shadow: none;
+    font-size: 14px;
+}
+.sidebar, div#wiki_panel, div.info-wrapper section.handouts, div.book-wrapper section.book-sidebar, .profile-wrapper .user-info {
+    box-sizing: border-box;
+    display: table-cell;
+    font-family: "Droid Arabic Naskh","Open Sans",sans-serif;
+    font-size: 14px;
+    position: relative;
+    vertical-align: top;
+    width: 23.72881%;
+    background: #f6f6f6;
+}
+.treeview, .treeview ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates > ol article h2, div.info-wrapper section.updates section > li h2, div.info-wrapper section.updates section article h2 {
+    font-size: 0.875em;
+    font-weight: bold;
+    padding-left: 20px;
+}
+

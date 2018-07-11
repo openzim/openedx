@@ -4,6 +4,7 @@ from urllib.parse import (
     urlencode,
     quote_plus,
     unquote,
+    urlparse,
 )
 import json
 import logging
@@ -102,32 +103,65 @@ class Mooc:
             x.download(c)
 
     def annexe(self,c):
-        """
         logging.info("Try to get specific page of mooc")
-        if len(vertical_path_list) != 0:
-            self.link_on_top=get_and_save_specific_pages(c,self.course_id,output,vertical_path_list[0]["url"])
-        else:
-            self.link_on_top=get_and_save_specific_pages(c,self.course_id,output,False)
+        self.page_annexe=[]
+        content=c.get_page(self.course_url).decode('utf-8')
+        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        top_bs=soup.find('ol', attrs={"class": "course-material" }) or soup.find('ul', attrs={"class": "course-material" }) or soup.find('ul', attrs={"class": "navbar-nav" }) or soup.find('ol', attrs={"class": "course-tabs"})
+        if top_bs != None:
+            for top_elem in top_bs.find_all("li"):
+                top_elem=top_elem.find("a")
+                path=re.sub("/courses/[^/]*/","",top_elem["href"])
+                if "course" in path or "edxnotes" in path or "progress" in path or "info" in path:
+                    continue
+                self.top[top_elem.get_text()]= path
+                if "wiki" in path:
+                    print("Wiki unsupported for the moment")
+                elif "forum" in path:
+                    print("Forum unsupported for the moment")
+                else:
+                    output_path = os.path.join(self.output_path,path)
+                    make_dir(output_path)
+                    page_content=c.get_page(c.conf["instance_url"] + top_elem["href"]).decode('utf-8')
+                    soup_page=BeautifulSoup.BeautifulSoup(page_content, 'html.parser')
+                    just_content = soup_page.find('section', attrs={"class": "container"})
+                    if just_content != None :
+                        html_content=dl_dependencies(str(just_content),output_path,"",c)
+                    else:
+                        book=soup_page.find('section', attrs={"class": "book-sidebar"})
+                        if book != None:
+                            pdf = book.find_all("a")
+                            html_content='<ul id="booknav">' #TODO css
+                            for url in pdf:
+                                file_name=os.path.basename(urlparse(url["rel"][0]).path)
+                                download(url["rel"][0], os.path.join(output_path,file_name), c.conf["instance_url"])
+                                html_content+='<li><a href="{}" > {} </a></li>'.format(file_name,url.get_text())
+                            html_content+='</ul>'
+                        else:
+                            logging.warning("Oh it's seems we does not support one type of extra content (in top bar)")
+                            continue
+                    self.page_annexe.append({ "output_path": output_path, "content": html_content,"title" : soup_page.find('title').get_text()})
 
-        if "forum" in self.top:
-            logging.info("Get discussion")
-            threads, threads_category =get_forum(c,self.course_id,output)
-            render_forum(threads,threads_category,output,link_on_top)
 
-        if "wiki" in self.top:
-            logging.info("Get wiki")
-            wiki_page=get_wiki(c,self.course_id,output)
-            render_wiki(wiki_page,c,self.course_id,output,link_on_top)
-        """
 
     def render(self):
         self.head.render()
+        for data in self.page_annexe:
+            jinja(
+                os.path.join(data["output_path"],"index.html"),
+                "specific_page.html",
+                False,
+                title=data["title"],
+                mooc=self,
+                content=data["content"],
+                rooturl="../../"
+            )
         copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(self.output_path, 'static'))
 
     def make_welcome_page(self,c):
         download("https://www.google.com/s2/favicons?domain=" + c.conf["instance_url"] , os.path.join(self.output_path,"favicon.png"),None)
 
-        #TODO to improuve, add message sur first page of course, not "homepage" (no more homepage). If homepage, add in top
+        #TODO to improuve, add message sur first page of course, not "homepage" (no more homepage). If homepage, add in top. (if top has info => then info = index.html for zim, else first page of mooc ?
         content=c.get_page(self.course_url).decode('utf-8')
         if not os.path.exists(os.path.join(self.output_path,"home")):
             os.makedirs(os.path.join(self.output_path,"home"))

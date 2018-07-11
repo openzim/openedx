@@ -46,5 +46,6 @@ class Libcast_xblock:
                 False,
                 format="webm" if self.mooc.convert_in_webm else "mp4",
                 folder_name=self.folder_name,
+                title=json["display_name"],
                 subs=self.subs
             )

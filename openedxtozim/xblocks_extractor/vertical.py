@@ -12,13 +12,13 @@ class Vertical:
         self.top=self.mooc.top
         self.output_path=self.mooc.output_path
         if self.json["block_counts"]["video"] != 0:
-            self.icon_type="glyphicon glyphicon-facetime-video"
+            self.icon_type="fa-video-camera"
         elif self.json["block_counts"]["problem"] != 0:
-            self.icon_type="glyphicon glyphicon-question-sign"
+            self.icon_type="fa-question-circle"
         elif self.json["block_counts"]["discussion"] != 0:
-            self.icon_type="glyphicon glyphicon-comment"
+            self.icon_type="fa-comment"
         else:
-            self.icon_type="glyphicon glyphicon-book"
+            self.icon_type="fa-book"
 
         self.display_name=json["display_name"]
         self.folder_name=slugify(self.display_name)
@@ -45,6 +45,7 @@ class Vertical:
             chapter=chapter,
             sequential=sequential,
             vertical=self,
+            extracted_id=self.json["id"].split("@")[-1],
             vertical_content=vertical,
             pred_vertical=pred_vertical,
             next_vertical=next_vertical,

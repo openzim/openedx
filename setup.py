@@ -25,9 +25,7 @@ setup(
     zip_safe=False,
     platforms='Linux',
     include_package_data=True,
-    entry_points={
-            'console_scripts': ['openedx2zim=openedx.openedx2zim:run'],
-    },
+    scripts=['openedx2zim.py'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

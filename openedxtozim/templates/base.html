@@ -6,6 +6,11 @@
     <meta name="generator" content="https://github.com/openzim/openedx/"/>
     <meta name="author" content="kiwix team"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!--    <link href="{{ rooturl }}static/css/from_edraak.css" rel="stylesheet" type="text/css" />
+    <link href="{{ rooturl }}static/css/from_edraak_vendor.css" rel="stylesheet" type="text/css" />
+    <link href="{{ rooturl }}static/css/from_edraak_courses.css" rel="stylesheet" type="text/css" />-->
+    <link href="{{ rooturl }}static/css/main_bis.css" rel="stylesheet" type="text/css" />
+    <link href="{{ rooturl }}static/css/font-awesome.css" rel="stylesheet" type="text/css" />
 {#    <link href="{{ rooturl }}static/css/main.css" rel="stylesheet" type="text/css" />
     {% if video == True %}
       <link href="{{ rooturl }}static/css/video-js.css" rel="stylesheet" type="text/css">
@@ -65,25 +70,20 @@
 #}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
-    <div class="wrapper">
-      {% if side_menu %}
-          {% include "menu.html" %}
-      {% endif %}
-      <div id="content">
-        <div class="topnav" id="topnav">
-{#          {% if side_menu %}
-            <a href="javascript:void(0);" onclick="$('#sidebar').toggleClass('active');" style="text-decoration: none;">&#9776;</a>
-          {% endif %}
-#}
-          {% for elem_name in mooc.top %}
-              <a href="{{ rooturl }}{{ mooc.top[elem_name] }}"> {{ elem_name }}</a>
-          {% endfor %}
-{#
-          <a href="javascript:void(0);" class="icon" onclick="myMenu()"><span class="glyphicon glyphicon-chevron-down"></span></a>
+  <div class="window-wrap">
+    <div id="content" class="content-wrapper">
+      <nav class="courseware wrapper-course-material" aria-label="Course Material">
+        <div class="course-material">
+          <ol class="course-tabs">
+            {% for elem_name in mooc.top %}
+                {# todo class active only when mooc.top[elem_name] ~ where we write this (output_path?) #}
+                <li><a class="active" href="{{ rooturl }}{{ mooc.top[elem_name] }}">{{ elem_name }}</a></li>
+            {% endfor %}
+          </ol>
         </div>
-#}
+      </nav>
         {% block body %}{% endblock %}
-      </div>
+   </div>
 {#      {% if video == True %}
         <script src="{{ rooturl }}static/video.js"></script>
       {% endif %}

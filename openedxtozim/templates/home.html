@@ -5,14 +5,19 @@
 {% block title %}{{ mooc.head.display_name }}{% endblock %}
 
 {% block body %}
-  <h1> {{ mooc.head.display_name }} </h1>
-  <br/>
-  <br/>
-  <div style="padding:2%;">
-  {% for message  in messages %}
-    {{ message }}
-
-    <hr>
-  </div>
-  {% endfor %}
+  <section class="container">
+    <div class="info-wrapper">
+      <section class="updates">
+        <h1> {{ mooc.head.display_name }} </h1>
+        <section>
+          {% for message  in messages %}
+            <article>
+              {{ message }}
+            </article>
+          {% endfor %}
+        </section>
+      </section>
+    </div>
+  </section>
+  
 {% endblock %}
