@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block addcss %} <link href="{{ rooturl }}static/css/thread.css" rel="stylesheet" type="text/css" /> {% endblock %}
+{% block bodyclass %}thread container{% endblock %}
+
+{% block title %}{{ thread["title"] }}{% endblock %}
+
+{% block body %}
+  <div style="padding:2%">
+    <h1> {{ thread["title"] }}</h1>
+    {% set post = thread %}
+    {% include "post.html" %}
+    {% for ans in thread["data_thread"]["content"]["endorsed_responses"] %}
+      {% set post = ans %}
+      {% include "post.html" %}
+    {% endfor %}
+    {% for ans in thread["data_thread"]["content"]["non_endorsed_responses"] %}
+      {% set post = ans %}
+      {% include "post.html" %}
+    {% endfor %}
+  </div>
+{% endblock %}

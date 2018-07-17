@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}menu_chapter{% endblock %}
+
+{% block title %}{{ course.display_name }}{% endblock %}
+
+{% block body %}
+<div id="container">
+  <ul>
+    {% for chapter in course.descendants %}
+      <li>
+        <a href="{{ rooturl }}{{ chapter.path }}/index.html" >{{ chapter.display_name }}</a>
+        {% if chapter.descendants|length > 0 %}
+            <ul>
+            {% for sequential in chapter.descendants %}
+              <li>
+                <p> {{ sequential.display_name }} </p>
+                {% if sequential.descendants|length > 0 %}
+                  <ul>
+                  {% for vertical in sequential.descendants %}
+                    <li><a  href="{{ rooturl }}{{ vertical.path }}/index.html" >{{ vertical.display_name }}</a></li>
+                  {% endfor %}
+                  </ul>
+                {% endif %}
+              </li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
+

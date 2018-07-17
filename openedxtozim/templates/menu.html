@@ -1,0 +1,38 @@
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <h3>Menu</h3> <!-- TODO loca -->
+  </div>
+  <ul class="list-unstyled components">
+
+
+
+
+    {% for chapter_ in mooc.head.descendants %}
+      {% if chapter_.descendants|length > 0 %}
+        <li>
+          {% if chapter and chapter_.id == chapter.id %}
+
+            <a href="#{{ chapter_.id }}" data-toggle="collapse" class=".in" aria-expanded="true">{{ chapter_.display_name }}</a>
+            <ul class="collapse list-unstyled in" id="{{ chapter_.id }}" aria-expanded="true">
+
+          {%else%}
+            <a href="#{{ chapter_.id }}" data-toggle="collapse" aria-expanded="false">{{ chapter_.display_name }}</a>
+            <ul class="collapse list-unstyled" id="{{ chapter_.id }}">
+          {%endif%}
+          {% for sequential_ in chapter_.descendants %}
+            {% if sequential_.descendants|length > 0 %}
+              {% if sequential and sequential_.id == sequential.id %} {# idem #}
+                <li style="background-color:#ddd;"><a style="color:black;" href="{{ rooturl }}{{ sequential.descendants[0].path }}/index.html" >{{ sequential_.display_name }}</a></li>
+              {% else %}
+                <li><a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >{{ sequential_.display_name }}</a></li>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          </ul>
+        </li>
+      {% else %}
+        <li><a href="{{ rooturl }}{{ chapter.path }}/index.html" >{{ chapter.display_name }}</a></li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</nav>

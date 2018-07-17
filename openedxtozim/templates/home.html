@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}home{% endblock %}
+
+{% block title %}{{ mooc.head.display_name }}{% endblock %}
+
+{% block body %}
+  <section class="container">
+    <div class="info-wrapper">
+      <section class="updates">
+        <h1> {{ mooc.head.display_name }} </h1>
+        <section>
+          {% for message  in messages %}
+            <article>
+              {{ message }}
+            </article>
+          {% endfor %}
+        </section>
+      </section>
+    </div>
+  </section>
+  
+{% endblock %}

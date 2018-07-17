@@ -1,0 +1,66 @@
+<script>
+function toggle_visibility_submenu(elem){
+    var e = elem.nextSibling.nextSibling;
+    console.log(e);
+    if(e.style.display == 'block' || e.style.display == '') {
+        e.style.display = 'none';
+    }else{
+        e.style.display = 'block';
+    }
+}
+
+</script>
+<div class="course-index">
+  <div class="accordion">
+    <nav class="course-navigation" aria-label="Course">
+    {% for chapter_ in mooc.head.descendants %}
+      {% if chapter_.descendants|length > 0 %}
+<!--        <li>-->
+          {% if chapter and chapter_.id == chapter.id %}
+            <a class="button-chapter chapter active" role="button" aria-expanded="true" onclick='toggle_visibility_submenu(this)'>
+              <span class="group-heading active" aria-label="{{ chapter_.display_name }}">
+                <span class="icon fa fa-caret-down" aria-hidden="true"></span>
+                {{ chapter_.display_name }}
+              </span>
+            </a>
+            <div class="chapter-content-container" {#" is-open" tabindex="-1" #} role="group" aria-label="{{ chapter_.display_name }} submenu" style="display:block;">
+            {% else %}
+            <a class="button-chapter chapter" role="button" aria-expanded="false" onclick='toggle_visibility_submenu(this)'>
+              <span class="group-heading" aria-label="{{ chapter_.display_name }}">
+                <span class="icon fa fa-caret-right" aria-hidden="true"></span>
+                {{ chapter_.display_name }}
+              </span>
+            </a>
+            <div class="chapter-content-container" {#" is-open" tabindex="-1" #} role="group" aria-label="{{ chapter_.display_name }} submenu" style="display:none;"">
+            {% endif %}
+            <div class="chapter-menu">
+          {% for sequential_ in chapter_.descendants %}
+            {% if sequential_.descendants|length > 0 %}
+              {% if sequential and sequential_.id == sequential.id %}
+                <div class="menu-item active">
+                  <a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >
+                    <p>
+                      {{ sequential_.display_name }}
+                      <span class="sr">current section</span>
+                    </p>
+                  </a>
+                </div>
+              {% else %}
+                <div class="menu-item">
+                  <a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >
+                    <p>
+                      {{ sequential_.display_name }}
+                    </p>
+                  </a>
+                </div>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          </div>
+          </div>
+<!--        </li>-->
+      {% endif %}
+    {% endfor %}
+    </nav>
+  </div>
+</div>

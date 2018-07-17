@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+
+{% block bodyclass %}vertical{% endblock %}
+
+{% block title %}{{ vertical.display_name }}{% endblock %}
+
+{% block body %}
+<div class="container">
+  <div class="course-wrapper" role="presentation">
+    {% if side_menu %}
+        {% include "side_menu.html" %}
+    {% endif %}
+    <section id="course-content" class="course-content" role="main" aria-label="Content">
+      <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
+        <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.json["id"] }}" data-position="1">
+          <div class="sequence-nav">
+              <a href="{{ rooturl }}{{ pred_vertical.path }}/index.html" title="{{ pred_vertical.display_name }}">
+              {% if pred_vertical %}
+                <button class="sequence-nav-button button-previous">
+              {% else %}
+                <button class="sequence-nav-button button-previous deactivated">
+              {% endif %}
+                  <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
+                  <span class="sr">Previous</span>
+                </button>
+              </a>
+            <nav class="sequence-list-wrapper" aria-label="Sequence">
+              <ol id="sequence-list" role="tablist">
+              {% for vertical_ in sequential.descendants %}
+                {#{% if vertical_.id != vertical.id %} TODO #}
+                <li>
+                  <a id="tab_0" tabindex=0 data-id="{{ vertical_.json["id"] }}" data-page-title="{{ vertical_.display_name }}" href="{{ rooturl }}{{ vertical_.path }}/index.html" title="{{ vertical_.display_name }}">
+                    <i class="icon fa {{ vertical_.icon_type }}" aria-hidden="true"></i>
+                    <p>
+{#    <span class="sr">video</span> {#TODO ok if remove ? #}#}
+                      {{ vertical_.display_name }}
+                    </p>
+                  </a>
+                </li>
+              {% endfor %}
+              </ol>
+            <div class="left-shadow" style="opacity: 0;"></div>
+            <div class="right-shadow" style="opacity: 0;"></div>
+            </nav>
+              <a href="{{ rooturl }}{{ next_vertical.path }}/index.html" title="{{ next_vertical.display_name }}">
+                {% if next_vertical %}
+                  <button class="sequence-nav-button button-next">
+                {% else %}
+                  <button class="sequence-nav-button button-next deactivated">
+                {% endif %}
+                  <span class="icon fa fa-chevron-right" aria-hidden="true"></span>
+                  <span class="sr">Next</span>
+                </button>
+              </a>
+          </div>
+          <div id="seq_content">
+            <div class="xblock xblock-student_view xblock-student_view-vertical xblock-initialized">
+              {% for elem  in vertical_content %}
+                <div class="vert-mod">
+                  <div class="vert vert-0">
+                    <div class="xblock xblock-student_view xmodule_display xblock-initialized">
+                      {{ elem }}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <nav class="sequence-bottom" aria-label="Section">
+              <a href="{{ rooturl }}{{ pred_vertical.path }}/index.html" title="{{ pred_vertical.display_name }}">
+              {% if pred_vertical %}
+                <button class="sequence-nav-button button-previous">
+              {% else %}
+                <button class="sequence-nav-button button-previous deactivated">
+              {% endif %}
+                <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
+              </button>
+              </a>
+              <a href="{{ rooturl }}{{ next_vertical.path }}/index.html" title="{{ next_vertical.display_name }}">
+                {% if next_vertical %}
+                  <button class="sequence-nav-button button-next">
+                {% else %}
+                  <button class="sequence-nav-button button-next deactivated">
+                {% endif %}
+                <i class="icon fa fa-chevron-right" aria-hidden="true"></i>
+              </button>
+              </a>
+          </nav>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+{% endblock %}
