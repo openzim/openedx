@@ -7,6 +7,7 @@ RUN apt-get install -y python-pip
 RUN apt-get install -y python-dev
 RUN apt-get install -y imagemagick
 RUN apt-get install -y ffmpeg
+RUN apt install python3-pip
 RUN apt-get install -y git #Temp
 
 # Install jpegoptim
