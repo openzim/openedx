@@ -31,7 +31,7 @@ RUN cd gifsicle-1.88 && make all install
 
 # Install sotoki
 RUN locale-gen "en_US.UTF-8"
-RUN pip install openedx2zim
+RUN pip3 install openedx2zim
 
 # Boot commands
 CMD openedx2zim ; /bin/bash
