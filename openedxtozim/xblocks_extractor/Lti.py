@@ -20,7 +20,7 @@ class Lti:
         url = self.json["lms_web_url"].replace("/jump_to/","/xblock/") + "/handler/preview_handler"
         print(url)
         content=c.get_page(url)
-        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         content_url=soup.find('form')
         download(content_url["action"],os.path.join(self.output_path,"content.pdf"),c)
 

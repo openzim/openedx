@@ -17,11 +17,11 @@ class FreeTextResponse:
 
     def download(self, c):
         content=c.get_page(self.json["student_view_url"])
-        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         html_content=soup.find('div', attrs={"class": "edx-notes-wrapper"})
         if html_content== None:
             html_content=str(soup.find('div', attrs={"class": "course-wrapper"}))
-        soup=BeautifulSoup.BeautifulSoup(html_content, "html.parser")
+        soup=BeautifulSoup.BeautifulSoup(html_content, "lxml")
         text_area=soup.find("textarea", attrs={"class": "student_answer"})
         check=soup.find("button", attrs={"class": "check"})
         save=soup.find("button", attrs={"class": "save"})

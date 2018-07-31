@@ -105,7 +105,7 @@ class Mooc:
     def annexe(self,c):
         logging.info("Try to get specific page of mooc")
         content=c.get_page(self.course_url)
-        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         top_bs=soup.find('ol', attrs={"class": "course-material" }) or soup.find('ul', attrs={"class": "course-material" }) or soup.find('ul', attrs={"class": "navbar-nav" }) or soup.find('ol', attrs={"class": "course-tabs"})
         if top_bs != None:
             for top_elem in top_bs.find_all("li"):
@@ -124,7 +124,7 @@ class Mooc:
                     output_path = os.path.join(self.output_path,path)
                     make_dir(output_path)
                     page_content=c.get_page(self.instance_url + top_elem["href"])
-                    soup_page=BeautifulSoup.BeautifulSoup(page_content, 'html.parser')
+                    soup_page=BeautifulSoup.BeautifulSoup(page_content, 'lxml')
                     just_content = soup_page.find('section', attrs={"class": "container"})
                     if just_content != None :
                         html_content=dl_dependencies(str(just_content),output_path,"",c)
@@ -172,7 +172,7 @@ class Mooc:
         if not os.path.exists(os.path.join(self.output_path,"home")):
             os.makedirs(os.path.join(self.output_path,"home"))
         html_content_offline=[]
-        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         html_content=soup.find('div', attrs={"class": "welcome-message" })
         if html_content is None:
             html_content=soup.find_all('div', attrs={"class": re.compile("info-wrapper")})

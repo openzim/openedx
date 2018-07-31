@@ -26,7 +26,7 @@ class Discussion:
         """
             #TODO remove when forum fixed
             content=get_page(data["student_view_url"],headers).decode('utf-8')
-            soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+            soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
             discussion_id=str(soup.find('div', attrs={"class": "discussion-module"})['data-discussion-id'])
             minimal_discussion=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=1&ajax=1", headers)
             data["discussion"]={}

@@ -10,13 +10,13 @@ def forum(c,mooc):
     forum_output=os.path.join(mooc.output_path, "forum")
     make_dir(forum_output)
     content=c.get_page(mooc.instance_url + "/courses/" +  mooc.course_id + "/discussion/forum")
-    good_content=BeautifulSoup.BeautifulSoup(content, 'html.parser').find("script", attrs={"id": "thread-list-template"})
+    good_content=BeautifulSoup.BeautifulSoup(content, 'lxml').find("script", attrs={"id": "thread-list-template"})
     category={}
     if good_content:
-        soup=BeautifulSoup.BeautifulSoup(good_content.text, 'html.parser')
+        soup=BeautifulSoup.BeautifulSoup(good_content.text, 'lxml')
         all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
         if len(all_category) == 0:
-            soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+            soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
             all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
         see=[]
         for cat in all_category:
@@ -177,7 +177,7 @@ def wiki(c,mooc):
 
 
         #Parse content page
-        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         text=soup.find("div", attrs={"class": "wiki-article"})
         if text != None : #If it's a page (and not a list of page)
             #Find new wiki page in page content
@@ -203,7 +203,7 @@ def wiki(c,mooc):
             allpage_url=str(see_children.find("a")["href"])
             wiki_data[url]["dir"] = allpage_url 
             content=c.get_page(self.mooc.instance_url + allpage_url)
-            soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+            soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
             table=soup.find("table")
             if table != None:
                 for link in table.find_all("a"):

@@ -21,13 +21,13 @@ class Problem:
 
     def download(self,c):
             content=c.get_page(self.json["student_view_url"])
-            soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+            soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
             try:
                 html_content_from_div=str(soup.find('div', attrs={"class": "problems-wrapper"})['data-content'])
             except:
                 problem_json_url=str(soup.find('div', attrs={"class": "problems-wrapper"})['data-url'])
                 html_content_from_div=str(c.get_api_json(problem_json_url+"/problem_get")["html"])
-            soup=BeautifulSoup.BeautifulSoup(html_content_from_div, 'html.parser')
+            soup=BeautifulSoup.BeautifulSoup(html_content_from_div, 'lxml')
             self.has_hint=soup.find("button", attrs={"class" : "hint-button"})
             for div in soup.find_all('div', attrs={"class": "notification"}):
                 div.decompose()
