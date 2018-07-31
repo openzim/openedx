@@ -18,7 +18,7 @@ class Libcast_xblock:
     def download(self,c):
         self.subs=[]
         content=c.get_page(self.data["student_view_url"])
-        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
+        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         url=str(soup.find('video').find('source')["src"])
         subs=soup.find('video').find_all('track')
         if len(subs) != 0:

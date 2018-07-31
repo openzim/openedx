@@ -18,7 +18,6 @@ class Html:
 
     def download(self,c):
         content=c.get_page(self.json["student_view_url"])
-#        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser') #TODO same everywhere
         soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         html_content=soup.find('div', attrs={"class": "edx-notes-wrapper"})
         if html_content== None:
