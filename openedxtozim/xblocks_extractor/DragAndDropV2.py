@@ -19,7 +19,7 @@ class DragAndDropV2: #IMPROVEMENT We can only see it, not interracting with it
 
     def download(self, c):
         print("Offlining drag and drop")
-        content=c.get_page(self.json["student_view_url"]).decode('utf-8')
+        content=c.get_page(self.json["student_view_url"])
         #print(content)
         soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
         self.content=json.loads(soup.find('script', attrs={"class": "xblock-json-init-args"}).get_text())

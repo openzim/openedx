@@ -104,7 +104,7 @@ class Mooc:
 
     def annexe(self,c):
         logging.info("Try to get specific page of mooc")
-        content=c.get_page(self.course_url).decode('utf-8')
+        content=c.get_page(self.course_url)
         soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
         top_bs=soup.find('ol', attrs={"class": "course-material" }) or soup.find('ul', attrs={"class": "course-material" }) or soup.find('ul', attrs={"class": "navbar-nav" }) or soup.find('ol', attrs={"class": "course-tabs"})
         if top_bs != None:
@@ -123,7 +123,7 @@ class Mooc:
                 else:
                     output_path = os.path.join(self.output_path,path)
                     make_dir(output_path)
-                    page_content=c.get_page(self.instance_url + top_elem["href"]).decode('utf-8')
+                    page_content=c.get_page(self.instance_url + top_elem["href"])
                     soup_page=BeautifulSoup.BeautifulSoup(page_content, 'html.parser')
                     just_content = soup_page.find('section', attrs={"class": "container"})
                     if just_content != None :
@@ -168,7 +168,7 @@ class Mooc:
         download("https://www.google.com/s2/favicons?domain=" + self.instance_url , os.path.join(self.output_path,"favicon.png"),None)
 
         #IMPROUVEMENT add message sur first page of course, not "homepage" (no more homepage). If homepage, add in top. (if top has info => then info = index.html for zim, else first page of mooc ?
-        content=c.get_page(self.course_url).decode('utf-8')
+        content=c.get_page(self.course_url)
         if not os.path.exists(os.path.join(self.output_path,"home")):
             os.makedirs(os.path.join(self.output_path,"home"))
         html_content_offline=[]

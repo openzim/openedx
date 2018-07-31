@@ -20,7 +20,7 @@ class Problem:
         make_dir(self.output_path)
 
     def download(self,c):
-            content=c.get_page(self.json["student_view_url"]).decode('utf-8')
+            content=c.get_page(self.json["student_view_url"])
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             try:
                 html_content_from_div=str(soup.find('div', attrs={"class": "problems-wrapper"})['data-content'])

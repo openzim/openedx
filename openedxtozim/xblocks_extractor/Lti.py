@@ -19,7 +19,7 @@ class Lti:
         #IMPROUVEMENT LTI can be lot of contnt type ? Here pdf, + utiliser le code du formulaire POST html + voir le code du xblock LTI
         url = self.json["lms_web_url"].replace("/jump_to/","/xblock/") + "/handler/preview_handler"
         print(url)
-        content=c.get_page(url).decode('utf-8')
+        content=c.get_page(url)
         soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
         content_url=soup.find('form')
         download(content_url["action"],os.path.join(self.output_path,"content.pdf"),c)
