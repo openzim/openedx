@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}forum container{% endblock %}
+
+{% block title %} Forum {% endblock %}
+
+{% block body %}
+
+<section class="discussion discussion-board page-content-container" id="discussion-container" data-course-id="{{ mooc.course_id }}">
+  <div class="page-content" lang="en">
+    <div class="discussion-body">
+      {% if thread %}
+      <main id="main" class="discussion-column" aria-label="Content" tabindex="-1">
+          <div class="forum-content">
+          {% include "forum_article.html" %}
+          </div>
+      </main>
+      {% endif %}
+      <aside class="forum-nav" role="complementary" aria-label="Liste des discussions">
+        <div class="forum-nav-browse-menu-wrapper" aria-label="Discussion topics list">
+          <ul class="forum-nav-browse-menu" role="listbox" id="discussion_topics_listbox">
+          {% for cat in category %}
+              <li class="forum-nav-browse-menu-item" data-discussion-id='{{ cat }}'>
+                <a onclick="show_forum('{{ cat }}')" > <!--href="{{ cat }}/index.html"-->
+                  <span class="forum-nav-browse-title">
+                    {{ category[cat]["title"] }}
+                  </span>
+                </a>
+                <!--- threads -->
+                  <div class="discussion-thread-list-container" id="{{ cat }}" style="display:none;">
+                    <div class="forum-nav-thread-list-wrapper" id="sort-filter-wrapper" tabindex="-1">
+                      <ul class="forum-nav-thread-list">
+                      {% for thread in thread_by_category[cat] %}
+                        <li data-id="{{ thread["id"] }}" class="forum-nav-thread">
+                          <a href="{{ rooturl }}forum/{{ thread["id"] }}/index.html" class="forum-nav-thread-link">
+                            <div class="forum-nav-thread-wrapper-0">
+                            
+                              <span class="sr">Discussion</span>
+                              {% if thread["data_thread"]["content"]["endorsed_responses"] %}
+                                  <span class="icon fa fa-check-square-o" aria-hidden="true"></span>
+                              {% else %}
+                                {% if thread["thread_type"] == "discussion" %}
+                                  <span class="icon fa fa-comments" aria-hidden="true"></span>
+                                {% else %}
+                                  <span class="icon fa fa-question" aria-hidden="true"></span>
+                                {% endif %}
+                              {% endif %}
+                            </div>
+                            <div class="forum-nav-thread-wrapper-1">
+                              <span class="forum-nav-thread-title">{{ thread["title"] }}</span>
+                              <div class="thread-preview-body">{{ thread["body"] | first_word }} ... </div>
+                            </div>
+                            <div class="forum-nav-thread-wrapper-2">
+                              <span class="forum-nav-thread-votes-count" style="display: none;">
+                                +0
+                                <span class="sr"> votes </span>
+                              </span>
+                              <span class="forum-nav-thread-comments-count" style="display: inline-block;">
+                                  {{ thread["comments_count"] + 1 }}
+                                  <span class="sr">commentaires </span> {# TODO loca #}
+                              </span>
+                            </div>
+                          </a>
+                        </li>
+                      {% endfor %}
+                      </ul>
+                    </div>
+                  </div>
+              </li>
+          {% endfor %}
+          </ul>
+        </div>
+      </aside>
+    <div>
+  </div>
+</section>
+
+
+
+{#
+  <div class="row">
+    <h3> Topics : </h3>
+    <div class="col-md-8">
+  {% for cat in category %}
+    {% if "sub_cat" in category[cat] %}
+      <h4> {{ category[cat]["name"] }} : </h4>
+          {% for sub_cat in category[cat]["sub_cat"] %}
+            <p class="question">    <a href="{{ sub_cat["data-discussion-id"] }}/index.html">{{ sub_cat["title"] }}</a></p>
+          {% endfor %}
+    {% else %}
+        <p class="question"><a href="{{ cat }}/index.html">{{ category[cat]["title"] }}</a></p>
+    {% endif %}
+  {% endfor %}
+  </div>
+</div>
+#}
+{% endblock %}

@@ -3,13 +3,50 @@
 {% block bodyclass %}wiki-list{% endblock %}
 
 {% block title %} Wiki {% endblock %}
-
 {% block body %}
-  <div style="padding:2%">
-    <ul>
-    {% for page in pages %}
-      <li><a href="{{ page["url"]  }}/index.html"> {{ page["title"] }}</a></li>
-    {% endfor %}
-    </ul>
+<div class="container">
+  <div class="wiki-wrapper">
+    <main id="main" aria-label="Content" tabindex="-1">
+      <section class="wiki " id="wiki-content">
+    {#<header class="breadcrumbs-header"> <!-- IMPROUVEMENT header-->
+      <h2 class="sr">Course Wiki</h2>
+      <ul class="breadcrumb pull-left" class="">
+          <li><a href="/courses/course-v1:Microsoft+DEV274x+1T2018a/wiki/">Wiki</a></li>
+          <li><a href="/courses/course-v1:Microsoft+DEV274x+1T2018a/wiki/Microsoft.DEV274x.2T2017/">Microsoft.DEV274x.2T2017</a></li>
+          <li class="active"><a href="/courses/course-v1:Microsoft+DEV274x+1T2018a/wiki/Microsoft.DEV274x.2T2017/can-i-re-submit-end-assignment/">Can i re submit the end of assignment?</a></li>
+      </ul>
+    </header>
+#}
+        <div class="article-wrapper">
+          <article class="main-article" id="main-article">
+            <h3 class="entry-title">{{ wiki_name }}</h3>
+            <p> There are {{ pages | length }} articles in this level.</p> {# TODO loca #}
+            <table class="table table-striped">
+              <tr>
+                <th scope="col">Titre</th> {# TODO loca #}
+                <th scope="col">Last modified</th> {# TODO loca #}
+              </tr>
+              {% for page in pages %}
+              <tr>
+                <td>
+                  <a href="{{ page["url"]  }}/index.html"> {{ page["title"] }}</a>
+                </td>
+                <td>
+                  {{ page["last-modif"] }}
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+
+          </article>
+        </div>
+      </section>
+    </main>
   </div>
+</div>
+
+
+
+
+
 {% endblock %}

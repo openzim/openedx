@@ -1,7 +1,7 @@
 import bs4 as BeautifulSoup
-from openedxtozim.utils import make_dir, jinja, dl_dependencies
 import os
 from slugify import slugify
+from openedxtozim.utils import make_dir, jinja, dl_dependencies
 
 class FreeTextResponse:
     def __init__(self,json,path,rooturl,id,descendants,mooc):

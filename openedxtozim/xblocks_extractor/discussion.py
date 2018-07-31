@@ -1,6 +1,6 @@
-from openedxtozim.utils import make_dir
 import os
 from slugify import slugify
+from openedxtozim.utils import make_dir, jinja
 class Discussion:
     is_video = False
     def __init__(self,json,path,rooturl,id,descendants,mooc):
@@ -14,8 +14,17 @@ class Discussion:
         make_dir(path)
 
     def download(self,c):
-        return
+        self.data=[]
+        if self.mooc.forum_thread != None:
+            for thread in self.mooc.forum_thread:
+                #if "course" in thread["data "]["context"]
+                if "courseware_url" in thread:
+                    if thread["courseware_url"] in self.json["lms_web_url"]:
+                        self.data.append(thread)
+
+
         """
+            #TODO remove when forum fixed
             content=get_page(data["student_view_url"],headers).decode('utf-8')
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             discussion_id=str(soup.find('div', attrs={"class": "discussion-module"})['data-discussion-id'])
@@ -27,6 +36,12 @@ class Discussion:
                     data["discussion"]["discussion_data"]+=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=" + str(i) + "&ajax=1", headers)["discussion_data"]
         """
     def render(self):
-            return "TODO when we support annexe content"
-
+        if self.mooc.forum_thread != None:
+            return jinja(
+                None,
+                "discussion.html",
+                False,
+                threads=self.data,
+                discussion=self
+            )
 

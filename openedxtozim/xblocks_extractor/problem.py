@@ -1,11 +1,11 @@
 import bs4 as BeautifulSoup
-from openedxtozim.utils import make_dir, jinja, dl_dependencies
 import os
 from slugify import slugify
 import logging
 import json
 from uuid import uuid4
 from urllib.parse import urlencode
+from openedxtozim.utils import make_dir, jinja, dl_dependencies
 
 class Problem:
     is_video = False
@@ -49,9 +49,8 @@ class Problem:
             path_answers=os.path.join(self.output_path,"problem_show")
             answers_content={"success": None}
             retry=0
-            while "success" in answers_content and retry < 6: #We use our check to finally get anwers
+            while "success" in answers_content and retry < 1: #We use our check to finally get anwers #TODO 1 -> 6
                 answers_content=c.get_api_json("/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/problem_show")
-#                https://courses.edraak.org/courses/course-v1:Edraak+IoT+2018_T1/xblock/block-v1:Edraak+IoT+2018_T1+type@problem+block@396c833905c34cdeb7c30628a532c528/handler/xmodule_handler/problem_show
                 if "success" in answers_content:
                     """
                     #TODO connection , same as hint ?
@@ -78,15 +77,20 @@ class Problem:
                 self.problem_id=str(uuid4())
 
             #HINT
-            """
-            #TODO
             if self.has_hint:
                 print("Has hint")
                 self.hint = []
                 hint_index=0
-                referer=c.conf["instance_url"] + "/courses/" + self.mooc.course_id + "/?activate_block_id=" + self.json["id"]
+                referer=self.mooc.instance_url + "/courses/" + self.mooc.course_id + "/?activate_block_id=" + self.json["id"]
+                referer=self.json["lms_web_url"] + "/?activate_block_id=" + self.json["id"]
+                print(referer)
+                print(self.json["id"])
                 post_data=urlencode({'hint_index': hint_index, 'input_id': self.json["id"]}).encode('utf-8')
-                get_info=c.get_api_json("/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/hint_button", post_data, referer)
+                print(post_data)
+                url_hint = "/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/hint_button"
+                print(url_hint)
+                get_info=c.get_api_json(url_hint, post_data, referer)
+                print(get_info)
                 if "success" in get_info:
                     self.hint.append(get_info)
                     hint_index+=1
@@ -96,8 +100,9 @@ class Problem:
                         if "success" in get_info:
                             self.hint.append(get_info)
                         hint_index+=1
-            """
+
     def render(self):
+            print(self.output_path)
             return jinja(
                 None,
                 "problem.html",

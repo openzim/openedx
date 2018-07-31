@@ -1,7 +1,6 @@
-#import bs4 as BeautifulSoup
-from openedxtozim.utils import make_dir, jinja
 import os
 from slugify import slugify
+from openedxtozim.utils import make_dir, jinja
 
 class QualtricsSurvey: #Replace by Html
     def __init__(self,json,path,rooturl,id,descendants,mooc):

@@ -1,4 +1,3 @@
-from openedxtozim.utils import create_zims, make_dir, download, dl_dependencies, jinja
 import re
 from urllib.parse import (
     urlencode,
@@ -13,7 +12,9 @@ from slugify import slugify
 from uuid import uuid4
 from distutils.dir_util import copy_tree
 import bs4 as BeautifulSoup
+from openedxtozim.utils import create_zims, make_dir, download, dl_dependencies, jinja
 
+import openedxtozim.annexe as annexe
 
 from openedxtozim.xblocks_extractor.course import Course
 from openedxtozim.xblocks_extractor.chapter import Chapter
@@ -27,9 +28,9 @@ from openedxtozim.xblocks_extractor.discussion import Discussion
 from openedxtozim.xblocks_extractor.FreeTextResponse import FreeTextResponse
 from openedxtozim.xblocks_extractor.Unavailable import Unavailable
 from openedxtozim.xblocks_extractor.Lti import Lti
+from openedxtozim.xblocks_extractor.DragAndDropV2 import DragAndDropV2
 
-BLOCKS_TYPE = { "course": Course, "chapter": Chapter, "sequential": Sequential, "vertical" : Vertical, "video": Video, "libcast_xblock": Libcast_xblock, "html": Html,"problem": Problem, "discussion": Discussion, "qualtricssurvey" : Html , "freetextresponse": FreeTextResponse , "grademebutton": Unavailable, "drag-and-drop-v2" : Unavailable, "lti": Lti, "unavailable": Unavailable}
-#TODO drag and drop
+BLOCKS_TYPE = { "course": Course, "chapter": Chapter, "sequential": Sequential, "vertical" : Vertical, "video": Video, "libcast_xblock": Libcast_xblock, "html": Html,"problem": Problem, "discussion": Discussion, "qualtricssurvey" : Html , "freetextresponse": FreeTextResponse , "grademebutton": Unavailable, "drag-and-drop-v2" : DragAndDropV2, "lti": Lti, "unavailable": Unavailable}
 
 def get_course_id(url, course_page_name, course_prefix, instance_url):
     clean_url=re.match(instance_url+course_prefix+".*"+course_page_name,url)
@@ -50,7 +51,8 @@ class Mooc:
         self.course_url=course_url
         self.convert_in_webm=convert_in_webm
         self.ignore_missing_xblock=ignore_missing_xblock
-        self.course_id=get_course_id(self.course_url, c.conf["course_page_name"], c.conf["course_prefix"], c.conf["instance_url"])
+        self.instance_url=c.conf["instance_url"]
+        self.course_id=get_course_id(self.course_url, c.conf["course_page_name"], c.conf["course_prefix"], self.instance_url)
         logging.info("Get info about course")
         self.info=c.get_api_json("/api/courses/v1/courses/" + self.course_id + "?username="+ c.user)
 
@@ -68,6 +70,9 @@ class Mooc:
         self.top={}
         self.object=[]
         self.no_homepage=False
+        self.wiki=None
+        self.forum_thread=None
+        self.page_annexe=[]
 
     def parser_json(self):
         def make_objects(current_path,current_id, rooturl):
@@ -97,14 +102,8 @@ class Mooc:
         make_objects(self.path+"course/",self.root_id,self.rooturl+"../")
         self.top["course"] = "course/" + self.head.folder_name + "/index.html"
 
-    def download(self,c):
-        logging.info("Get content")
-        for x in self.object:
-            x.download(c)
-
     def annexe(self,c):
         logging.info("Try to get specific page of mooc")
-        self.page_annexe=[]
         content=c.get_page(self.course_url).decode('utf-8')
         soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
         top_bs=soup.find('ol', attrs={"class": "course-material" }) or soup.find('ul', attrs={"class": "course-material" }) or soup.find('ul', attrs={"class": "navbar-nav" }) or soup.find('ol', attrs={"class": "course-tabs"})
@@ -112,17 +111,19 @@ class Mooc:
             for top_elem in top_bs.find_all("li"):
                 top_elem=top_elem.find("a")
                 path=re.sub("/courses/[^/]*/","",top_elem["href"])
-                if "course" in path or "edxnotes" in path or "progress" in path or "info" in path:
+                if path == "course/" or "edxnotes" in path or "progress" in path or "info" in path or "courseware" in path:
                     continue
                 self.top[top_elem.get_text()]= path
                 if "wiki" in path:
-                    print("Wiki unsupported for the moment")
+                    self.wiki, self.wiki_name=annexe.wiki(c,self)
                 elif "forum" in path:
-                    print("Forum unsupported for the moment")
+                    pass #TODO tmp Not working at this time
+                    print(path)
+                    self.forum_thread, self.forum_category = annexe.forum(c,self)
                 else:
                     output_path = os.path.join(self.output_path,path)
                     make_dir(output_path)
-                    page_content=c.get_page(c.conf["instance_url"] + top_elem["href"]).decode('utf-8')
+                    page_content=c.get_page(self.instance_url + top_elem["href"]).decode('utf-8')
                     soup_page=BeautifulSoup.BeautifulSoup(page_content, 'html.parser')
                     just_content = soup_page.find('section', attrs={"class": "container"})
                     if just_content != None :
@@ -130,19 +131,16 @@ class Mooc:
                     else:
                         book=soup_page.find('section', attrs={"class": "book-sidebar"})
                         if book != None:
-                            pdf = book.find_all("a")
-                            html_content='<ul id="booknav">' #TODO css
-                            for url in pdf:
-                                file_name=os.path.basename(urlparse(url["rel"][0]).path)
-                                download(url["rel"][0], os.path.join(output_path,file_name), c.conf["instance_url"])
-                                html_content+='<li><a href="{}" > {} </a></li>'.format(file_name,url.get_text())
-                            html_content+='</ul>'
+                            html_content=annexe.booknav(self,book,url,output_path)
                         else:
-                            logging.warning("Oh it's seems we does not support one type of extra content (in top bar)")
+                            logging.warning("Oh it's seems we does not support one type of extra content (in top bar) :" + path)
                             continue
                     self.page_annexe.append({ "output_path": output_path, "content": html_content,"title" : soup_page.find('title').get_text()})
 
-
+    def download(self,c):
+        logging.info("Get content")
+        for x in self.object:
+            x.download(c)
 
     def render(self):
         self.head.render()
@@ -156,12 +154,20 @@ class Mooc:
                 content=data["content"],
                 rooturl="../../"
             )
+
+        if self.wiki:
+            annexe.render_wiki(self)
+        if self.forum_thread:
+            annexe.render_forum(self)
         copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(self.output_path, 'static'))
 
     def make_welcome_page(self,c):
-        download("https://www.google.com/s2/favicons?domain=" + c.conf["instance_url"] , os.path.join(self.output_path,"favicon.png"),None)
+        print("--IMPORTANT--")
+        dl_dependencies("","/tmp","bla",c,True) #TODO tmp debug format fichier
+        print("-------------")
+        download("https://www.google.com/s2/favicons?domain=" + self.instance_url , os.path.join(self.output_path,"favicon.png"),None)
 
-        #TODO to improuve, add message sur first page of course, not "homepage" (no more homepage). If homepage, add in top. (if top has info => then info = index.html for zim, else first page of mooc ?
+        #IMPROUVEMENT add message sur first page of course, not "homepage" (no more homepage). If homepage, add in top. (if top has info => then info = index.html for zim, else first page of mooc ?
         content=c.get_page(self.course_url).decode('utf-8')
         if not os.path.exists(os.path.join(self.output_path,"home")):
             os.makedirs(os.path.join(self.output_path,"home"))

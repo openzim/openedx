@@ -1,0 +1,21 @@
+<h3 class="problem-title"> {{ DragDrop.content["title"] }} </h3>
+<div class="problem-progress"> {{ DragDrop.content["weighted_max_score"] }} points {% if DragDrop.content["graded"] %} graded {% else %} ungraded {% endif %} </div>
+<div class="problem"><p> {{ DragDrop.content["problem_text"] }} </p></div>
+<div class="drag-container">
+  <div class="ui-drappable">
+    {% for item in DragDrop.content["items"] %}
+      <div class="option fade dragdrop-item" style="{% if DragDrop.content["item_background_color"] %} background-color:{{ DragDrop.content["item_background_color"] }}; {% endif %} {%if DragDrop.content["item_text_color"] %} text-color:{{ DragDrop.content["item_textcolor"] }}; {% endif %} width:{{ item["widthPercent"] }}; ">
+        <div class="item-content">
+          <img src="{{ item["expandedImageURL"] }}" alt="{{ item["imageDescription"] }}"/>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+<div class="target">
+  <div class="target-img-wrapper">
+    <img class="target-img" src="{{ DragDrop.content["target_img_expanded_url"] }}" alt="{{ DragDrop.content["target_img_description"] }}" />
+  </div>
+</div>
+<p> Sorry, you cannot drag and drop item or check answers offline</p>
+

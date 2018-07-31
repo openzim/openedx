@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% block addhead %} <script type="text/javascript" src="{{ rooturl }}static/xblocks.js"></script> {% endblock %}
 
 {% block bodyclass %}vertical{% endblock %}
 
@@ -28,12 +29,10 @@
             <nav class="sequence-list-wrapper" aria-label="Sequence">
               <ol id="sequence-list" role="tablist">
               {% for vertical_ in sequential.descendants %}
-                {#{% if vertical_.id != vertical.id %} TODO #}
-                <li>
+                <li {% if vertical_.id == vertical.id %} class="current_vertical" {% endif %}>
                   <a id="tab_0" tabindex=0 data-id="{{ vertical_.json["id"] }}" data-page-title="{{ vertical_.display_name }}" href="{{ rooturl }}{{ vertical_.path }}/index.html" title="{{ vertical_.display_name }}">
                     <i class="icon fa {{ vertical_.icon_type }}" aria-hidden="true"></i>
                     <p>
-{#    <span class="sr">video</span> {#TODO ok if remove ? #}#}
                       {{ vertical_.display_name }}
                     </p>
                   </a>
@@ -56,6 +55,7 @@
           </div>
           <div id="seq_content">
             <div class="xblock xblock-student_view xblock-student_view-vertical xblock-initialized">
+              <h2 class="hd hd-2 unit-title"> {{ vertical.json["display_name"] }} </h2>
               {% for elem  in vertical_content %}
                 <div class="vert-mod">
                   <div class="vert vert-0">

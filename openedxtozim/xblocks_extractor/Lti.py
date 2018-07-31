@@ -1,7 +1,7 @@
 import bs4 as BeautifulSoup
-from openedxtozim.utils import make_dir, jinja, download
 import os
 from slugify import slugify
+from openedxtozim.utils import make_dir, jinja, download
 
 class Lti:
     def __init__(self,json,path,rooturl,id,descendants,mooc):
@@ -16,7 +16,7 @@ class Lti:
         make_dir(self.output_path)
 
     def download(self, c):
-        #TODO LTI can be lot of contnt type ? Here pdf, + utiliser le code du formulaire POST html + voir le code du xblock LTI
+        #IMPROUVEMENT LTI can be lot of contnt type ? Here pdf, + utiliser le code du formulaire POST html + voir le code du xblock LTI
         url = self.json["lms_web_url"].replace("/jump_to/","/xblock/") + "/handler/preview_handler"
         print(url)
         content=c.get_page(url).decode('utf-8')
