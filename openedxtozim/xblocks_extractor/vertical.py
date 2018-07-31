@@ -1,6 +1,7 @@
-from openedxtozim.utils import make_dir, jinja
 import os
 from slugify import slugify
+from openedxtozim.utils import make_dir, jinja
+
 class Vertical:
     def __init__(self,json,path,rooturl,id,descendants,mooc):
         self.mooc=mooc

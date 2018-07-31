@@ -53,7 +53,6 @@ from docopt import docopt
 import sys
 import os
 import logging
-import mistune #markdown
 
 from openedxtozim.utils import check_missing_binary,jinja_init
 from openedxtozim.connection import Connection
@@ -62,8 +61,6 @@ from openedxtozim.mooc import Mooc
 def run():
     arguments = docopt(__doc__, version='0.1')
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    global MARKDOWN #TODO move to init ?
-    MARKDOWN = mistune.Markdown()
 
     logging.info("Test (missing) bin")
     check_missing_binary(arguments['--nozim'])
@@ -74,8 +71,8 @@ def run():
 
     mooc=Mooc(c,arguments["<course_url>"], arguments["--transcode2webm"], arguments["--ignore-unsupported-xblocks"])
     mooc.parser_json()
-    mooc.download(c)
     mooc.annexe(c)
+    mooc.download(c)
     mooc.render()
     mooc.make_welcome_page(c)
     if not arguments['--nozim']:

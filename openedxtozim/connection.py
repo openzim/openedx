@@ -13,6 +13,7 @@ from urllib.request import (
     Request,
     urlretrieve,
 )
+import requests
 import ssl
 import getpass
 import sys
@@ -39,7 +40,7 @@ class Connection:
         if self.conf == None:
             sys.exit("No configuation found for this instance, please open a issue https://github.com/openzim/openedx/issues")
         #Make headers
-        self.cookiejar = LWPCookieJar()
+        self.cookiejar = LWPCookieJar('lol.cookies')
         opener = build_opener(HTTPCookieProcessor(self.cookiejar))
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         install_opener(opener)
@@ -47,6 +48,7 @@ class Connection:
         for cookie_ in self.cookiejar:
             if cookie_.name == 'csrftoken':
                 cookie = cookie_
+        #self.cookiejar.save()
         self.headers = {
             'User-Agent': 'Mozilla/5.0',
             'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -79,55 +81,17 @@ class Connection:
         return resp
 
     def get_page(self,url):
-        request = Request(url, None, self.headers)
+        h=self.headers
+        h["X-Requested-With"]="" #TODO check if not issues if always X-requested-with = "" (need for forum)
+        request = Request(url, None, h)
         try:
             response = urlopen(request)
         except:
             response = urlopen(request)
         return response.read()
+        #TODO decode('utf-8')
 
-
-    """
-    def get_and_save_specific_pages(self,course_id, output,first_page):
-        content=get_page(self.instance_url + "/courses/" +  course_id,self.headers).decode('utf-8')
-        soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
-        specific_pages=soup.find('ol', attrs={"class": "course-tabs"}).find_all('li')
-        if first_page:
-            link_on_top={ first_page : "Course"}
-        else:
-            link_on_top={}
-        page_to_save={}
-        for page in specific_pages:
-            link=page.find("a")["href"]
-            sub_dir=link.replace("/courses/" + unquote(course_id) + "/","")
-            if "course_wiki" in sub_dir:
-                link_on_top["wiki"]="Wiki"
-            elif "discussion/forum" in sub_dir:
-                link_on_top["forum"]="Discussion"
-            elif "course" not in sub_dir and "edxnotes" not in sub_dir and "progress" not in sub_dir :
-                if page.span:
-                    page.span.clear()
-                link_on_top[sub_dir] = page.text.strip()
-                if not os.path.exists(os.path.join(output,sub_dir)):
-                    os.makedirs(os.path.join(output,sub_dir))
-                page_content=get_page(instance_url + link,headers).decode('utf-8')
-                soup_page=BeautifulSoup.BeautifulSoup(page_content, 'html.parser')
-                good_part_of_page_content=str(soup_page.find('section', attrs={"class": "container"}))
-                html_content=dl_dependencies(good_part_of_page_content,os.path.join(output,sub_dir),sub_dir,c)
-                page_to_save[sub_dir]={}
-                page_to_save[sub_dir]["content"]=html_content
-                page_to_save[sub_dir]["title"]=soup_page.find('title').text
-        #Now we have all link on top
-        for sub_dir in page_to_save:
-                jinja(
-                    os.path.join(output,sub_dir,"index.html"),
-                    "specific_page.html",
-                    False,
-                    title=page_to_save[sub_dir]["title"],
-                    top=link_on_top,
-                    content=page_to_save[sub_dir]["content"],
-                    rooturl="../.."
-                )
-        return link_on_top
-    """
-
+    def get_redirection(self,url):
+        request = Request(url, None, self.headers)
+        response = urlopen(request)
+        return response.geturl()

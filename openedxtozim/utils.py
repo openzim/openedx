@@ -7,6 +7,7 @@ from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from slugify import slugify
 import ssl
+import html
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen,Request
 import urllib.parse
@@ -17,6 +18,9 @@ from hashlib import sha256
 from webvtt import WebVTT
 import youtube_dl
 import re
+import mistune #markdown
+
+MARKDOWN = mistune.Markdown()
 
 def exec_cmd(cmd, timeout=None):
     try:
@@ -91,7 +95,7 @@ def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_p
         return False
 
 def markdown(text):
-    return MARKDOWN(text)[3:-5]
+    return MARKDOWN(text)[3:-5].replace("\n","<br>")
 
 def remove_newline(text):
     return text.replace("\n", "")
@@ -119,10 +123,6 @@ def download(url, output, instance_url,timeout=20,retry=2):
             f.write(output_content)
         return response.headers
     except Exception as e:
-        print("fail dl ")
-        print(url)
-        print(e)
-        print(output)
         if retry >= 0:
             logging.warning("Retry download")
             download(url, output, instance_url,timeout=timeout,retry=retry-1)
@@ -136,9 +136,10 @@ def download_and_convert_subtitles(path,lang_and_url,c):
             try:
                 subtitle=c.get_page(lang_and_url[lang]).decode('utf-8')
                 subtitle=re.sub(r'^0$', '1', str(subtitle), flags=re.M)
+                subtitle=html.unescape(subtitle)
                 with open(path_lang, 'w') as f:
                     f.write(subtitle)
-                if not False: #already_in_vtt: #TODO Find way to know is they are already in vtt or not
+                if not False: #already_in_vtt: #TODO Find way to know is they are already in vtt or not ; maybe try ?
                     webvtt = WebVTT().from_srt(path_lang)
                     webvtt.save()
             except HTTPError as e:
@@ -196,18 +197,11 @@ def jinja(output, template,deflate, **context):
     if output == None:
         return page
     else:
-#        print("Write to {}".format(output))
         with open(output, 'w') as f:
             if deflate:
                 f.write(zlib.compress(page.encode('utf-8')))
             else:
                 f.write(page)
-
-def jinja_return(template, **context):
-    template = ENV.get_template(template)
-    page = template.render(**context)
-    return page
- 
 
 def jinja_init(templates):
     global ENV
@@ -217,10 +211,16 @@ def jinja_init(templates):
             slugify=slugify,
             markdown=markdown,
             remove_newline=remove_newline,
+            first_word=first_word,
         )
     ENV.filters.update(filters)
 
-def dl_dependencies(content, path, folder_name, c):
+def dl_dependencies(content, path, folder_name, c,print_tmp=False):
+    if not hasattr(dl_dependencies, 'c'): #TODO tmp
+        dl_dependencies.c = {}
+    if print_tmp:
+        print(dl_dependencies.c)
+        return
     body = string2html(content)
     imgs = body.xpath('//img')
     for img in imgs:
@@ -234,8 +234,6 @@ def dl_dependencies(content, path, folder_name, c):
                 try:
                     headers=download(src, out,c.conf["instance_url"], timeout=180)
                     type_of_file=get_filetype(headers,out)
-                    # update post's html
-                    resize_one(out,type_of_file,"540")
                     optimize_one(out,type_of_file)
                 except Exception as e:
                     print(e)
@@ -254,8 +252,8 @@ def dl_dependencies(content, path, folder_name, c):
             ext = os.path.splitext(src.split("?")[0])[1]
             filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
             out = os.path.join(path, filename)
-            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF", ".mp4", ".MP4", ".webm", ".WEBM", ".mp3", ".MP3"]: #TODO better solution for extention (black list?) ; TODO make list from moocs
-            #if ext not in ["", ".HTML", ".html", ".PHP", ".php", ".shtml", ".SHTML", ".xhtml", ".XHTML", ".aspx", ".ASPX", ".htm", ".HTM" ]: #black list
+            dl_dependencies.c[ext]=0 #TODO tmp
+            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF", ".mp4", ".MP4", ".webm", ".WEBM", ".mp3", ".MP3", ".zip", ".ZIP", ".TXT", ".txt", ".CSV", ".csv"]: # TODO make list from moocs
                 if not os.path.exists(out):
                     try:
                         download(src, out,c.conf["instance_url"] , timeout=180)
@@ -294,7 +292,33 @@ def dl_dependencies(content, path, folder_name, c):
                     pass
             src = os.path.join(folder_name,filename )
             js.attrib['href'] = src 
-    if imgs or docs or csss or jss:
+    iframes = body.xpath('//iframe')
+    for iframe in iframes:
+        #INPROUVEMENT pdfjs iframe
+        if "src" in iframe.attrib:
+            src = iframe.attrib['src']
+            if "youtube" in src:
+                name=src.split("/")[-1]
+                out_dir=os.path.join(path, name)
+                make_dir(out_dir)
+                out=os.path.join(out_dir,"video.mp4")
+                if not os.path.exists(out):
+                    try:
+                        download_youtube(src, out)
+                    except Exception as e:
+                        print(e)
+                        logging.warning("error with " + src)
+                        pass
+                x = jinja(
+                            None,
+                            "video.html",
+                            False,
+                            format="mp4",
+                            folder_name=name,
+                            subs=[]
+                )
+                iframe.getparent().replace(iframe,string2html(x))
+    if imgs or docs or csss or jss or iframes:
         content = html2string(body, encoding="unicode")
     return content
 
@@ -304,3 +328,5 @@ def make_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
+def first_word(text):
+    return " ".join(text.split(" ")[0:5])

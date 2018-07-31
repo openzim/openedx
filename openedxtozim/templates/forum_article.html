@@ -1,0 +1,62 @@
+<article class="discussion-article" data-id="{{ thread["id"] }}" tabindex="-1">
+  <div class="thread-wrapper">
+    <div class="thread-main-wrapper">
+      <div class="thread-content-wrapper">
+        <div class="discussion-post">
+          <header class="post-header">
+            <div class="post-header-content">
+              <h2 class="post-title">{{ thread["title"] }}</h2>
+              <p class="posted-details"> {% if thread["thread_type"] == "discussion" %} discussion {% else %} question {% endif %} posted at <span class="timeago" title="{{ thread["created_at"] | remove_newline }}">{{ thread["created_at"] | remove_newline }}</span> by <a class="username">{{ thread["username"] }}</a></p> {# TODO loca #}
+            </div>
+          </header>
+          <div class="post-body">
+            <p>
+            {{ thread["body"] }}
+            </p>
+          </div>
+        </div>
+      </div>
+      {% if thread["children"] | length != 0 %}
+      <div class="post-extended-content thread-responses-wrapper">
+        <ol class="responses js-response-list">
+          {% for comment in thread["children"] %}
+          <li class="forum-response">
+            <div class="discussion-response">
+              <header class="response-header">
+                <div class="response-header-content">
+                  <a class="username">{{ comment["username"] }}</a>
+                  {#IMPROUVEMENT               <span class="user-label-staff">(Staff)</span> #}
+                  <p class="posted-details">
+                    <span class="timeago" title="{{ comment["created_at"] | remove_newline }}">{{ comment["created_at"] | remove_newline }}</span>
+                  </p>
+                </div>
+              </header>
+              <div class="response-body">
+                {{ comment["body"] }}
+              </div>
+            </div>
+            {% if comment["children"] %}
+            <ol class="comments">
+              {% for comment_of_comment in comment["children"] %}
+              <li>
+                <div class="discussion-comment">
+                  <div class="response-body">
+                    <p> {{ comment_of_comment["body"] }} </p>
+                  </div>
+                  <p class="posted-details">
+                        Posted <span class="timeago" title="{{ comment_of_comment["created_at"] | remove_newline }}">{{ comment_of_comment["created_at"] | remove_newline }}</span> by <a class="username">{{ comment_of_comment["username"] }}</a> {# TODO loca #}
+                  </p>
+                </div>
+              </li>
+              {% endfor %}
+            </ol>
+            {% endif %}
+          </li>
+        {% endfor %}
+        </ol>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</article>

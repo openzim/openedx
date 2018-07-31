@@ -1,10 +1,27 @@
-@import url("https://fonts.googleapis.com/css?family=Open+Sans:300,400,400i,600,700,");
+
+@font-face {
+  font-family: 'Open Sans';
+  src: url('font/opensans/OpenSans-Regular-webfont.eot');
+  src: url('font/opensans/OpenSans-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+        url('font/opensans/OpenSans-Regular-webfont.woff2') format('woff2'),
+        url('font/opensans/OpenSans-Regular-webfont.woff') format('woff'),
+        url('font/opensans/OpenSans-Regular-webfont.ttf') format('truetype'),
+        url('font/opensans/OpenSans-Regular-webfont.svg#open_sansregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
 * {
   transition: all 0.5s ease 0s;
 }
 
+html{
+  min-height:100%;
+  height:100%;
+}
 
 body{
+/*  background-color:green;*/
   min-height:100%;
   height:100%;
   margin:0;
@@ -12,10 +29,19 @@ body{
   font-style:normal;
   line-height:1em;
   /* color:#5d5e70 */
+  max-width:100%
 
-/* TODO direction:ltr */
 }
-
+html, body {
+    font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 1rem;
+    font-style: normal;
+    line-height: 1em;
+}
+body, h1, h2, h3, h4, h5, h6, p, label {
+    text-align: left;
+    font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
 article, aside, details, figcaption, figure, footer, header, hgroup, nav, section {
     display: block;
 }
@@ -120,7 +146,25 @@ h1 {
     margin-bottom: 30px;
     text-align: center;
 }
-
+h2 {
+    color: #646464;
+    font: normal 1.2em/1.2em Georgia,Cambria,"Times New Roman",Times,serif;
+    font-weight: normal;
+    font-size: 1.2em;
+    line-height: 1.2em;
+    font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+    margin-bottom: 15px;
+}
+video, input {
+  max-width:100%;
+}
+table {
+    table-layout: fixed;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
 .wrapper-course-materiel, .wrapper-preview-menu{
   padding:0;
   box-sizing:border-box;
@@ -201,6 +245,7 @@ ol.course-tabs li a {
     padding: 0 2%;
     box-sizing: border-box;
     margin: 0 auto 0;
+    background-color: #f0f0f0;
 }
 
 div.course-wrapper {
@@ -208,13 +253,15 @@ div.course-wrapper {
 }
 
 .container > div {
-    display: table;
+/*    display: table; TODO test*/
     table-layout: fixed;
     width: 100%;
+/*
     border-radius: 3px;
     border: 1px solid #aaa;
     background: #fff;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+*/
 }
 .course-index {
     transition: all 0.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s;
@@ -261,7 +308,7 @@ div.course-wrapper {
 }
 
 .course-index .accordion .course-navigation .button-chapter .group-heading .icon {
-    position: absolute; /* TODO*/
+    position: absolute;
     left: 20px;
     top: 20px;
     font-size: 0.875em;
@@ -404,6 +451,14 @@ button[disabled], input[disabled] {
     margin: 0 40px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1) inset;
 }
+
+.current_vertical{
+  border-bottom-color: #1ca3a6;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+}
+
+
 .help-tab, .xmodule_display.xmodule_CourseModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_CourseModule .sequence-nav ol li a p, .xmodule_display.xmodule_SequenceModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p, div.timer-main, .view-teams .team-profile .page-content-secondary .member-profile p {
     z-index: 100;
 }
@@ -415,7 +470,7 @@ button[disabled], input[disabled] {
     display: table;
     height: 100%;
     margin: 0;
-    padding: 0 10px;
+/*    padding: 0 10px;*/
     width: 100%;
 }
 .xmodule_display.xmodule_SequenceModule .sequence-nav ol li {
@@ -446,7 +501,7 @@ button[disabled], input[disabled] {
     font-size: 90%;
     color: #0a0a0a;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p { /* Title top bar in black/gray when we are in this vertical TODO*/
+.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p {
     background: #333;
     color: #fff;
     line-height: 1.41575em;
@@ -596,3 +651,501 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
     padding-left: 20px;
 }
 
+.topmobilebar{
+    display:none;
+}
+
+.dragdrop-item {
+    display: inline-block;
+    width: auto;
+    min-width: 4em;
+    max-width: 30%;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    box-sizing: border-box;
+    margin: 5px;
+    text-align: center;
+    background-color: #1d5280;
+    font-size: 14px;
+    color: #fff;
+    opacity: 1;
+    outline-color: #fff;
+    outline-style: none;
+    z-index: 10 !important;
+}
+.target-img {
+    display: table-cell;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+}
+.problem-progress {
+    display: inline-block;
+    color: #5e5e5e;
+    font-size: 0.875em;
+    margin-bottom: 0.5em;
+}
+
+
+
+.wiki-wrapper section.wiki .main-article {
+    float: left;
+    width: 74.57627%;
+    padding: 40px 0 40px 40px;
+    color: #313131;
+    box-sizing: border-box;
+}
+.wiki-wrapper section.wiki.view .main-article h3 {
+/*    margin-top: 40px;*/
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 1.25em;
+}
+.wiki-wrapper section.wiki .entry-title {
+    padding-bottom: 8px;
+    margin-bottom: 22px;
+    margin-top: 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 1.6em;
+    font-weight: bold;
+    color: #313131;
+    text-transform: none;
+    letter-spacing: 0;
+}
+.wiki-wrapper section.wiki .main-article {
+    color: #313131;
+}
+.wiki-wrapper section.wiki .article-functions {
+    float: left;
+    width: 23.72881%;
+/*    padding: 40px 40px;*/
+    padding:47.5px 0px 0px 40px;
+    box-sizing: border-box;
+}
+.wiki-wrapper section.wiki .article-functions .timestamp {
+    margin-top: 15px;
+    padding: 15px 0 0 10px;
+    border-top: 1px solid #ddd;
+}
+.wiki-wrapper section.wiki .article-functions .see-children {
+    padding: 15px 0 0;
+    border-top: 1px solid #ddd;
+    margin-top: 15px;
+}
+.wiki-wrapper section.wiki .table.table-striped {
+    width: 100%;
+    margin-top: 20px;
+}
+.wiki-wrapper section.wiki .table.table-striped th, .wiki-wrapper section.wiki .table.table-striped td {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+    overflow: hidden;
+}
+.wiki-wrapper section.wiki .table.table-striped tr:nth-child(2n) {
+    background: #f8f8f8;
+}
+.page-content-container {
+    border: 1px solid #e7e7e7;
+    background-color: #fff;
+    max-width: 1920px;
+    margin: 0 auto;
+}
+.page-content {
+    padding: 40px;
+}
+.page-content {
+    display: flex;
+}
+.discussion-body, .discussion-module {
+    display: flex;
+    flex-direction: row-reverse;
+}
+.discussion-body, .discussion-module {
+    width: 100%;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+}
+.forum-nav {
+    max-width: 300px;
+    width: 25%;
+}
+.forum-nav-browse-menu-wrapper {
+    border-bottom: 1px solid #d9d9d9;
+    background: #e7e7e7;
+}
+.forum-nav-browse-menu {
+    padding-left: 0;
+    margin: 0;
+    font-size: 14px;
+    overflow-y: scroll;
+    list-style: none;
+    max-height: 600px;
+}
+.forum-nav-browse-menu {
+    font-size: 14px;
+    list-style: none;
+}
+.forum-nav-browse-title {
+    text-align: left;
+    display: block;
+/*    width: 100%;*/
+    border: 0;
+    border-bottom-color: currentcolor;
+    border-bottom-style: none;
+    border-bottom-width: 0px;
+    border-radius: 0;
+    border-bottom: 1px solid #d9d9d9;
+    padding: 10px;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    background-image: none;
+    cursor: pointer;
+}
+.forum-nav-thread-list {
+    padding-left: 0 !important;
+    min-height: 60px;
+/*    max-height: 800px;*/
+    border-bottom: 1px solid #e7e7e7;
+    margin: 0;
+    overflow-y: auto;
+    list-style: none;
+    border-radius: 0 0 3px 3px;
+}
+.forum-nav-thread-list-limit {
+  max-height: 800px;
+}
+.forum-nav-thread {
+    border-bottom: 1px solid #d9d9d9;
+    background-color: #fff;
+    margin-bottom: 0;
+}
+.forum-nav-thread .forum-nav-thread-link {
+    border-left: 3px solid transparent;
+    display: flex;
+    padding: 10px;
+    transition: none;
+    align-items: center;
+    justify-content: space-between;
+    color: #414141;
+}
+.forum-nav-thread-wrapper-0 {
+    margin-right: 4px;
+    align-self: flex-start;
+}
+.forum-nav-thread-wrapper-0, .forum-nav-thread-wrapper-1, .forum-nav-thread-wrapper-2 {
+    display: inline-block;
+    vertical-align: middle;
+}
+.forum-nav-thread-wrapper-1 {
+    margin: 0 5px;
+    max-width: calc(100% - 75px);
+    flex-grow: 1;
+}
+.forum-nav-thread-wrapper-0, .forum-nav-thread-wrapper-1, .forum-nav-thread-wrapper-2 {
+    display: inline-block;
+    vertical-align: middle;
+}
+.forum-nav-thread-title {
+    margin-left: 0;
+    font-size: 14px;
+    display: block;
+}
+.forum-nav-thread-list .thread-preview-body {
+    margin-top: 5px;
+    color: #414141;
+    font-size: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.forum-nav-thread-wrapper-2 {
+    text-align: right;
+    min-width: 40px;
+    white-space: nowrap;
+}
+.forum-nav-thread-votes-count:last-child, .forum-nav-thread-comments-count:last-child {
+    margin-right: 0;
+}
+.forum-nav-thread-comments-count {
+    position: relative;
+    margin-left: 5px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    padding: 2px 4px;
+    min-width: 2em;
+    background-color: #e7e7e7;
+}
+.forum-nav-thread-votes-count, .forum-nav-thread-comments-count {
+    margin-right: 5px;
+    font-size: 12px;
+    display: inline-block;
+    text-align: center;
+    color: #000;
+}
+.discussion-column {
+    margin-left: 20px;
+    min-height: 500px;
+    margin-bottom: 0;
+    width: 75%;
+}
+.discussion-column {
+    flex-grow: 1;
+    margin-bottom: 20px;
+}
+.discussion-body .discussion-article, .discussion-module .discussion-article {
+    position: relative;
+}
+.discussion-post {
+    padding: 0 10px;
+}
+.discussion-post .post-header-content {
+    max-width: calc(100% - 100px);
+}
+.discussion-post .post-header-content .post-title {
+    font-size: 21px;
+    margin-bottom: 5px;
+}
+.discussion-body .discussion-article a, .discussion-module .discussion-article a, .discussion-body .discussion-article p, .discussion-module .discussion-article p {
+    word-wrap: break-word;
+}
+.discussion-article .posted-details {
+    margin: 4px 0;
+    color: #414141;
+}
+.discussion .action-button .action-label, .discussion .actions-dropdown .action-list-item, .view-discussion-home .label, .view-discussion-home .home-description, .view-discussion-home .home-stats .stats-grouping .profile-stat, .discussion-article .posted-details, .discussion-comment .response-body, .discussion-post .post-context, .discussion .post-actions-list, .discussion .response-actions-list, .discussion .comment-actions-list {
+    line-height: 17.76px;
+    font-size: 12px;
+}
+.discussion-response .response-body, .discussion-post .post-body, .discussion .action-button .action-label, .discussion .actions-dropdown .action-list-item, .view-discussion-home .label, .view-discussion-home .home-description, .view-discussion-home .home-stats .stats-grouping .profile-stat, .discussion-article .posted-details, .discussion-comment .response-body, .discussion-post .post-context, .discussion .post-actions-list, .discussion .response-actions-list, .discussion .comment-actions-list {
+    font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+.discussion .post-label, .discussion-article .posted-details, .discussion-post .post-context {
+    font-weight: 300;
+}
+.discussion-article .posted-details .timeago, .discussion-article .posted-details .top-post-status {
+    color: inherit;
+}
+.discussion-article .posted-details .username {
+    display: inline;
+}
+.discussion-article .posted-details .username {
+    font-weight: 600;
+}
+.discussion-body .discussion-article a, .discussion-module .discussion-article a, .discussion-body .discussion-article p, .discussion-module .discussion-article p {
+    word-wrap: break-word;
+}
+.discussion-post .post-body {
+    padding: 10px 0;
+    max-width: calc(100% - 100px);
+}
+.discussion-response .response-body, .discussion-post .post-body {
+    line-height: 20.72px;
+    font-size: 14px;
+}
+.discussion-response .response-body, .discussion-post .post-body, .discussion .action-button .action-label, .discussion .actions-dropdown .action-list-item, .view-discussion-home .label, .view-discussion-home .home-description, .view-discussion-home .home-stats .stats-grouping .profile-stat, .discussion-article .posted-details, .discussion-comment .response-body, .discussion-post .post-context, .discussion .post-actions-list, .discussion .response-actions-list, .discussion .comment-actions-list {
+    font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+.discussion .post-actions-list, .discussion .response-actions-list, .discussion .comment-actions-list, .discussion .actions-dropdown, .discussion .responses, .discussion .comments {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    text-indent: 0;
+}
+.discussion .responses .forum-response {
+    animation: fadeIn 0.3s;
+    position: relative;
+    margin: 20px 0;
+    border: 1px solid #d9d9d9;
+    border-radius: 3px;
+    box-shadow: 0 0 1px rgba(0,0,0,0.2);
+}
+.discussion .post-actions-list li, .discussion .response-actions-list li, .discussion .comment-actions-list li, .discussion .actions-dropdown li, .discussion .responses li, .discussion .comments li, .discussion .post-actions-list dt, .discussion .response-actions-list dt, .discussion .comment-actions-list dt, .discussion .actions-dropdown dt, .discussion .responses dt, .discussion .comments dt, .discussion .post-actions-list dd, .discussion .response-actions-list dd, .discussion .comment-actions-list dd, .discussion .actions-dropdown dd, .discussion .responses dd, .discussion .comments dd {
+    margin: 0;
+    padding: 0;
+}
+.discussion .responses .discussion-response {
+    box-sizing: border-box;
+    -webkit-border-top-left-radius: 3px;
+    -moz-border-topleft-radius: 3px;
+    border-top-left-radius: 3px;
+    -webkit-border-top-right-radius: 3px;
+    -moz-border-topright-radius: 3px;
+    border-top-right-radius: 3px;
+    -webkit-border-bottom-right-radius: 0;
+    -moz-border-bottomright-radius: 0;
+    border-bottom-right-radius: 0;
+    -webkit-border-bottom-left-radius: 0;
+    -moz-border-bottomleft-radius: 0;
+    border-bottom-left-radius: 0;
+    padding: 20px;
+    background-color: #fff;
+}
+.discussion-response {
+    min-height: 100px;
+}
+.discussion-article .response-header {
+    line-height: 1 !important;
+    font-size: 14px !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+.discussion-response .response-header-content {
+    display: inline-block;
+    vertical-align: top;
+    width: flex-grid(11, 12);
+}
+.discussion .user-label-staff, .discussion .user-label-community-ta {
+    color: #414141;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.discussion-response .response-body {
+    padding: 10px 30px 0 0;
+    margin-bottom: 0.2em;
+    font-size: 14px;
+}
+.discussion-response .response-body, .discussion-post .post-body {
+    line-height: 20.72px;
+    font-size: 14px;
+}
+.discussion .comments {
+    -webkit-border-top-left-radius: 0;
+    -moz-border-topleft-radius: 0;
+    border-top-left-radius: 0;
+    -webkit-border-top-right-radius: 0;
+    -moz-border-topright-radius: 0;
+    border-top-right-radius: 0;
+    -webkit-border-bottom-right-radius: 3px;
+    -moz-border-bottomright-radius: 3px;
+    border-bottom-right-radius: 3px;
+    -webkit-border-bottom-left-radius: 3px;
+    -moz-border-bottomleft-radius: 3px;
+    border-bottom-left-radius: 3px;
+    background: #f5f5f5;
+    box-shadow: 0 1px 3px -1px rgba(0,0,0,0.2) inset;
+}
+.discussion-comment .response-body {
+    display: inline-block;
+    margin-bottom: 10px;
+    width: flex-grid(10, 12);
+}
+.discussion .comments > li {
+    border-top: 1px solid #d9d9d9;
+    padding: 10px 20px;
+    position: relative;
+}
+.xblock-student_view-discussion {
+    padding-top: 15px !important;
+}
+.discussion-module {
+    display: block;
+    position: relative;
+    border-radius: 3px;
+}
+.discussion-body, .discussion-module {
+    display: flex;
+    flex-direction: row-reverse;
+}
+.discussion-body, .discussion-module {
+    width: 100%;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+}
+.course-wrapper .course-content .xblock, .course-wrapper .courseware-results-wrapper .xblock {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+.discussion-module .discussion-module-header {
+    float: left;
+    width: 57.62712%;
+    margin-bottom: 15px;
+    margin-left:15px;
+}
+.hd-3 {
+    margin-bottom: 10px;
+    font-size: 1.35em;
+    font-weight: 400;
+    line-height: 1.4em;
+}
+.hd-1, .hd-2, .hd-3, .hd-4, .hd-5, .hd-6, .hd-7, .hd-8 {
+    margin: 0;
+        margin-bottom: 0px;
+    font-weight: 400;
+    font-size: inherit;
+    line-height: inherit;
+    color: #474747;
+}
+.xblock .xblock h2 {
+  font-weight: 600;
+  text-transform: initial;
+}
+.hd-2, .xblock .xblock h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+    line-height: 1.4em;
+}
+.discussion-module .inline-discussion-topic {
+    width: 100%;
+    font-size: 12px;
+}
+.discussion-module .inline-discussion-topic .inline-discussion-topic-title {
+    font-weight: bold;
+}
+.discussion-module .discussion {
+    clear: both;
+}
+.discussion.inline-discussion .inline-threads {
+    border: 1px solid #d9d9d9;
+    border-radius: 3px;
+}
+
+
+
+
+
+
+@media (max-width: 640px) {
+  .course-index, .courseware{
+    display:none;
+  }
+  #course-content{
+    padding:2em 0.5em;
+  }
+  .topmobilebar{
+    width:100%;
+    display: flex;
+    justify-content: space-between;
+    margin:5px 0;
+    font-size: 28px;
+  }
+  #show_pagemobilemenu {
+    padding: 0.3em;
+  }
+  #show_sidemenu{
+    padding: 0.3em;
+  }
+  .course-index{
+    width:100%;
+    position:sticky;
+    z-index:1;
+
+  }
+  ol.course-tabs li {
+    text-align:center;
+    width:100;
+    position:sticky;
+    z-index:1;
+    float:none;
+    padding: 0.3em;
+  }
+
+}
+
+/*
+@media (min-width: 640px) {
+
+}*/
