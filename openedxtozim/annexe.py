@@ -9,7 +9,7 @@ from openedxtozim.utils import make_dir, download, dl_dependencies, jinja, markd
 def forum(c,mooc):
     forum_output=os.path.join(mooc.output_path, "forum")
     make_dir(forum_output)
-    content=c.get_page(mooc.instance_url + "/courses/" +  mooc.course_id + "/discussion/forum").decode('utf-8')
+    content=c.get_page(mooc.instance_url + "/courses/" +  mooc.course_id + "/discussion/forum")
     good_content=BeautifulSoup.BeautifulSoup(content, 'html.parser').find("script", attrs={"id": "thread-list-template"})
     category={}
     if good_content:
@@ -160,7 +160,7 @@ def wiki(c,mooc):
     while page_to_visit:
         url = page_to_visit.pop()
         try:
-            content=c.get_page(url).decode('utf-8')
+            content=c.get_page(url)
         except HTTPError as e:
             if e.code == 404 or e.code == 403:
                 pass

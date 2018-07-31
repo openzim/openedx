@@ -134,7 +134,7 @@ def download_and_convert_subtitles(path,lang_and_url,c):
         path_lang=os.path.join(path,lang + ".vtt")
         if not os.path.exists(path_lang):
             try:
-                subtitle=c.get_page(lang_and_url[lang]).decode('utf-8')
+                subtitle=c.get_page(lang_and_url[lang])
                 subtitle=re.sub(r'^0$', '1', str(subtitle), flags=re.M)
                 subtitle=html.unescape(subtitle)
                 with open(path_lang, 'w') as f:

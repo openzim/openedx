@@ -88,8 +88,7 @@ class Connection:
             response = urlopen(request)
         except:
             response = urlopen(request)
-        return response.read()
-        #TODO decode('utf-8')
+        return response.read().decode('utf-8')
 
     def get_redirection(self,url):
         request = Request(url, None, self.headers)

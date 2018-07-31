@@ -23,7 +23,7 @@ class Video:
         self.subs=[]
         youtube=False
         if "student_view_data" not in self.json:
-            content=c.get_page(self.json["student_view_url"]).decode('utf-8')
+            content=c.get_page(self.json["student_view_url"])
             soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
             url=str(soup.find('video').find('source')["src"])
             subs=soup.find('video').find_all('track')
@@ -43,7 +43,7 @@ class Video:
                 url = self.json["student_view_data"]["encoded_videos"]["youtube"]["url"]
                 youtube=True
             else:
-                content=c.get_page(self.json["student_view_url"]).decode('utf-8')
+                content=c.get_page(self.json["student_view_url"])
                 soup=BeautifulSoup.BeautifulSoup(content, 'html.parser')
                 youtube_json=soup.find('div', attrs={ "id" : re.compile("^video_") })
                 print(youtube_json["data-metadata"])
