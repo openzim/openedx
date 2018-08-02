@@ -1,16 +1,9 @@
-{#          {% if elem["discussion"]["discussion_data"] != [] %}
-            <h1> Discussions </h1>
-            {% for thread in elem["discussion"]["discussion_data"] %}
-                <a href="{{ rooturl}}forum/{{ thread["commentable_id"] }}/{{ thread["id"] }}/index.html">{{ thread["title"] }} by {{ thread["username"] }}</a><br/>
-            {% endfor %}
-          {% endif %}
-#}
 <div class="discussion-module">
   <div class="discussion-module-header">
     <h3 class="hd hd-3 discussion-module-title"> {{ discussion.json["display_name"] }}</h3>
     <div class="inline-discussion-topic">
       <span class="inline-discussion-topic-title">Topic:</span>
-      {{ threads[0]["courseware_title"] }}
+      {{ category_title["title"] }}
     </div>
   </div>
   <section class="discussion inline-discussion">

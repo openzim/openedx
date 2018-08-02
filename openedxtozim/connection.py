@@ -20,6 +20,7 @@ import sys
 import json
 import logging
 import re
+import copy
 
 def get_config(instance):
         configuration = { "courses.edx.org" : { "login_page" : "/login_ajax", "account_page": "/account/settings", "course_page_name": "/course", "course_prefix": "/courses/", "instance_url": "https://courses.edx.org" }, "courses.edraak.org" :  {"login_page" : "/login_ajax", "account_page": "/account/settings", "course_page_name": "/", "course_prefix": "/courses/", "instance_url": "https://courses.edraak.org" } }
@@ -71,17 +72,21 @@ class Connection:
 
     def get_api_json(self,page, post=None, referer=None):
         if referer:
-            tmp_headers = self.headers
+            tmp_headers = copy.deepcopy(self.headers)
             tmp_headers['Referer'] = referer
             request = Request(self.conf["instance_url"] + page, post, tmp_headers)
+            if "hint" in page: #TODO fix it
+                return {}
         else:
             request = Request(self.conf["instance_url"] + page, post, self.headers)
+
         response = urlopen(request)
-        resp = json.loads(response.read().decode('utf-8'))
+        r=response.read().decode('utf-8')
+        resp = json.loads(r)
         return resp
 
     def get_page(self,url):
-        h=self.headers
+        h=copy.deepcopy(self.headers)
         h["X-Requested-With"]="" #TODO check if not issues if always X-requested-with = "" (need for forum)
         request = Request(url, None, h)
         try:

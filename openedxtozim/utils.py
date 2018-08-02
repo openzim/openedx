@@ -193,7 +193,7 @@ def resize_one(path,type,nb_pix):
 
 def jinja(output, template,deflate, **context):
     template = ENV.get_template(template)
-    page = template.render(**context)
+    page = template.render(**context, output_path=output)
     if output == None:
         return page
     else:
@@ -212,8 +212,12 @@ def jinja_init(templates):
             markdown=markdown,
             remove_newline=remove_newline,
             first_word=first_word,
+            clean_top=clean_top,
         )
     ENV.filters.update(filters)
+
+def clean_top(t):
+        return "/".join(t.split("/")[:-1])
 
 def dl_dependencies(content, path, folder_name, c,print_tmp=False):
     if not hasattr(dl_dependencies, 'c'): #TODO tmp

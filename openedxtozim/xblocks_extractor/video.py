@@ -18,9 +18,9 @@ class Video:
         self.folder_name = slugify(json["display_name"])
         self.output_path = os.path.join(self.mooc.output_path,self.path)
         make_dir(self.output_path)
+        self.subs=[]
 
     def download(self, c):
-        self.subs=[]
         youtube=False
         if "student_view_data" not in self.json:
             content=c.get_page(self.json["student_view_url"])
