@@ -4,6 +4,7 @@ import os
 from uuid import uuid4
 import json
 from collections import defaultdict
+import logging
 from openedxtozim.utils import make_dir, download, dl_dependencies, jinja, markdown
 
 def forum(c,mooc):
@@ -33,36 +34,30 @@ def forum(c,mooc):
                 if cat["data-discussion-id"] not in see:
                     category[cat["data-discussion-id"]] = {"title": str(cat.text).replace("\n","")}
     else:
-        print("not find")
-#https://courses.edraak.org/courses/course-v1:Edraak+IoT+2018_T1/discussion/forum/search?ajax=1&page=1&commentable_ids=3be3558ae81f49e0d89898b99712a33c1247fcd2&sort_key=date&sort_order=desc
-#https://courses.edx.org/courses/course-v1:Microsoft+DEV274x+1T2018a/discussion/forum/course/inline?ajax=1&page=1&commentable_ids=course&sort_key=activity&sort_order=desc
+        logging.error("No forum category found")
     threads=[]
-    """
+
     for x in category:
         url="/courses/" + mooc.course_id + "/discussion/forum/" + x + "/inline?ajax=1&page=1&sort_key=activity&sort_order=desc"
-        #url="/courses/" + mooc.course_id + "/discussion/forum/search?ajax=1&page=1&commentable_ids=" + x + "&sort_key=activity&sort_order=desc"
-        #url="/courses/" + "course-v1:Microsoft+DEV274x+1T2018a" + "/discussion/forum/inline/?ajax=1&page=1&sort_key=activity&sort_order=desc"
         data=c.get_api_json(url)
-        threads=data["discussion_data"]
+        d=data["discussion_data"]
+        for thread in d:
+            thread["category_id"] = x
+        threads=d
         for i in range(1,data["num_pages"]):
             url="/courses/" + mooc.course_id + "/discussion/forum/" + x + "/inline?ajax=1&page=" + str(i+1) + "&sort_key=activity&sort_order=desc"
-            #url="/courses/" + mooc.course_id + "/discussion/forum/search?ajax=1&page=" + str(i+1) + "&commentable_ids=" + x + "&sort_key=activity&sort_order=desc"
             data=c.get_api_json(url)
-            threads+=data["discussion_data"]
+            d=data["discussion_data"]
+            for thread in d:
+                thread["category_id"] = x
+            threads+=d
 
-    print(threads)
-    """
-
-    threads= [ {"id": "5ac1976624451a09c7003386", "commentable_id": "course" }]
     for thread in threads:
-        print("We try :"+ thread["id"])
-        url = "/courses/" + mooc.course_id + "/discussion/forum/" + thread["commentable_id"] + "/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=25" #TODO limit here
-        url = "/courses/course-v1:Microsoft+DEV274x+1T2018a/discussion/forum/course/threads/5ac1976624451a09c7003386?ajax=1&resp_skip=0&resp_limit=25"
-        url = "/courses/" + mooc.course_id + "/discussion/forum/" + thread["id"] + "/inline?ajax=1&resp_skip=0&resp_limit=25"
+        url = "/courses/" + mooc.course_id + "/discussion/forum/" + thread["commentable_id"] + "/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100" #TODO limit here
         make_dir(os.path.join(forum_output,thread["commentable_id"]))
         try:
-            thread["data_thread"]=c.get_api_json(url)
-        except: #TODO better
+            thread["data_thread"]=c.get_api_json(url, referer=mooc.instance_url+url.split("?")[0])
+        except:
             try:
                 thread["data_thread"]=c.get_api_json(url)
             except:
@@ -82,13 +77,14 @@ def forum(c,mooc):
                 for children_children in children["children"]:
                     children_children["body"]=dl_dependencies(markdown(children_children["body"]),os.path.join(forum_output,thread["id"]),"",c)
 
-    with open('data_forum_bis.json', 'w') as outfile:
-        json.dump(threads, outfile)
     """
-    f=open('data_forum.json', 'r')
+    with open('data_forum_ter.json', 'w') as outfile:
+        json.dump(threads, outfile)
+    print(threads)
+
+    f=open('data_forum_ter.json', 'r')
     threads=json.loads(f.read())
     """
-    #    headers["X-Requested-With"] = ""
 
     return threads, category
 
@@ -110,29 +106,6 @@ def render_forum(mooc):
             rooturl="../"
     )
     for thread in threads:
-        """
-        #TODO update and remove done plus haut
-        make_dir(os.path.join(forum_output,thread["id"])) #if not done ?
-        if ("endorsed_responses" in thread["data_thread"]["content"] or "non_endorsed_responses" in thread["data_thread"]["content"]) and "children" in thread["data_thread"]["content"]:
-            logging.warning("pb endorsed VS children" + thread["id"])
-        if "children" not in thread["data_thread"]["content"]:
-            thread["data_thread"]["content"]["children"] = []
-        if "endorsed_responses" in thread["data_thread"]["content"]:
-            thread["data_thread"]["content"]["children"] += thread["data_thread"]["content"]["endorsed_responses"]
-        if "non_endorsed_responses" in thread["data_thread"]["content"]:
-            thread["data_thread"]["content"]["children"] += thread["data_thread"]["content"]["non_endorsed_responses"]
-        #Fin todo remove
-        thread["data_thread"]["content"]["body"] = dl_dependencies(markdown(thread["data_thread"]["content"]["body"]),os.path.join(forum_output,thread["id"]),"",c)
-        for children in thread["data_thread"]["content"]["children"]:
-            children["body"]=dl_dependencies(markdown(children["body"]),os.path.join(forum_output,thread["id"]),"",c)
-
-            if "children" in children:
-                for children_children in children["children"]:
-                    children_children["body"]=dl_dependencies(markdown(children_children["body"]),os.path.join(forum_output,thread["id"]),"",c)
-
-
-        #Fin update
-        """
         jinja(
                 os.path.join(forum_output,thread["id"],"index.html"),
                 "forum.html",
@@ -150,12 +123,12 @@ def render_forum(mooc):
 
 def wiki(c,mooc):
     #Get redirection to wiki
-    first_page=c.get_redirection(self.mooc.instance_url + "/courses/" +  mooc.course_id + "/course_wiki")
+    first_page=c.get_redirection(mooc.instance_url + "/courses/" +  mooc.course_id + "/course_wiki")
     page_to_visit=[first_page]
     wiki_data={} #Data from page already visit
     # "[url]" : { "rooturl": , "path": , "text": , "title": , "dir" : , "children": [] }
     #Extract wiki name
-    wiki_name = first_page.replace(self.mooc.instance_url + "/wiki/", "")[:-1]
+    wiki_name = first_page.replace(mooc.instance_url + "/wiki/", "")[:-1]
 
     while page_to_visit:
         url = page_to_visit.pop()
@@ -166,7 +139,7 @@ def wiki(c,mooc):
                 pass
 
         wiki_data[url]={}
-        web_path=os.path.join("wiki", url.replace(self.mooc.instance_url + "/wiki/",""))
+        web_path=os.path.join("wiki", url.replace(mooc.instance_url + "/wiki/",""))
         path=os.path.join(mooc.output_path, web_path)
         make_dir(path)
         wiki_data[url]["path"] = path
@@ -185,12 +158,12 @@ def wiki(c,mooc):
                 if link.has_attr("href") and "/wiki/" in link["href"]:
                     if link not in wiki_data and link not in page_to_visit:
                         if not link["href"][0:4] == "http":
-                            page_to_visit.append(self.mooc.instance_url + link["href"])
+                            page_to_visit.append(mooc.instance_url + link["href"])
                         else:
                             page_to_visit.append(link["href"])
 
                     if not link["href"][0:4] == "http": #Update path in wiki page
-                        link["href"] = rooturl[:-1] + link["href"].replace(self.mooc.instance_url,"") + "/index.html"
+                        link["href"] = rooturl[:-1] + link["href"].replace(mooc.instance_url,"") + "/index.html"
 
             wiki_data[url]["text"] = dl_dependencies(str(text),path,"",c)
             wiki_data[url]["title"] = soup.find("title").text
@@ -202,7 +175,7 @@ def wiki(c,mooc):
         if see_children:
             allpage_url=str(see_children.find("a")["href"])
             wiki_data[url]["dir"] = allpage_url 
-            content=c.get_page(self.mooc.instance_url + allpage_url)
+            content=c.get_page(mooc.instance_url + allpage_url)
             soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
             table=soup.find("table")
             if table != None:
@@ -211,8 +184,8 @@ def wiki(c,mooc):
                         pass
                     else:
                         if link["href"] not in wiki_data and link["href"] not in page_to_visit:
-                            page_to_visit.append(self.mooc.instance_url + link["href"])
-                        wiki_data[url]["children"].append(self.mooc.instance_url + link["href"])
+                            page_to_visit.append(mooc.instance_url + link["href"])
+                        wiki_data[url]["children"].append(mooc.instance_url + link["href"])
     return wiki_data, wiki_name
 
 def render_wiki(mooc):

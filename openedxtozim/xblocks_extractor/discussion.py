@@ -12,36 +12,26 @@ class Discussion:
         self.output_path=self.mooc.output_path
         path = os.path.join(self.output_path,self.path,slugify(json["display_name"]))
         make_dir(path)
+        self.data=[]
+        self.category_title=""
 
     def download(self,c):
-        self.data=[]
-        if self.mooc.forum_thread != None:
+        if self.mooc.forum_thread != None and "topic_id" in self.json["student_view_data"] :
             for thread in self.mooc.forum_thread:
-                #if "course" in thread["data "]["context"]
-                if "courseware_url" in thread:
-                    if thread["courseware_url"] in self.json["lms_web_url"]:
-                        self.data.append(thread)
+                if thread["category_id"] == self.json["student_view_data"]["topic_id"]:
+                    self.data.append(thread)
+            self.category_title=self.mooc.forum_category[self.json["student_view_data"]["topic_id"]]
 
-
-        """
-            #TODO remove when forum fixed
-            content=get_page(data["student_view_url"],headers).decode('utf-8')
-            soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
-            discussion_id=str(soup.find('div', attrs={"class": "discussion-module"})['data-discussion-id'])
-            minimal_discussion=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=1&ajax=1", headers)
-            data["discussion"]={}
-            data["discussion"]["discussion_data"]=minimal_discussion["discussion_data"]
-            if minimal_discussion["num_pages"] != 1:
-                for i in range(2,minimal_discussion["num_pages"]+1):
-                    data["discussion"]["discussion_data"]+=get_api_json(instance_url,"/courses/" + course_id + "/discussion/forum/" + discussion_id + "/inline?page=" + str(i) + "&ajax=1", headers)["discussion_data"]
-        """
     def render(self):
-        if self.mooc.forum_thread != None:
+        if self.category_title != "":
             return jinja(
                 None,
                 "discussion.html",
                 False,
+                category_title=self.category_title,
                 threads=self.data,
                 discussion=self
             )
+        else:
+            return "This discussion is not supported, sorry !"
 

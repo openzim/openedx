@@ -76,7 +76,7 @@ class Problem:
                         self.explanation.append({ "name": "solution_" + qid, "value": json.dumps(answers_content["answers"][qid])})
                 self.problem_id=str(uuid4())
 
-            #HINT
+            #HINT #TODO fix it !
             if self.has_hint:
                 print("Has hint")
                 self.hint = []
