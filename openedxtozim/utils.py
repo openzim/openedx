@@ -168,7 +168,10 @@ def convert_video_to_webm(video_path, video_final_path):
             logging.warning("Error when convert " + video_path + " to webm")
 
 def get_filetype(headers,path):
-    file_type=headers.get_content_type()
+    if headers == None:
+        file_type=os.path.splitext(path.split("?")[0])[1]
+    else:
+        file_type=headers.get_content_type()
     type="none"
     if ("png" in file_type) or ("PNG" in file_type):
         type="png"

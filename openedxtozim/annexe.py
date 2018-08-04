@@ -22,12 +22,10 @@ def forum(c,mooc):
         see=[]
         for cat in all_category:
             if not cat.has_attr("data-discussion-id") and cat.find("a") != None:
-                random_id=str(uuid4())
-                category[random_id]={"name" : cat.find("a").text.replace("\n",""), "sub_cat":[]}
                 bs_sub_cat=cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"});
                 for sub_cat in cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"}):
                     if sub_cat.has_attr("data-discussion-id"):
-                        category[random_id]["sub_cat"].append({"data-discussion-id": sub_cat["data-discussion-id"], "title" :str(sub_cat.text).replace("\n","")})
+                        category[sub_cat["data-discussion-id"]] = {"title" :cat.find("a").text.replace("\n","")}
                         see.append(sub_cat["data-discussion-id"])
         for cat in all_category:
             if cat.has_attr("data-discussion-id"):
@@ -38,25 +36,36 @@ def forum(c,mooc):
     threads=[]
 
     for x in category:
+        make_dir(os.path.join(forum_output,x))
         url="/courses/" + mooc.course_id + "/discussion/forum/" + x + "/inline?ajax=1&page=1&sort_key=activity&sort_order=desc"
         data=c.get_api_json(url)
         d=data["discussion_data"]
-        for thread in d:
+        """
+        for thread in d: #TODO commentable id ?
             thread["category_id"] = x
+        """
         threads=d
         for i in range(1,data["num_pages"]):
             url="/courses/" + mooc.course_id + "/discussion/forum/" + x + "/inline?ajax=1&page=" + str(i+1) + "&sort_key=activity&sort_order=desc"
             data=c.get_api_json(url)
             d=data["discussion_data"]
+            """
             for thread in d:
                 thread["category_id"] = x
+            """
             threads+=d
 
     for thread in threads:
         url = "/courses/" + mooc.course_id + "/discussion/forum/" + thread["commentable_id"] + "/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100" #TODO limit here
-        make_dir(os.path.join(forum_output,thread["commentable_id"]))
+        make_dir(os.path.join(forum_output,thread["id"]))
         try:
             thread["data_thread"]=c.get_api_json(url, referer=mooc.instance_url+url.split("?")[0])
+            """
+            if thread["id"] == "5b1cfba9ab22e0e47f016243" : #TODO debug limit : IoT edraak
+                print("---debug--")
+                print(thread)
+                print("---debug--")
+            """
         except:
             try:
                 thread["data_thread"]=c.get_api_json(url)
@@ -96,6 +105,9 @@ def render_forum(mooc):
     thread_by_category=defaultdict(list)
     for thread in threads: 
         thread_by_category[thread["commentable_id"]].append(thread)
+    print("TODO debug category")
+    for x in thread_by_category:
+        print(x + ": " + str(len(thread_by_category)))
     jinja(
             os.path.join(forum_output,"index.html"),
             "forum.html",
@@ -105,6 +117,7 @@ def render_forum(mooc):
             mooc=mooc,
             rooturl="../"
     )
+    #TODO for threads by categorie missing ?
     for thread in threads:
         jinja(
                 os.path.join(forum_output,thread["id"],"index.html"),

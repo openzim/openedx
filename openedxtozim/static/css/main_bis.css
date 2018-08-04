@@ -1044,10 +1044,11 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
     position: relative;
     border-radius: 3px;
 }
+/*
 .discussion-body, .discussion-module {
     display: flex;
     flex-direction: row-reverse;
-}
+}*/
 .discussion-body, .discussion-module {
     width: 100%;
     border: none;
