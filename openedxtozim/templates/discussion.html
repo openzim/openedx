@@ -14,7 +14,7 @@
           <ul class="forum-nav-thread-list forum-nav-thread-list-limit">
           {% for thread in threads %} {# Except here #}
             <li data-id="{{ thread["id"] }}" class="forum-nav-thread">
-              <a href="{{ rooturl }}forum/{{ thread["id"] }}/index.html" class="forum-nav-thread-link">
+              <a href="{{ rooturl }}/forum/{{ thread["id"] }}/index.html" class="forum-nav-thread-link">
                 <div class="forum-nav-thread-wrapper-0">
                   <span class="sr">Discussion</span>
                   {% if thread["data_thread"]["content"]["endorsed_responses"] %}

@@ -113,13 +113,13 @@ class Mooc:
                 path=re.sub("/courses/[^/]*/","",top_elem["href"])
                 if path == "course/" or "edxnotes" in path or "progress" in path or "info" in path or "courseware" in path:
                     continue
-                self.top[top_elem.get_text()]= path
                 if "wiki" in path:
                     self.wiki, self.wiki_name=annexe.wiki(c,self)
                 elif "forum" in path:
+                    path="/forum"
                     self.forum_thread, self.forum_category = annexe.forum(c,self)
                 else:
-                    output_path = os.path.join(self.output_path,path)
+                    output_path = os.path.join(self.output_path,path) #TODO deal with iframe
                     make_dir(output_path)
                     page_content=c.get_page(self.instance_url + top_elem["href"])
                     soup_page=BeautifulSoup.BeautifulSoup(page_content, 'lxml')
@@ -134,6 +134,7 @@ class Mooc:
                             logging.warning("Oh it's seems we does not support one type of extra content (in top bar) :" + path)
                             continue
                     self.page_annexe.append({ "output_path": output_path, "content": html_content,"title" : soup_page.find('title').get_text()})
+                self.top[top_elem.get_text()]= path
 
     def download(self,c):
         logging.info("Get content")
