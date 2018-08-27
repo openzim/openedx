@@ -1143,7 +1143,22 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
     float:none;
     padding: 0.3em;
   }
-
+  .discussion-post .post-body {
+    padding: 10px 0;
+    max-width: 100%;
+  }
+  .discussion-post .post-header-content{
+    max-width: 100%;
+    width:100%;
+  }
+  .forum-nav {
+    display:none;
+    max-width:100%;
+    width:100%;
+  }
+  .page-content {
+      padding: 8px;
+  }
 }
 
 /*

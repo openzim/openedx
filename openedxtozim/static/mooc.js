@@ -22,6 +22,22 @@ function show_pagemobilemenu(){
     course_content.style.display = 'table-cell';
   }
 }
+
+function show_forum_menu(){
+  var e=document.getElementsByClassName("forum-nav")[0];
+  var forum_content = document.getElementById("main");
+  if(e.style.display == 'none' || e.style.display == '') {
+    e.style.display = 'block';
+    forum_content.style.display = 'none';
+  }else{
+    e.style.display = 'none';
+    forum_content.style.display = 'table-cell';
+  }
+
+
+}
+
+
 function show_forum(threads_id){
   var e = document.getElementById(threads_id);
   if(e.style.display == 'none') {

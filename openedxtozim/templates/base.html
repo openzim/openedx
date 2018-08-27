@@ -47,16 +47,16 @@
 #}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
-  {% if side_menu %}
     <div class="topmobilebar">
-      <a onclick="show_sidemenu()" id="show_sidemenu">
-        <i class="fa fa-bars"></i>
-      </a>
+      {% if side_menu or forum_menu %}
+        <a onclick="{% if side_menu %}show_sidemenu(){% else %}show_forum_menu(){% endif %}" id="show_sidemenu">
+          <i class="fa fa-bars"></i>
+        </a>
+      {% endif %}
       <a onclick="show_pagemobilemenu()" id="show_pagemobilemenu">
         <i class="fa fa-angle-down"></i>
       </a>
     </div>
-  {% endif %}
   <div class="window-wrap">
     <div id="content" class="content-wrapper">
       <nav class="courseware wrapper-course-material" aria-label="Course Material">

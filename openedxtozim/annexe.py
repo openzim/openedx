@@ -95,7 +95,8 @@ def render_forum(mooc):
             category=category,
             thread_by_category=thread_by_category,
             mooc=mooc,
-            rooturl="../"
+            rooturl="../",
+            forum_menu=True
     )
     for thread in threads:
         jinja(
@@ -106,7 +107,8 @@ def render_forum(mooc):
                 category=category,
                 thread_by_category=thread_by_category,
                 mooc=mooc,
-                rooturl="../../../"
+                rooturl="../../../",
+                forum_menu=True
         )
 
 
