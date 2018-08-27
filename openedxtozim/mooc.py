@@ -116,7 +116,7 @@ class Mooc:
                 if "wiki" in path:
                     self.wiki, self.wiki_name=annexe.wiki(c,self)
                 elif "forum" in path:
-                    path="/forum"
+                    path="forum/"
                     self.forum_thread, self.forum_category = annexe.forum(c,self)
                 else:
                     output_path = os.path.join(self.output_path,path) #TODO deal with iframe
