@@ -74,7 +74,6 @@ def run():
     mooc.annexe(c)
     mooc.download(c)
     mooc.render()
-    mooc.make_welcome_page(c)
     if not arguments['--nozim']:
         mooc.zim("eng",arguments["<publisher>"],arguments["--zimpath"],arguments["--nofulltextindex"])
 

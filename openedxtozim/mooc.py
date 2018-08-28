@@ -137,13 +137,33 @@ class Mooc:
                 self.top[top_elem.get_text()]= path
 
     def download(self,c):
+        download("https://www.google.com/s2/favicons?domain=" + self.instance_url , os.path.join(self.output_path,"favicon.png"),None)
+
+        logging.info("Get homepage")
+        content=c.get_page(self.course_url)
+        make_dir(os.path.join(self.output_path,"home"))
+        self.html_homepage=[]
+        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
+        html_content=soup.find('div', attrs={"class": "welcome-message" })
+        if html_content is None:
+            html_content=soup.find_all('div', attrs={"class": re.compile("info-wrapper")})
+            if html_content == [] :
+                self.no_homepage=True
+                return
+            else:
+                for x in range(0,len(html_content)):
+                    article=html_content[x]
+                    article['class']="toggle-visibility-element article-content"
+                    self.html_homepage.append(dl_dependencies(article.prettify(),os.path.join(self.output_path, "home"),"home",c))
+        else:
+                self.html_homepage.append(dl_dependencies(html_content.prettify(),os.path.join(self.output_path, "home"),"home",c))
         logging.info("Get content")
         for x in self.object:
             x.download(c)
 
     def render(self):
-        self.head.render()
-        for data in self.page_annexe:
+        self.head.render() #Render course
+        for data in self.page_annexe: #Render annexe
             jinja(
                 os.path.join(data["output_path"],"index.html"),
                 "specific_page.html",
@@ -158,37 +178,16 @@ class Mooc:
             annexe.render_wiki(self)
         if self.forum_thread:
             annexe.render_forum(self)
+        if not self.no_homepage:
+            jinja( #Render home page
+                os.path.join(self.output_path,"index.html"),
+                "home.html",
+                False,
+                messages=self.html_homepage,
+                mooc=self,
+                render_homepage=True
+            )
         copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(self.output_path, 'static'))
-
-    def make_welcome_page(self,c):
-        download("https://www.google.com/s2/favicons?domain=" + self.instance_url , os.path.join(self.output_path,"favicon.png"),None)
-
-        #IMPROUVEMENT add message sur first page of course, not "homepage" (no more homepage). If homepage, add in top. (if top has info => then info = index.html for zim, else first page of mooc ?
-        content=c.get_page(self.course_url)
-        if not os.path.exists(os.path.join(self.output_path,"home")):
-            os.makedirs(os.path.join(self.output_path,"home"))
-        html_content_offline=[]
-        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
-        html_content=soup.find('div', attrs={"class": "welcome-message" })
-        if html_content is None:
-            html_content=soup.find_all('div', attrs={"class": re.compile("info-wrapper")})
-            if html_content == [] :
-                self.no_homepage=True
-                return
-            else:
-                for x in range(0,len(html_content)):
-                    article=html_content[x]
-                    article['class']="toggle-visibility-element article-content"
-                    html_content_offline.append(dl_dependencies(article.prettify(),os.path.join(self.output_path, "home"),"home",c))
-        else:
-                html_content_offline.append(dl_dependencies(html_content.prettify(),os.path.join(self.output_path, "home"),"home",c))
-        jinja(
-            os.path.join(self.output_path,"index.html"),
-            "home.html",
-            False,
-            messages=html_content_offline,
-            mooc=self
-        )
 
     def zim(self,lang,publisher,zimpath,nofulltextindex):
         logging.info("Create zim")
