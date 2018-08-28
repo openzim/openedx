@@ -21,6 +21,7 @@ class Video:
         self.subs=[]
 
     def download(self, c):
+        subs_lang={}
         youtube=False
         if "student_view_data" not in self.json:
             content=c.get_page(self.json["student_view_url"])
@@ -47,17 +48,20 @@ class Video:
                 soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
                 youtube_json=soup.find('div', attrs={ "id" : re.compile("^video_") })
                 if youtube_json and youtube_json.has_attr("data-metadata"):
+                    print(self.output_path)
                     youtube_json=json.loads(youtube_json["data-metadata"])
                     url="https://www.youtube.com/watch?v=" + youtube_json["streams"].split(":")[-1]
                     youtube=True
-                    #TODO transcript : from youtube ? "transcriptAvailableTranslationsUrl" ou "transcriptTranslationUrl" + ?videoId=
-
+                    if "transcriptTranslationUrl" in youtube_json and "transcriptLanguages" in youtube_json:
+                            for lang in youtube_json["transcriptLanguages"]:
+                                subs_lang[lang] = c.conf["instance_url"] + youtube_json["transcriptTranslationUrl"].replace("__lang__", lang) 
                 else:
                     self.no_video=True
                     logging.error("Cannot get video for {}".format(self.json["lms_web_url"]))
                     logging.error(self.json)
                     return
-            subs_lang = self.json["student_view_data"]["transcripts"]
+            if subs_lang=={}:
+                subs_lang = self.json["student_view_data"]["transcripts"]
 
         if self.mooc.convert_in_webm:
             video_path=os.path.join(self.output_path,"video.webm")
@@ -70,8 +74,8 @@ class Video:
                     download(url, video_path,c)
                 if self.mooc.convert_in_webm:
                     convert_video_to_webm(video_path, video_path)
-        download_and_convert_subtitles(self.output_path,subs_lang,c)
-        self.subs=[ {"file": os.path.join(self.folder_name, lang + ".vtt"), "code": lang } for lang in subs_lang ]
+        real_subtitle=download_and_convert_subtitles(self.output_path,subs_lang,c)
+        self.subs=[ {"file": os.path.join(self.folder_name, lang + ".vtt"), "code": lang } for lang in real_subtitle ]
 
     def render(self):
             return jinja(

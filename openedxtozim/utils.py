@@ -131,6 +131,7 @@ def download(url, output, instance_url,timeout=20,retry=2):
             return False
 
 def download_and_convert_subtitles(path,lang_and_url,c):
+    real_subtitles={}
     for lang in lang_and_url:
         path_lang=os.path.join(path,lang + ".vtt")
         if not os.path.exists(path_lang):
@@ -143,10 +144,14 @@ def download_and_convert_subtitles(path,lang_and_url,c):
                 if not False: #already_in_vtt: #TODO Find way to know is they are already in vtt or not ; maybe try ?
                     webvtt = WebVTT().from_srt(path_lang)
                     webvtt.save()
+                real_subtitles[lang]=lang + ".vtt"
             except HTTPError as e:
                 if e.code == 404 or e.code == 403:
                     logging.error("Fail to get or convert subtitle from {}".format(lang_and_url[lang]))
                     pass
+        else:
+            real_subtitles[lang]=lang + ".vtt"
+    return real_subtitles
 
 def download_youtube(youtube_url, video_path):
     parametre={"outtmpl" : video_path, 'preferredcodec': 'mp4', 'format' : 'mp4'}
