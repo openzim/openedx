@@ -222,12 +222,7 @@ def jinja_init(templates):
 def clean_top(t):
         return "/".join(t.split("/")[:-1])
 
-def dl_dependencies(content, path, folder_name, c,print_tmp=False):
-    if not hasattr(dl_dependencies, 'c'): #TODO tmp
-        dl_dependencies.c = {}
-    if print_tmp:
-        print(dl_dependencies.c)
-        return
+def dl_dependencies(content, path, folder_name,c):
     body = string2html(content)
     imgs = body.xpath('//img')
     for img in imgs:
@@ -259,8 +254,7 @@ def dl_dependencies(content, path, folder_name, c,print_tmp=False):
             ext = os.path.splitext(src.split("?")[0])[1]
             filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
             out = os.path.join(path, filename)
-            dl_dependencies.c[ext]=0 #TODO tmp
-            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF", ".mp4", ".MP4", ".webm", ".WEBM", ".mp3", ".MP3", ".zip", ".ZIP", ".TXT", ".txt", ".CSV", ".csv"]: # TODO make list from moocs
+            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF", ".mp4", ".MP4", ".webm", ".WEBM", ".mp3", ".MP3", ".zip", ".ZIP", ".TXT", ".txt", ".CSV", ".csv"]: #IMPROUVEMENT make list from moocs
                 if not os.path.exists(out):
                     try:
                         download(src, out,c.conf["instance_url"] , timeout=180)

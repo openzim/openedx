@@ -87,7 +87,7 @@ class Connection:
 
     def get_page(self,url):
         h=copy.deepcopy(self.headers)
-        h["X-Requested-With"]="" #TODO check if not issues if always X-requested-with = "" (need for forum)
+        h["X-Requested-With"]=""
         request = Request(url, None, h)
         try:
             response = urlopen(request)

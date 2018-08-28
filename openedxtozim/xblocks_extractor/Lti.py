@@ -16,7 +16,7 @@ class Lti:
         make_dir(self.output_path)
 
     def download(self, c):
-        #IMPROUVEMENT LTI can be lot of contnt type ? Here pdf, + utiliser le code du formulaire POST html + voir le code du xblock LTI
+        #IMPROUVEMENT LTI can be lot of content type ? Here pdf
         url = self.json["lms_web_url"].replace("/jump_to/","/xblock/") + "/handler/preview_handler"
         print(url)
         content=c.get_page(url)
