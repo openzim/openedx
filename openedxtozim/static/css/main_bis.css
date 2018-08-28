@@ -253,7 +253,6 @@ div.course-wrapper {
 }
 
 .container > div {
-/*    display: table; TODO test*/
     table-layout: fixed;
     width: 100%;
 /*

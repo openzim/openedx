@@ -63,7 +63,7 @@
         <div class="course-material">
           <ol class="course-tabs">
             {% for elem_name in mooc.top %}
-                {% if mooc.top[elem_name] | clean_top in output_path %} {# TODO does not always work #}
+                {% if mooc.top[elem_name] | clean_top in output_path %}
                   <li><a class="active" href="{{ rooturl }}{{ mooc.top[elem_name] }}">{{ elem_name }}</a></li>
                 {% else %}
                   <li><a href="{{ rooturl }}{{ mooc.top[elem_name] }}">{{ elem_name }}</a></li>

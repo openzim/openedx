@@ -161,9 +161,6 @@ class Mooc:
         copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(self.output_path, 'static'))
 
     def make_welcome_page(self,c):
-        print("--IMPORTANT--")
-        dl_dependencies("","/tmp","bla",c,True) #TODO tmp debug format fichier
-        print("-------------")
         download("https://www.google.com/s2/favicons?domain=" + self.instance_url , os.path.join(self.output_path,"favicon.png"),None)
 
         #IMPROUVEMENT add message sur first page of course, not "homepage" (no more homepage). If homepage, add in top. (if top has info => then info = index.html for zim, else first page of mooc ?
