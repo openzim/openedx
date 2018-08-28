@@ -601,6 +601,7 @@ nav.sequence-bottom {
     display: flex;
     min-height: 100%;
     flex-direction: column;
+    background-color:#f0f0f0;
 }
 body.view-in-course .info-wrapper {
     max-width: 1180px;
@@ -758,7 +759,6 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
 }
 .discussion-body, .discussion-module {
     display: flex;
-    flex-direction: row-reverse;
 }
 .discussion-body, .discussion-module {
     width: 100%;
@@ -1055,6 +1055,9 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
     background: transparent;
     box-shadow: none;
 }
+.course-wrapper{
+  background-color:#ffffff;
+}
 .course-wrapper .course-content .xblock, .course-wrapper .courseware-results-wrapper .xblock {
     overflow-wrap: break-word;
     word-wrap: break-word;
@@ -1102,6 +1105,14 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
 .discussion.inline-discussion .inline-threads {
     border: 1px solid #d9d9d9;
     border-radius: 3px;
+}
+.list_course{
+  background-color:#ffffff;
+  width:auto;
+  box-sizing: border-box;
+  margin-left:2%;
+  margin-right:2%;
+  max-width: 100%;
 }
 
 

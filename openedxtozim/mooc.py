@@ -100,7 +100,7 @@ class Mooc:
 
         logging.info("Parse json and make folder tree")
         make_objects(self.path+"course/",self.root_id,self.rooturl+"../")
-        self.top["course"] = "course/" + self.head.folder_name + "/index.html"
+        self.top["Course"] = "course/" + self.head.folder_name + "/index.html"
 
     def annexe(self,c):
         logging.info("Try to get specific page of mooc")
