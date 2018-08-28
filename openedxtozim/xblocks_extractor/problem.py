@@ -49,11 +49,11 @@ class Problem:
             path_answers=os.path.join(self.output_path,"problem_show")
             answers_content={"success": None}
             retry=0
-            while "success" in answers_content and retry < 1: #We use our check to finally get anwers #TODO 1 -> 6
+            while "success" in answers_content and retry < 6: #We use our check to finally get anwers
                 answers_content=c.get_api_json("/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/problem_show")
                 if "success" in answers_content:
                     """
-                    #TODO connection , same as hint ?
+                    #IMPROUVEMENT connection , same as hint ?
                     post_data=urlencode({'event_type': "problem_show", "event": { "problem": self.json["id"] }, "page" : self.json["lms_web_url"]}).encode('utf-8')
                     c.get_api_json("/event", post_data)
                     """

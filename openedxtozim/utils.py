@@ -19,6 +19,7 @@ from webvtt import WebVTT
 import youtube_dl
 import re
 import mistune #markdown
+from urllib.parse import unquote
 
 MARKDOWN = mistune.Markdown()
 
@@ -295,7 +296,6 @@ def dl_dependencies(content, path, folder_name,c):
             js.attrib['href'] = src 
     iframes = body.xpath('//iframe')
     for iframe in iframes:
-        #INPROUVEMENT pdfjs iframe
         if "src" in iframe.attrib:
             src = iframe.attrib['src']
             if "youtube" in src:
@@ -319,6 +319,20 @@ def dl_dependencies(content, path, folder_name,c):
                             subs=[]
                 )
                 iframe.getparent().replace(iframe,string2html(x))
+            elif ".pdf" in src:
+                filename_src = src.split("/")[-1]
+                ext = os.path.splitext(filename_src.split("?")[0])[1]
+                filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
+                out = os.path.join(path, filename)
+                print(out)
+                if not os.path.exists(out):
+                    try:
+                        download(unquote(src), out,c.conf["instance_url"], timeout=180)
+                    except :
+                        logging.warning("error with " + src)
+                        pass
+                src = os.path.join(folder_name,filename )
+                iframe.attrib['src'] = src
     if imgs or docs or csss or jss or iframes:
         content = html2string(body, encoding="unicode")
     return content
