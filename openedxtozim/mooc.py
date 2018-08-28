@@ -119,7 +119,7 @@ class Mooc:
                     path="forum/"
                     self.forum_thread, self.forum_category = annexe.forum(c,self)
                 else:
-                    output_path = os.path.join(self.output_path,path) #TODO deal with iframe
+                    output_path = os.path.join(self.output_path,path)
                     make_dir(output_path)
                     page_content=c.get_page(self.instance_url + top_elem["href"])
                     soup_page=BeautifulSoup.BeautifulSoup(page_content, 'lxml')
