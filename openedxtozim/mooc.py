@@ -134,7 +134,7 @@ class Mooc:
                             logging.warning("Oh it's seems we does not support one type of extra content (in top bar) :" + path)
                             continue
                     self.page_annexe.append({ "output_path": output_path, "content": html_content,"title" : soup_page.find('title').get_text()})
-                self.top[top_elem.get_text()]= path
+                self.top[top_elem.get_text()]= path + "/index.html"
 
     def download(self,c):
         download("https://www.google.com/s2/favicons?domain=" + self.instance_url , os.path.join(self.output_path,"favicon.png"),None)

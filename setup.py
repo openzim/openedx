@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
+from pip._internal.req import parse_requirements
 
 setup(
     name='openedx2zim',
@@ -20,7 +20,8 @@ setup(
         'youtube-dl',
         'python-slugify',
         'jinja2',
-        'mistune'
+        'mistune',
+	'requests'
         ],
     zip_safe=False,
     platforms='Linux',

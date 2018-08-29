@@ -10,26 +10,26 @@ function problem_check_answers(problem_id){
         inputs[index].remove();
   }
   var not_available = document.createElement("span");
-  not_available.classList.add("glyphicon");
-  not_available.classList.add("glyphicon-question-sign");
+  not_available.classList.add("fa");
+  not_available.classList.add("fa-question");
   not_available.classList.add("no_answers");
   not_available.title="This answers can't be check";
 
   var valid = document.createElement("span");
-  valid.classList.add("glyphicon");
-  valid.classList.add("glyphicon-ok");
+  valid.classList.add("fa");
+  valid.classList.add("fa-check");
   valid.classList.add("show_answers_valid");
   valid.title="This answers is valid";
 
   var invalid = document.createElement("span");
-  invalid.classList.add("glyphicon");
-  invalid.classList.add("glyphicon-remove");
+  invalid.classList.add("fa");
+  invalid.classList.add("fa-times");
   invalid.classList.add("show_answers_invalid");
   invalid.title="This answers invalid";
 
   var inputs_input = document.getElementById(problem_id).getElementsByTagName('input');
   for (index = 0; index < inputs_input.length; ++index) {
-    if(inputs_input[index].getAttribute('type') == 'checkbox'){
+    if(inputs_input[index].getAttribute('type') == 'checkbox' || inputs_input[index].getAttribute('type') == 'radio'){
       if(inputs_input[index].checked){
         console.log(index);
         if (problem_answers_array[problem_id].indexOf(inputs_input[index].id) > -1){
@@ -53,8 +53,8 @@ function problem_show_answers(problem_id){
   }
 
   var valid = document.createElement("span");
-  valid.classList.add("glyphicon");
-  valid.classList.add("glyphicon-ok");
+  valid.classList.add("fa");
+  valid.classList.add("fa-check");
   valid.classList.add("show_answers_valid");
   valid.title="This answers is valid";
 

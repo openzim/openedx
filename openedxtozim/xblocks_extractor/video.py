@@ -48,7 +48,6 @@ class Video:
                 soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
                 youtube_json=soup.find('div', attrs={ "id" : re.compile("^video_") })
                 if youtube_json and youtube_json.has_attr("data-metadata"):
-                    print(self.output_path)
                     youtube_json=json.loads(youtube_json["data-metadata"])
                     url="https://www.youtube.com/watch?v=" + youtube_json["streams"].split(":")[-1]
                     youtube=True

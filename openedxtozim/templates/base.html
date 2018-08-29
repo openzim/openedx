@@ -9,6 +9,7 @@
     <link href="{{ rooturl }}static/css/main_bis.css" rel="stylesheet" type="text/css" />
     <link href="{{ rooturl }}static/css/font-awesome.css" rel="stylesheet" type="text/css" />
     <link href="{{ rooturl }}static/css/video-js.css" rel="stylesheet" type="text/css">
+	<script src="{{ rooturl }}static/video.js"></script>
     {% block addhead %}{% endblock %}
     <script type="text/javascript" src="{{ rooturl }}static/mooc.js"></script>
     <link rel="icon" type="image/png" href="{{ rooturl }}/favicon.png">
@@ -63,7 +64,7 @@
         <div class="course-material">
           <ol class="course-tabs">
             {% if mooc.no_homepage == False %}
-              <li><a {% if render_homepage %} class="active" {% endif %} href="{{ rooturl }}">Home</a></li>
+              <li><a {% if render_homepage %} class="active" {% endif %} href="{{ rooturl }}/index.html">Home</a></li>
             {% endif %}
             {% for elem_name in mooc.top %}
                 {% if mooc.top[elem_name] | clean_top in output_path %}

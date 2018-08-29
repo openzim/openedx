@@ -412,7 +412,7 @@ input[type="submit"]:disabled, input[type="button"]:disabled, button:disabled, .
 button[disabled], input[disabled] {
     cursor: default;
 }
-.light-button, div.history-controls input[type="submit"], a.light-button, .gray-button, body .xmodule_display.xmodule_CapaModule div.problem .action .save, input[type="reset"], input[type="submit"], input[type="button"], button, .button, form input[type="reset"], form input[type="submit"], form input[type="button"], form button, form .button, .xmodule_display.xmodule_LTIModule div.lti .wrapper-lti-link .lti-link .link_lti_new_window {
+.light-button, div.history-controls input[type="submit"], a.light-button, .gray-button, body .xmodule_display.xmodule_CapaModule div.problem .action .save, input[type="reset"], input[type="submit"], input[type="button"], button:not(.vjs-control), .button, form input[type="reset"], form input[type="submit"], form input[type="button"], form button, form .button, .xmodule_display.xmodule_LTIModule div.lti .wrapper-lti-link .lti-link .link_lti_new_window {
     border: 1px solid #cdcdcd;
     border-radius: 3px;
     box-shadow: inset 0 1px 0 0 #fff;
@@ -1113,7 +1113,16 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
   margin-right:2%;
   max-width: 100%;
 }
+.video-js{
+	max-width:100%;
+}
+.show_answers_invalid{
+  color:red;
+}
 
+.show_answers_valid{
+  color:green;
+}
 
 
 
