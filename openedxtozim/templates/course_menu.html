@@ -5,6 +5,8 @@
 {% block title %}{{ course.display_name }}{% endblock %}
 
 {% block body %}
+{% include "side_menu.html" %}
+{#
 <div class="list_course">
   <ul>
     {% for chapter in course.descendants %}
@@ -30,5 +32,6 @@
     {% endfor %}
   </ul>
 </div>
+#}
 {% endblock %}
 

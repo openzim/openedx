@@ -16,8 +16,8 @@
       <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
         <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.json["id"] }}" data-position="1">
           <div class="sequence-nav">
-              <a href="{{ rooturl }}{{ pred_vertical.path }}/index.html" title="{{ pred_vertical.display_name }}">
               {% if pred_vertical %}
+              <a href="{{ rooturl }}{{ pred_vertical.path }}/index.html" title="{{ pred_vertical.display_name }}">
                 <button class="sequence-nav-button button-previous">
               {% else %}
                 <button class="sequence-nav-button button-previous deactivated">
@@ -25,7 +25,9 @@
                   <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
                   <span class="sr">Previous</span>
                 </button>
+              {% if pred_vertical %}
               </a>
+	      {% endif %}
             <nav class="sequence-list-wrapper" aria-label="Sequence">
               <ol id="sequence-list" role="tablist">
               {% for vertical_ in sequential.descendants %}
@@ -42,8 +44,8 @@
             <div class="left-shadow" style="opacity: 0;"></div>
             <div class="right-shadow" style="opacity: 0;"></div>
             </nav>
-              <a href="{{ rooturl }}{{ next_vertical.path }}/index.html" title="{{ next_vertical.display_name }}">
                 {% if next_vertical %}
+                <a href="{{ rooturl }}{{ next_vertical.path }}/index.html" title="{{ next_vertical.display_name }}">
                   <button class="sequence-nav-button button-next">
                 {% else %}
                   <button class="sequence-nav-button button-next deactivated">
@@ -51,7 +53,9 @@
                   <span class="icon fa fa-chevron-right" aria-hidden="true"></span>
                   <span class="sr">Next</span>
                 </button>
-              </a>
+                {% if next_vertical %}
+                </a>
+		{% endif %}
           </div>
           <div id="seq_content">
             <div class="xblock xblock-student_view xblock-student_view-vertical xblock-initialized">

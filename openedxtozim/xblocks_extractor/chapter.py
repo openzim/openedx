@@ -22,6 +22,7 @@ class Chapter:
             x.download(c)
 
     def render(self,pred_info,next_info):
+        """
         jinja(
             os.path.join(self.output_path,self.path,"index.html"),
             "chapter_menu.html",
@@ -30,6 +31,7 @@ class Chapter:
             rooturl=self.rooturl,
             mooc=self.mooc
         )
+        """
         for x in range(0,len(self.descendants)): 
             if x==0: #We search for previous vertical
                 pred=pred_info

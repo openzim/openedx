@@ -5,6 +5,7 @@ import logging
 import json
 import re
 from openedxtozim.utils import make_dir, jinja,download_and_convert_subtitles, download, download_youtube, convert_video_to_webm
+from urllib.parse import unquote
 
 class Video:
     def __init__(self,json,path,rooturl,id,descendants,mooc):
@@ -37,9 +38,9 @@ class Video:
                         subs_lang[track["srclang"]]=self.mooc.instance_url + track["src"]
         else:
             if "fallback" in self.json["student_view_data"]["encoded_videos"] and "url" in self.json["student_view_data"]["encoded_videos"]["fallback"]:
-                url = self.json["student_view_data"]["encoded_videos"]["fallback"]["url"]
+                url = unquote(self.json["student_view_data"]["encoded_videos"]["fallback"]["url"])
             elif "mobile_low" in self.json["student_view_data"]["encoded_videos"] and "url" in self.json["student_view_data"]["encoded_videos"]["mobile_low"]:
-                url = self.json["student_view_data"]["encoded_videos"]["mobile_low"]["url"]
+                url = unquote(self.json["student_view_data"]["encoded_videos"]["mobile_low"]["url"])
             elif "youtube" in self.json["student_view_data"]["encoded_videos"] and "url" in self.json["student_view_data"]["encoded_videos"]["youtube"]:
                 url = self.json["student_view_data"]["encoded_videos"]["youtube"]["url"]
                 youtube=True

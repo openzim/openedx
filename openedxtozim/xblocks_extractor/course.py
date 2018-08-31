@@ -42,5 +42,6 @@ class Course:
                 False,
                 course=self,
                 rooturl=self.rooturl,
-                mooc=self.mooc
+                mooc=self.mooc,
+                all_side_menu_open=True
             )

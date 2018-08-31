@@ -100,7 +100,6 @@ class Mooc:
 
         logging.info("Parse json and make folder tree")
         make_objects(self.path+"course/",self.root_id,self.rooturl+"../")
-        self.top["Course"] = "course/" + self.head.folder_name + "/index.html"
 
     def annexe(self,c):
         logging.info("Try to get specific page of mooc")
@@ -111,6 +110,11 @@ class Mooc:
             for top_elem in top_bs.find_all("li"):
                 top_elem=top_elem.find("a")
                 path=re.sub("/courses/[^/]*/","",top_elem["href"])
+                if path == "course/" or "courseware" in path:
+                    self.top[top_elem.get_text()] = "course/" + self.head.folder_name + "/index.html"
+                if "info" in path:
+                    name = top_elem.get_text().replace(", current location", "")
+                    self.top[name] = "/index.html" 
                 if path == "course/" or "edxnotes" in path or "progress" in path or "info" in path or "courseware" in path:
                     continue
                 if "wiki" in path:

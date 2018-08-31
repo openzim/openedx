@@ -24,7 +24,7 @@
             <div class="chapter-menu">
           {% for sequential_ in chapter_.descendants %}
             {% if sequential_.descendants|length > 0 %}
-              {% if sequential and sequential_.id == sequential.id %}
+              {% if sequential and (sequential_.id == sequential.id or all_side_menu_open) %}
                 <div class="menu-item active">
                   <a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >
                     <p>

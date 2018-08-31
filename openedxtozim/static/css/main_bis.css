@@ -412,7 +412,7 @@ input[type="submit"]:disabled, input[type="button"]:disabled, button:disabled, .
 button[disabled], input[disabled] {
     cursor: default;
 }
-.light-button, div.history-controls input[type="submit"], a.light-button, .gray-button, body .xmodule_display.xmodule_CapaModule div.problem .action .save, input[type="reset"], input[type="submit"], input[type="button"], button:not(.vjs-control), .button, form input[type="reset"], form input[type="submit"], form input[type="button"], form button, form .button, .xmodule_display.xmodule_LTIModule div.lti .wrapper-lti-link .lti-link .link_lti_new_window {
+.light-button, div.history-controls input[type="submit"], a.light-button, .gray-button, body .xmodule_display.xmodule_CapaModule div.problem .action .save, input[type="reset"], input[type="submit"], input[type="button"], button:not(.vjs-control):not(.vjs-button):not(.vjs-big-play-button), .button, form input[type="reset"], form input[type="submit"], form input[type="button"], form button, form .button, .xmodule_display.xmodule_LTIModule div.lti .wrapper-lti-link .lti-link .link_lti_new_window {
     border: 1px solid #cdcdcd;
     border-radius: 3px;
     box-shadow: inset 0 1px 0 0 #fff;
@@ -1123,8 +1123,41 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
 .show_answers_valid{
   color:green;
 }
-
-
+.xmodule_display.xmodule_CapaModule div.problem .choicegroup label:hover, .xmodule_display.xmodule_CapaModule div.problem .choicetextgroup label:hover {
+    border: 2px solid #0078b0;
+}
+.xmodule_display.xmodule_CapaModule div.problem .choicegroup label, .xmodule_display.xmodule_CapaModule div.problem .choicetextgroup label {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    display: inline-block;
+    clear: both;
+    margin-bottom: 10px;
+    border: 2px solid #e3e3e3;
+    border-radius: 3px;
+    padding: 10px;
+    width: 100%;
+}
+form.choicegroup label, .xmodule_display.xmodule_CapaModule div.problem form.choicetextgroup label, .xmodule_display.xmodule_ConditionalModule div.problem form.choicetextgroup label {
+    clear: both;
+    float: left;
+}
+label {
+    cursor: pointer;
+}
+label {
+    color: #3c3c3c;
+    font: italic 300 1rem/1.6rem "Droid Arabic Naskh","Open Sans",sans-serif;
+        font-style: italic;
+        font-weight: 300;
+        font-family: "Droid Arabic Naskh", "Open Sans", sans-serif;
+    margin-bottom: 5px;
+    text-shadow: 0 1px rgba(255,255,255,0.4);
+    -webkit-font-smoothing: antialiased;
+}
+fieldset{
+    border:none;
+}
 
 
 

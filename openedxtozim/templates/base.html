@@ -63,11 +63,8 @@
       <nav class="courseware wrapper-course-material" aria-label="Course Material">
         <div class="course-material">
           <ol class="course-tabs">
-            {% if mooc.no_homepage == False %}
-              <li><a {% if render_homepage %} class="active" {% endif %} href="{{ rooturl }}/index.html">Home</a></li>
-            {% endif %}
             {% for elem_name in mooc.top %}
-                {% if mooc.top[elem_name] | clean_top in output_path %}
+                {% if (mooc.top[elem_name] != "/index.html" and mooc.top[elem_name] | clean_top in output_path) or (mooc.top[elem_name] == "/index.html" and render_homepage) %}
                   <li><a class="active" href="{{ rooturl }}{{ mooc.top[elem_name] }}">{{ elem_name }}</a></li>
                 {% else %}
                   <li><a href="{{ rooturl }}{{ mooc.top[elem_name] }}">{{ elem_name }}</a></li>
