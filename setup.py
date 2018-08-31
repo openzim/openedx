@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
-from pip._internal.req import parse_requirements
+#from pip._internal.req import parse_requirements
+from pip.req import parse_requirements
 
 setup(
     name='openedx2zim',

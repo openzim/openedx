@@ -5,9 +5,12 @@ RUN apt-get update
 RUN apt-get install -y advancecomp
 RUN apt-get install -y python-pip
 RUN apt-get install -y python-dev
+RUN apt-get install -y python3-pip
+RUN apt-get install -y python3-dev
 RUN apt-get install -y imagemagick
 RUN apt-get install -y ffmpeg
 RUN apt-get install -y git #Temp
+RUN apt-get install -y libxml2  libxslt1-dev
 
 # Install jpegoptim
 RUN apt-get install -y libjpeg-dev
@@ -33,8 +36,7 @@ RUN cd gifsicle-1.88 && make all install
 RUN locale-gen "en_US.UTF-8"
 #RUN pip install openedx2zim
 RUN git clone https://github.com/openzim/openedx/
-RUN pip3 install setuptools
-RUN cd openedx && git checkout summer2018 && python3 setup.py install
+RUN cd openedx && git checkout summer2018 && sed -i "s/_internal.//" setup.py && python3 setup.py install
 
 
 # Boot commands
