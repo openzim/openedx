@@ -12,7 +12,11 @@ setup(
     url='http://github.com/kiwix/openedx',
     keywords="kiwix zim openedx edx offline",
     license="GPL",
+    #packages=find_packages('.'),
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
+    package_dir={'openedxtozim': 'openedxtozim'},
+    zip_safe=False,
+    include_package_data=True,
     install_requires=[
         'docopt',
         'bs4',
@@ -22,11 +26,9 @@ setup(
         'python-slugify',
         'jinja2',
         'mistune',
-	'requests'
+        'requests'
         ],
-    zip_safe=False,
     platforms='Linux',
-    include_package_data=True,
     scripts=['openedx2zim.py'],
     classifiers=[
         'Development Status :: 4 - Beta',

@@ -30,6 +30,22 @@
                 <div class="forum-nav-thread-wrapper-1">
                   <span class="forum-nav-thread-title">{{ thread["title"] }}</span>
                   <div class="thread-preview-body">{{ thread["body"] | first_word }} ... </div>
+		      {% if thread["pinned"] or thread["user_id"] in staff_user %}
+		      <ul class="forum-nav-thread-labels">
+			{% if thread["pinned"] %}
+				<li class="post-label-pinned">
+				    <i class="icon fa fa-thumb-tack"></i>
+				    Pinned
+				</li>
+			{% endif %}
+			{% if thread["user_id"] in staff_user %}
+				<li class="post-label-by-staff">
+				    <i class="icon fa fa-user"></i>
+				    By: Staff
+				</li>
+			{% endif %}
+		    </ul>
+		    {% endif %}
                 </div>
                 <div class="forum-nav-thread-wrapper-2">
                   <span class="forum-nav-thread-votes-count" style="display: none;">

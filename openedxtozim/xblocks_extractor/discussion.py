@@ -27,7 +27,7 @@ class Discussion:
                 discussion_id=discussion_block["data-discussion-id"]
                 for thread in self.mooc.forum_thread:
 
-#REMOVE? Not so sure                    if thread["category_id"] == discussion_id :
+#TODO REMOVE? Not so sure                    if thread["category_id"] == discussion_id :
                     if thread["commentable_id"] == discussion_id :
                         self.data.append(thread)
 #                print(self.mooc.forum_category)
@@ -42,6 +42,7 @@ class Discussion:
                 category_title=self.category_title,
                 threads=self.data,
                 discussion=self,
+                staff_user=self.mooc.staff_user_forum,
                 rooturl="/".join(self.rooturl.split("/")[:-1]) #rooturl - 1 folder
             )
         else:

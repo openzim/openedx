@@ -1166,7 +1166,47 @@ label:hover {
 fieldset{
     border:none;
 }
-
+.forum-nav-thread-list, .forum-nav-thread-labels {
+    margin: 0;
+    padding-left: 0;
+}
+.post-label-pinned {
+    font-size: 9px;
+    line-height: 19px;
+    display: inline-block;
+    margin-top: 5px;
+    border: 1px solid;
+        border-top-color: currentcolor;
+        border-right-color: currentcolor;
+        border-bottom-color: currentcolor;
+        border-left-color: currentcolor;
+    border-radius: 3px;
+    padding: 0 6px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-color: #b62567;
+    color: #b62567;
+}
+.post-label-by-staff:last-child {
+    margin-left: 0;
+}
+.post-label-by-staff{
+    font-size: 9px;
+    line-height: 19px;
+    display: inline-block;
+    margin-top: 5px;
+    border: 1px solid;
+        border-top-color: currentcolor;
+        border-right-color: currentcolor;
+        border-bottom-color: currentcolor;
+        border-left-color: currentcolor;
+    border-radius: 3px;
+    padding: 0 6px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-color: #0078b0;
+    color: #0078b0;
+}
 
 
 @media (max-width: 640px) {

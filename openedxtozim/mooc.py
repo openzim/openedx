@@ -121,7 +121,7 @@ class Mooc:
                     self.wiki, self.wiki_name=annexe.wiki(c,self)
                 elif "forum" in path:
                     path="forum/"
-                    self.forum_thread, self.forum_category = annexe.forum(c,self)
+                    self.forum_thread, self.forum_category, self.staff_user_forum = annexe.forum(c,self)
                 else:
                     output_path = os.path.join(self.output_path,path)
                     make_dir(output_path)

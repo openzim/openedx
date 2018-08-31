@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 import bs4 as BeautifulSoup
 import os
+import re
 from uuid import uuid4
 import json
 from collections import defaultdict
@@ -35,6 +36,20 @@ def forum(c,mooc):
         logging.error("No forum category found")
     threads=[]
 
+    #Search for Staff user :
+    json_user={}
+    section_user = BeautifulSoup.BeautifulSoup(content, 'lxml').find("section", attrs={"id": "discussion-container"})
+    if section_user and section_user.has_attr("data-roles"):
+        json_user = json.loads(section_user["data-roles"])
+    else:
+        section_user = re.search("roles: [^\n]*", content)
+        if section_user: #TODO check ok in this case
+            json_user=json.loads(re.sub(r"roles: (.*),", r'\1', section_user.group()))
+    staff_user = []
+    for x in json_user:
+        staff_user += [ str(y) for y in json_user[x]]
+
+    #Search category
     for x in category:
         make_dir(os.path.join(forum_output,x))
         url="/courses/" + mooc.course_id + "/discussion/forum/" + x + "/inline?ajax=1&page=1&sort_key=activity&sort_order=desc"
@@ -46,6 +61,8 @@ def forum(c,mooc):
             data=c.get_api_json(url)
             d=data["discussion_data"]
             threads+=d
+    print(threads)
+    sys.exit(1)
 
     for thread in threads:
         url = "/courses/" + mooc.course_id + "/discussion/forum/" + thread["commentable_id"] + "/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100"
@@ -78,10 +95,11 @@ def forum(c,mooc):
                 for children_children in children["children"]:
                     children_children["body"]=dl_dependencies(markdown(children_children["body"]),os.path.join(forum_output,thread["id"]),"",c)
 
-    return threads, category
+    return threads, category, staff_user
 
 def render_forum(mooc):
     threads=mooc.forum_thread
+    staff_user=mooc.staff_user_forum
     forum_output=os.path.join(mooc.output_path, "forum")
     category=mooc.forum_category
 
@@ -94,6 +112,7 @@ def render_forum(mooc):
             False,
             category=category,
             thread_by_category=thread_by_category,
+            staff_user=staff_user,
             mooc=mooc,
             rooturl="../",
             forum_menu=True
@@ -106,6 +125,7 @@ def render_forum(mooc):
                 thread=thread["data_thread"]["content"],
                 category=category,
                 thread_by_category=thread_by_category,
+		staff_user=staff_user,
                 mooc=mooc,
                 rooturl="../../../",
                 forum_menu=True
