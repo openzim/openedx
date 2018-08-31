@@ -4,7 +4,7 @@
     {% for chapter_ in mooc.head.descendants %}
       {% if chapter_.descendants|length > 0 %}
 <!--        <li>-->
-          {% if chapter and chapter_.id == chapter.id %}
+          {% if chapter and chapter_.id == chapter.id  or all_side_menu_open %}
             <a class="button-chapter chapter active" role="button" aria-expanded="true" onclick='toggle_visibility_submenu(this)'>
               <span class="group-heading active" aria-label="{{ chapter_.display_name }}">
                 <span class="icon fa fa-caret-down" aria-hidden="true"></span>
@@ -24,7 +24,7 @@
             <div class="chapter-menu">
           {% for sequential_ in chapter_.descendants %}
             {% if sequential_.descendants|length > 0 %}
-              {% if sequential and (sequential_.id == sequential.id or all_side_menu_open) %}
+              {% if sequential and sequential_.id == sequential.id %}
                 <div class="menu-item active">
                   <a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >
                     <p>

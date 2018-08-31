@@ -1143,17 +1143,25 @@ form.choicegroup label, .xmodule_display.xmodule_CapaModule div.problem form.cho
     float: left;
 }
 label {
-    cursor: pointer;
-}
-label {
-    color: #3c3c3c;
-    font: italic 300 1rem/1.6rem "Droid Arabic Naskh","Open Sans",sans-serif;
+	cursor: pointer;
+	color: #3c3c3c;
+	font: italic 300 1rem/1.6rem "Droid Arabic Naskh","Open Sans",sans-serif;
         font-style: italic;
         font-weight: 300;
         font-family: "Droid Arabic Naskh", "Open Sans", sans-serif;
-    margin-bottom: 5px;
-    text-shadow: 0 1px rgba(255,255,255,0.4);
-    -webkit-font-smoothing: antialiased;
+	margin-bottom: 5px;
+	text-shadow: 0 1px rgba(255,255,255,0.4);
+	box-sizing: border-box;
+	display: inline-block;
+	clear: both;
+	margin-bottom: 10px;
+	border: 2px solid #e3e3e3;
+	border-radius: 3px;
+	padding: 10px;
+	width: 100%;
+}
+label:hover {
+    border: 2px solid #1ca3a6;
 }
 fieldset{
     border:none;

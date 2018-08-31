@@ -33,6 +33,7 @@ RUN cd gifsicle-1.88 && make all install
 RUN locale-gen "en_US.UTF-8"
 #RUN pip install openedx2zim
 RUN git clone https://github.com/openzim/openedx/
+RUN pip3 install setuptools
 RUN cd openedx && git checkout summer2018 && python3 setup.py install
 
 

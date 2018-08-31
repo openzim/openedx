@@ -7,6 +7,7 @@ function problem_check_answers(problem_id){
   inputs_noans = Array.prototype.slice.call(document.getElementById(problem_id).getElementsByClassName("no_answers"));
   inputs = inputs_valid.concat(inputs_invalid, inputs_noans);
   for (index = 0; index < inputs.length; ++index) {
+	inputs[index].parentNode.style.border = "2px solid #e3e3e3";
         inputs[index].remove();
   }
   var not_available = document.createElement("span");
@@ -34,8 +35,10 @@ function problem_check_answers(problem_id){
         console.log(index);
         if (problem_answers_array[problem_id].indexOf(inputs_input[index].id) > -1){
           inputs_input[index].parentNode.appendChild(valid.cloneNode(true));
+          inputs_input[index].parentNode.style.border = "2px solid green";
         }else{
           inputs_input[index].parentNode.appendChild(invalid.cloneNode(true));
+          inputs_input[index].parentNode.style.border = "2px solid red";
         }
       }
     }else{
@@ -49,6 +52,7 @@ function problem_show_answers(problem_id){
   inputs_invalid = Array.prototype.slice.call(document.getElementById(problem_id).getElementsByClassName("show_answers_invalid"));
   inputs = inputs_valid.concat(inputs_invalid);
   for (index = 0; index < inputs.length; ++index) {
+	inputs[index].parentNode.style.border = "2px solid #e3e3e3";
         inputs[index].remove();
   }
 
@@ -62,6 +66,7 @@ function problem_show_answers(problem_id){
 
       try{
         document.getElementById(item).parentNode.appendChild(valid.cloneNode(true));
+        document.getElementById(item).parentNode.style.border = "2px solid green";
       } catch(e) {}
     }
   );
