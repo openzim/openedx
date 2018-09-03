@@ -8,6 +8,7 @@ from urllib.parse import (
 import json
 import logging
 import os
+import sys
 from slugify import slugify
 from uuid import uuid4
 from distutils.dir_util import copy_tree
@@ -90,7 +91,9 @@ class Mooc:
             else:
                 if not self.ignore_missing_xblock:
                     logging.error("Some part of your course are not supported by openedx2zim : {} \n You should open an issue at https://github.com/openzim/openedx/issues (with this message and Mooc URL, you can ignore this with --ignore-unsupported-xblocks".format(current_json["type"]))
+                    sys.exit(1)
                 else:
+                    print(current_json["student_view_url"])
                     obj = BLOCKS_TYPE["unavailable"](current_json,path,rooturl,random_id,descendants,self)
 
             if current_json["type"] == "course":
@@ -133,7 +136,7 @@ class Mooc:
                     else:
                         book=soup_page.find('section', attrs={"class": "book-sidebar"})
                         if book != None:
-                            html_content=annexe.booknav(self,book,url,output_path)
+                            html_content=annexe.booknav(self,book,output_path)
                         else:
                             logging.warning("Oh it's seems we does not support one type of extra content (in top bar) :" + path)
                             continue

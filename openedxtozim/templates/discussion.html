@@ -30,6 +30,7 @@
                 <div class="forum-nav-thread-wrapper-1">
                   <span class="forum-nav-thread-title">{{ thread["title"] }}</span>
                   <div class="thread-preview-body">{{ thread["body"] | first_word }} ... </div>
+                  <div class="thread-preview-body">Posted by {{ thread["username"] }} </div>
 		      {% if thread["pinned"] or thread["user_id"] in staff_user %}
 		      <ul class="forum-nav-thread-labels">
 			{% if thread["pinned"] %}

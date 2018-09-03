@@ -996,9 +996,20 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
     width: flex-grid(11, 12);
 }
 .discussion .user-label-staff, .discussion .user-label-community-ta {
-    color: #414141;
+/*    color: #414141;*/
     font-size: 12px;
     white-space: nowrap;
+}
+.user-label-staff {
+    font-size: 9px;
+    vertical-align: middle;
+    margin-left: 5px;
+    border-radius: 2px;
+    padding: 0 4px;
+    background: #0078b0;
+    font-style: normal;
+    text-transform: uppercase;
+    color: white;
 }
 .discussion-response .response-body {
     padding: 10px 30px 0 0;
@@ -1207,7 +1218,13 @@ fieldset{
     border-color: #0078b0;
     color: #0078b0;
 }
-
+.handouts-header {
+    text-align: left;
+    margin-bottom: 0;
+    padding: 12px 26px 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
 
 @media (max-width: 640px) {
   .course-index, .courseware{

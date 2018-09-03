@@ -4,7 +4,7 @@ import os
 import re
 from uuid import uuid4
 import json
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import logging
 from openedxtozim.utils import make_dir, download, dl_dependencies, jinja, markdown
 
@@ -13,25 +13,16 @@ def forum(c,mooc):
     make_dir(forum_output)
     content=c.get_page(mooc.instance_url + "/courses/" +  mooc.course_id + "/discussion/forum")
     good_content=BeautifulSoup.BeautifulSoup(content, 'lxml').find("script", attrs={"id": "thread-list-template"})
-    category={}
+    category=OrderedDict()
     if good_content:
-        soup=BeautifulSoup.BeautifulSoup(good_content.text, 'lxml')
+        soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
-        if len(all_category) == 0:
-            soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
-            all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
-        see=[]
         for cat in all_category:
-            if not cat.has_attr("data-discussion-id") and cat.find("a") != None:
-                bs_sub_cat=cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"});
-                for sub_cat in cat.find_all("li", attrs={"class": "forum-nav-browse-menu-item"}):
-                    if sub_cat.has_attr("data-discussion-id"):
-                        category[sub_cat["data-discussion-id"]] = {"title" :cat.find("a").text.replace("\n","")}
-                        see.append(sub_cat["data-discussion-id"])
-        for cat in all_category:
-            if cat.has_attr("data-discussion-id"):
-                if cat["data-discussion-id"] not in see:
-                    category[cat["data-discussion-id"]] = {"title": str(cat.text).replace("\n","")}
+            if not cat.has_attr("data-discussion-id"): #and cat.find("a") != None:
+                category[str(uuid4())] = { "title" : cat.find("span", attrs={"class": "forum-nav-browse-title"}).text, "catego_with_sub_catego" : True}
+            elif cat.has_attr("data-discussion-id"):
+                category[cat["data-discussion-id"]] = {"title": str(cat.text).replace("\n","")}
+
     else:
         logging.error("No forum category found")
     threads=[]
@@ -61,8 +52,6 @@ def forum(c,mooc):
             data=c.get_api_json(url)
             d=data["discussion_data"]
             threads+=d
-    print(threads)
-    sys.exit(1)
 
     for thread in threads:
         url = "/courses/" + mooc.course_id + "/discussion/forum/" + thread["commentable_id"] + "/threads/" + thread["id"] + "?ajax=1&resp_skip=0&resp_limit=100"
@@ -232,7 +221,7 @@ def render_wiki(mooc):
                 mooc=mooc,
                 rooturl=wiki_data[page]["rooturl"] + "../"
             )
-def booknav(mooc, book, url, output_path):
+def booknav(mooc, book, output_path):
     #IMPROUVEMENT pdf viewer
     pdf = book.find_all("a")
     html_content='<ul id="booknav">'

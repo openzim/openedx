@@ -229,7 +229,7 @@ def clean_top(t):
         return "/".join(t.split("/")[:-1])
 
 def dl_dependencies(content, path, folder_name,c):
-    body = string2html(content)
+    body = string2html(str(content))
     imgs = body.xpath('//img')
     for img in imgs:
         if "src" in img.attrib:

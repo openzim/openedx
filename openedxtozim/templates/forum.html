@@ -14,13 +14,16 @@
           <ul class="forum-nav-browse-menu" role="listbox" id="discussion_topics_listbox">
           {% for cat in category %}
               <li class="forum-nav-browse-menu-item" data-discussion-id='{{ cat }}'>
+		{% if not "catego_with_sub_catego" in category[cat] %}
                 <a onclick="show_forum('{{ cat }}')" > <!--href="{{ cat }}/index.html"-->
+		{% endif %}
                   <span class="forum-nav-browse-title">
                     {{ category[cat]["title"] }}
                   </span>
+		{% if not "catego_with_sub_catego" in category[cat] %}
                 </a>
                 <!--- threads -->
-                  <div class="discussion-thread-list-container" id="{{ cat }}" style="display:none;">
+                  <div class="discussion-thread-list-container" id="{{ cat }}" {% if thread and cat == thread["commentable_id"] %} style="display:block;" {% else %} style="display:none;" {% endif %}>
                     <div class="forum-nav-thread-list-wrapper" id="sort-filter-wrapper" tabindex="-1">
                       <ul class="forum-nav-thread-list">
                       {% for thread in thread_by_category[cat] %}
@@ -75,6 +78,7 @@
                       </ul>
                     </div>
                   </div>
+		{% endif %}
               </li>
           {% endfor %}
           </ul>

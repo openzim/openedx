@@ -6,7 +6,7 @@
           <header class="post-header">
             <div class="post-header-content">
               <h2 class="post-title">{{ thread["title"] }}</h2>
-              <p class="posted-details"> {% if thread["thread_type"] == "discussion" %} discussion {% else %} question {% endif %} posted at <span class="timeago" title="{{ thread["created_at"] | remove_newline }}">{{ thread["created_at"] | remove_newline }}</span> by <a class="username">{{ thread["username"] }}</a></p> {# TODO loca #}
+              <p class="posted-details"> {% if thread["thread_type"] == "discussion" %} discussion {% else %} question {% endif %} posted at <span class="timeago" title="{{ thread["created_at"] | remove_newline }}">{{ thread["created_at"] | remove_newline }}</span> by <a class="username">{{ thread["username"] }}</a>{% if thread["user_id"] in staff_user %} <span class="user-label-staff">(Staff)</span> {% endif %}</p> {# TODO loca #}
             </div>
           </header>
           <div class="post-body">
@@ -25,7 +25,7 @@
               <header class="response-header">
                 <div class="response-header-content">
                   <a class="username">{{ comment["username"] }}</a>
-                  {#IMPROUVEMENT               <span class="user-label-staff">(Staff)</span> #}
+		  {% if thread["user_id"] in staff_user %} <span class="user-label-staff">(Staff)</span> {% endif %}
                   <p class="posted-details">
                     <span class="timeago" title="{{ comment["created_at"] | remove_newline }}">{{ comment["created_at"] | remove_newline }}</span>
                   </p>

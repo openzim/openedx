@@ -45,7 +45,8 @@ class Connection:
         opener = build_opener(HTTPCookieProcessor(self.cookiejar))
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         install_opener(opener)
-        opener.open(self.conf["instance_url"])
+        opener.open(self.conf["instance_url"] + "/login")
+        cookie = None
         for cookie_ in self.cookiejar:
             if cookie_.name == 'csrftoken':
                 cookie = cookie_
