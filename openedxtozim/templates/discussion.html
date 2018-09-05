@@ -11,6 +11,11 @@
       <section class="inline-threads">
         {# Same than home_categorie.html #}
         <div class="forum-nav-thread-list-wrapper" id="sort-filter-wrapper" tabindex="-1">
+	{% if threads | length == 0 %}
+	<div class="zero-message">
+	  <p> 0 <i class="fa fa-comment"></i> </p>
+	</div>
+	{% else %}
           <ul class="forum-nav-thread-list forum-nav-thread-list-limit">
           {% for thread in threads %} {# Except here #}
             <li data-id="{{ thread["id"] }}" class="forum-nav-thread">
@@ -62,6 +67,7 @@
             </li>
           {% endfor %}
           </ul>
+	{% endif %}
         </div>
       </section>
     </div>

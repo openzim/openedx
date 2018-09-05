@@ -125,6 +125,8 @@ def download(url, output, instance_url,timeout=20,retry=2):
         return response.headers
     except Exception as e:
         if retry >= 0:
+            print(url)
+            print(e)
             logging.warning("Retry download")
             download(url, output, instance_url,timeout=timeout,retry=retry-1)
         else:
@@ -263,7 +265,7 @@ def dl_dependencies(content, path, folder_name,c):
             if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF", ".mp4", ".MP4", ".webm", ".WEBM", ".mp3", ".MP3", ".zip", ".ZIP", ".TXT", ".txt", ".CSV", ".csv"]: #IMPROUVEMENT make list from moocs
                 if not os.path.exists(out):
                     try:
-                        download(src, out,c.conf["instance_url"] , timeout=180)
+                        download(unquote(src), out,c.conf["instance_url"] , timeout=180) #TODO check if unquote is not problem
                     except : 
                         logging.warning("error with " + src)
                         pass
@@ -329,7 +331,6 @@ def dl_dependencies(content, path, folder_name,c):
                 ext = os.path.splitext(filename_src.split("?")[0])[1]
                 filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
                 out = os.path.join(path, filename)
-                print(out)
                 if not os.path.exists(out):
                     try:
                         download(unquote(src), out,c.conf["instance_url"], timeout=180)

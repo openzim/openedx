@@ -401,7 +401,7 @@ button[disabled], input[disabled] {
     cursor: default;
 }
 input[type="submit"]:disabled, input[type="submit"].is-disabled, input[type="submit"].disabled, input[type="button"]:disabled, input[type="button"].is-disabled, input[type="button"].disabled, button:disabled, button.is-disabled, button.disabled, .button:disabled, .button.is-disabled, .button.disabled {
-    pointer-events: none;
+    /*pointer-events: none;*/
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -1225,6 +1225,102 @@ fieldset{
     font-size: 16px;
     font-weight: 600;
 }
+div.book-wrapper {
+    max-width: 1150px;
+    margin: 0 auto;
+    width: 100%;
+}
+div.book-wrapper section.book-sidebar {
+    box-sizing: border-box;
+    padding: 10px 0;
+    border-radius: 3px 0 0 3px;
+    border: 1px solid #d3d5d4;
+        border-right-color: rgb(211, 213, 212);
+        border-right-style: solid;
+        border-right-width: 1px;
+    border-right: none;
+    width: 180px;
+}
+.sidebar, div#wiki_panel, div.info-wrapper section.handouts, div.book-wrapper section.book-sidebar, .profile-wrapper .user-info {
+    box-sizing: border-box;
+    display: table-cell;
+    font-family: "Source Sans Pro","Open Sans",Verdana,Geneva,sans-serif,sans-serif;
+    font-size: 14px;
+    position: relative;
+    vertical-align: top;
+    width: 23.72881%;
+    background: #FBFFFD;
+}
+#booknav {
+    list-style: none;
+}
+.sidebar ul, div#wiki_panel ul, div.info-wrapper section.handouts ul, div.book-wrapper section.book-sidebar ul, .profile-wrapper .user-info ul, .sidebar ol, div#wiki_panel ol, div.info-wrapper section.handouts ol, div.book-wrapper section.book-sidebar ol, .profile-wrapper .user-info ol {
+    margin: 0;
+    padding-left: 0;
+}
+div.book-wrapper section.book-sidebar #booknav > li {
+    padding: 5px 6px;
+    margin: 5px 10px;
+}
+div.book-wrapper section.book-sidebar #booknav li {
+    background: none;
+    border-bottom: 0;
+    padding-left: 10px;
+}
+div.book-wrapper section.book-sidebar #booknav .chapter {
+    line-height: 1.4em;
+}
+div.book-wrapper section.book-sidebar #booknav li a {
+    padding: 0;
+    color: #4F7573;
+}
+.sidebar ul li a, div#wiki_panel ul li a, div.info-wrapper section.handouts ul li a, div.book-wrapper section.book-sidebar ul li a, .profile-wrapper .user-info ul li a, .sidebar ol li a, div#wiki_panel ol li a, div.info-wrapper section.handouts ol li a, div.book-wrapper section.book-sidebar ol li a, .profile-wrapper .user-info ol li a {
+    display: block;
+    line-height: 1.41575em;
+    font-size: 1em;
+    box-sizing: border-box;
+    padding: 0.35394em 0.70788em 0.35394em 0;
+}
+.sidebar a, div#wiki_panel a, div.info-wrapper section.handouts a, div.book-wrapper section.book-sidebar a, .profile-wrapper .user-info a {
+    border: none;
+    font-style: normal;
+}
+div.book-wrapper .book {
+    padding: 0;
+    width: 76%;
+}
+.zero-message {
+    text-align: center;
+    margin-left: auto;
+    margin-left: auto;
+    margin-right: auto;
+    width: 6em;
+    margin-top: 15px;
+    color: #494949;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @media (max-width: 640px) {
   .course-index, .courseware{

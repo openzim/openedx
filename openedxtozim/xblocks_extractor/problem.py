@@ -28,7 +28,7 @@ class Problem:
                 problem_json_url=str(soup.find('div', attrs={"class": "problems-wrapper"})['data-url'])
                 html_content_from_div=str(c.get_api_json(problem_json_url+"/problem_get")["html"])
             soup=BeautifulSoup.BeautifulSoup(html_content_from_div, 'lxml')
-            self.has_hint=soup.find("button", attrs={"class" : "hint-button"})
+            #self.has_hint=soup.find("button", attrs={"class" : "hint-button"}) #Remove comment when  hint ok
             for div in soup.find_all('div', attrs={"class": "notification"}):
                 div.decompose()
             for input_tag in soup.find_all('input'):
@@ -76,6 +76,7 @@ class Problem:
                         self.explanation.append({ "name": "solution_" + qid, "value": json.dumps(answers_content["answers"][qid])})
                 self.problem_id=str(uuid4())
 
+            """
             #HINT #TODO fix it !
             if self.has_hint:
                 print("Has hint")
@@ -100,9 +101,9 @@ class Problem:
                         if "success" in get_info:
                             self.hint.append(get_info)
                         hint_index+=1
+            """
 
     def render(self):
-            print(self.output_path)
             return jinja(
                 None,
                 "problem.html",

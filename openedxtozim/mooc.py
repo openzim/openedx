@@ -74,6 +74,7 @@ class Mooc:
         self.wiki=None
         self.forum_thread=None
         self.page_annexe=[]
+        self.book_list_list=[]
 
     def parser_json(self):
         def make_objects(current_path,current_id, rooturl):
@@ -114,7 +115,8 @@ class Mooc:
                 top_elem=top_elem.find("a")
                 path=re.sub("/courses/[^/]*/","",top_elem["href"])
                 if path == "course/" or "courseware" in path:
-                    self.top[top_elem.get_text()] = "course/" + self.head.folder_name + "/index.html"
+                    name = top_elem.get_text().replace(", current location", "")
+                    self.top[name] = "course/" + self.head.folder_name + "/index.html"
                 if "info" in path:
                     name = top_elem.get_text().replace(", current location", "")
                     self.top[name] = "/index.html" 
@@ -133,14 +135,14 @@ class Mooc:
                     just_content = soup_page.find('section', attrs={"class": "container"})
                     if just_content != None :
                         html_content=dl_dependencies(str(just_content),output_path,"",c)
+                        self.page_annexe.append({ "output_path": output_path, "content": html_content,"title" : soup_page.find('title').get_text()})
                     else:
                         book=soup_page.find('section', attrs={"class": "book-sidebar"})
                         if book != None:
-                            html_content=annexe.booknav(self,book,output_path)
+                            self.book_list_list.append({"output_path": output_path, "book_list" : annexe.booknav(self,book,output_path), "dir_path": path})
                         else:
                             logging.warning("Oh it's seems we does not support one type of extra content (in top bar) :" + path)
                             continue
-                    self.page_annexe.append({ "output_path": output_path, "content": html_content,"title" : soup_page.find('title').get_text()})
                 self.top[top_elem.get_text()]= path + "/index.html"
 
     def download(self,c):
@@ -160,9 +162,29 @@ class Mooc:
             else:
                 for x in range(0,len(html_content)):
                     article=html_content[x]
+                    dismiss = article.find("div", attrs={"class": "dismiss-message"})
+                    if dismiss != None:
+                        dismiss.decompose()
+                    bookmark = article.find("a", attrs={"class": "action-show-bookmarks"})
+                    if bookmark != None:
+                        bookmark.decompose()
+                    buttons = article.find_all("button",attrs={"class": "toggle-visibility-button"})
+                    if buttons != None:
+                        for button in buttons:
+                            button.decompose()
                     article['class']="toggle-visibility-element article-content"
                     self.html_homepage.append(dl_dependencies(article.prettify(),os.path.join(self.output_path, "home"),"home",c))
         else:
+                dismiss = html_content.find("div", attrs={"class": "dismiss-message"})
+                if dismiss != None:
+                    dismiss.decompose()
+                bookmark = html_content.find("a", attrs={"class": "action-show-bookmarks"})
+                if bookmark != None:
+                    bookmark.decompose()
+                buttons = html_content.find_all("button",attrs={"class": "toggle-visibility-button"})
+                if buttons != None:
+                    for button in buttons:
+                        button.decompose()
                 self.html_homepage.append(dl_dependencies(html_content.prettify(),os.path.join(self.output_path, "home"),"home",c))
         logging.info("Get content")
         for x in self.object:
@@ -185,6 +207,8 @@ class Mooc:
             annexe.render_wiki(self)
         if self.forum_thread:
             annexe.render_forum(self)
+        if len(self.book_list_list) != 0:
+            annexe.render_booknav(self)
         if not self.no_homepage:
             jinja( #Render home page
                 os.path.join(self.output_path,"index.html"),

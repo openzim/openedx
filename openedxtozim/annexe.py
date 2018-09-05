@@ -18,6 +18,8 @@ def forum(c,mooc):
         soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
         for cat in all_category:
+            if cat.has_attr("id") and cat["id"] in [ "all_discussions", "posts_following" ]:
+                continue
             if not cat.has_attr("data-discussion-id"): #and cat.find("a") != None:
                 category[str(uuid4())] = { "title" : cat.find("span", attrs={"class": "forum-nav-browse-title"}).text, "catego_with_sub_catego" : True}
             elif cat.has_attr("data-discussion-id"):
@@ -222,13 +224,23 @@ def render_wiki(mooc):
                 rooturl=wiki_data[page]["rooturl"] + "../"
             )
 def booknav(mooc, book, output_path):
-    #IMPROUVEMENT pdf viewer
     pdf = book.find_all("a")
-    html_content='<ul id="booknav">'
+    book_list=[]
     for url in pdf:
         file_name=os.path.basename(urlparse(url["rel"][0]).path)
         download(url["rel"][0], os.path.join(output_path,file_name), mooc.instance_url)
-        html_content+='<li><a href="{}" > {} </a></li>'.format(file_name,url.get_text())
-    html_content+='</ul>'
-    return html_content
+        book_list.append({"url": file_name , "name": url.get_text()})
+    return book_list
+
+def render_booknav(mooc):
+    for book_nav in mooc.book_list_list:
+        jinja(
+          os.path.join(book_nav["output_path"], "index.html"),
+	  "booknav.html",
+	  False,
+	  book_list=book_nav["book_list"],
+          dir_path=book_nav["dir_path"],
+	  mooc=mooc,
+	  rooturl="../../../"
+        )
 

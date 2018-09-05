@@ -24,5 +24,6 @@
             <button onclick="problem_show_answers('{{ problem.problem_id }}')">Show answers and explanation</button> 
           {% else %}
             </br>
-            <p> Sorry, we haven't answers</p>
+            <button disabled title="Sorry, we haven't answers" >Check answers</button> 
+            <!--<p> Sorry, we haven't answers</p>-->
           {% endif %}

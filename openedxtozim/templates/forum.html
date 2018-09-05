@@ -25,6 +25,11 @@
                 <!--- threads -->
                   <div class="discussion-thread-list-container" id="{{ cat }}" {% if thread and cat == thread["commentable_id"] %} style="display:block;" {% else %} style="display:none;" {% endif %}>
                     <div class="forum-nav-thread-list-wrapper" id="sort-filter-wrapper" tabindex="-1">
+		      {% if thread_by_category[cat] | length == 0 %}
+		      <div class="zero-message">
+		        <p> 0 <i class="fa fa-comment"></i> </p>
+		      </div>
+		      {% else %}
                       <ul class="forum-nav-thread-list">
                       {% for thread in thread_by_category[cat] %}
                         <li data-id="{{ thread["id"] }}" class="forum-nav-thread">
@@ -76,6 +81,7 @@
                         </li>
                       {% endfor %}
                       </ul>
+		      {% endif %}
                     </div>
                   </div>
 		{% endif %}
