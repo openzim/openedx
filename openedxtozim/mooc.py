@@ -91,10 +91,10 @@ class Mooc:
                 obj = BLOCKS_TYPE[current_json["type"]](current_json,path,rooturl,random_id,descendants,self)
             else:
                 if not self.ignore_missing_xblock:
-                    logging.error("Some part of your course are not supported by openedx2zim : {} \n You should open an issue at https://github.com/openzim/openedx/issues (with this message and Mooc URL, you can ignore this with --ignore-unsupported-xblocks".format(current_json["type"]))
+                    logging.error("Some part of your course are not supported by openedx2zim : {} ({})\n You should open an issue at https://github.com/openzim/openedx/issues (with this message and Mooc URL, you can ignore this with --ignore-unsupported-xblocks".format(current_json["type"],current_json["student_view_url"]))
                     sys.exit(1)
                 else:
-                    print(current_json["student_view_url"])
+                    print("Unavailable xblocks: " + current_json["student_view_url"])
                     obj = BLOCKS_TYPE["unavailable"](current_json,path,rooturl,random_id,descendants,self)
 
             if current_json["type"] == "course":

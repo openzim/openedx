@@ -62,7 +62,6 @@ function show_forum(threads_id){
 
 function toggle_visibility_submenu(elem){
     var e = elem.nextSibling.nextSibling;
-    console.log(e);
     if(e.style.display == 'block' || e.style.display == '') {
         e.style.display = 'none';
     }else{

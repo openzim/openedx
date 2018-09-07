@@ -13,39 +13,6 @@
     {% block addhead %}{% endblock %}
     <script type="text/javascript" src="{{ rooturl }}static/mooc.js"></script>
     <link rel="icon" type="image/png" href="{{ rooturl }}/favicon.png">
-{#
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Config({
-          tex2jax: {
-            inlineMath: [ ['$','$'], ["\\(","\\)"]],
-            displayMath: [ ['$$','$$'], ["\\[","\\]"]]}
-      });
-    </script>
-    <script type="text/x-mathjax-config">
-
-      // In order to eliminate all flashing during interactive
-      // preview, it is necessary to set processSectionDelay to 0
-      // (remove delay between input and output phases). This
-      // effectively disables fast preview, regardless of
-      // the fast preview setting as shown in the context menu.
-      MathJax.Hub.processSectionDelay = 0;
-
-      MathJax.Hub.signal.Interest(function(message) {
-        if(message[0] === "End Math") {
-            set_mathjax_display_div_settings();
-        }
-      });
-      function set_mathjax_display_div_settings() {
-        $('.MathJax_Display').each(function( index ) {
-          this.setAttribute('tabindex', '0');
-          this.setAttribute('aria-live', 'off');
-          this.removeAttribute('role');
-          this.removeAttribute('aria-readonly');
-        });
-      }
-    </script>
-    <script type="text/javascript" src="{{ rooturl }}static/MathJax.js?config=TeX-MML-AM_SVG"></script>
-#}
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
     <div class="topmobilebar">
@@ -75,10 +42,54 @@
       </nav>
         {% block body %}{% endblock %}
    </div>
-{#      {% if video == True %}
-        <script src="{{ rooturl }}static/video.js"></script>
-      {% endif %}
-#}
     </div>
+{#
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+          tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"]],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"]]}
+      });
+    </script>
+#}
+	<script type="text/x-mathjax-config">
+	  MathJax.Hub.Config({
+	    tex2jax: {
+	      inlineMath: [
+		["\\(","\\)"],
+		['[mathjaxinline]','[/mathjaxinline]']
+	      ],
+	      displayMath: [
+		["\\[","\\]"],
+		['[mathjax]','[/mathjax]']
+	      ]
+	    }
+	  });
+          MathJax.Hub.setRenderer("PreviewHTML");
+	</script>
+    <script type="text/x-mathjax-config">
+
+      // In order to eliminate all flashing during interactive
+      // preview, it is necessary to set processSectionDelay to 0
+      // (remove delay between input and output phases). This
+      // effectively disables fast preview, regardless of
+      // the fast preview setting as shown in the context menu.
+      MathJax.Hub.processSectionDelay = 0;
+
+      MathJax.Hub.signal.Interest(function(message) {
+        if(message[0] === "End Math") {
+            set_mathjax_display_div_settings();
+        }
+      });
+      function set_mathjax_display_div_settings() {
+        $('.MathJax_Display').each(function( index ) {
+          this.setAttribute('tabindex', '0');
+          this.setAttribute('aria-live', 'off');
+          this.removeAttribute('role');
+          this.removeAttribute('aria-readonly');
+        });
+      }
+    </script>
+    <script type="text/javascript" src="{{ rooturl }}static/MathJax.js?config=TeX-MML-AM_SVG"></script>
   </body>
 </html>

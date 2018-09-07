@@ -143,7 +143,7 @@ def download_and_convert_subtitles(path,lang_and_url,c):
                 subtitle=html.unescape(subtitle)
                 with open(path_lang, 'w') as f:
                     f.write(subtitle)
-                if not False: #already_in_vtt: #TODO Find way to know is they are already in vtt or not ; maybe try ?
+                if not is_webvtt(path_lang): #already_in_vtt: #TODO Find way to know is they are already in vtt or not ; maybe try ?
                     webvtt = WebVTT().from_srt(path_lang)
                     webvtt.save()
                 real_subtitles[lang]=lang + ".vtt"
@@ -154,6 +154,12 @@ def download_and_convert_subtitles(path,lang_and_url,c):
         else:
             real_subtitles[lang]=lang + ".vtt"
     return real_subtitles
+
+def is_webvtt(path):
+    f = open(path,"r")
+    first_line = f.readline()
+    f.close()
+    return "WEBVTT" in first_line or "webvtt" in first_line
 
 def download_youtube(youtube_url, video_path):
     parametre={"outtmpl" : video_path, 'preferredcodec': 'mp4', 'format' : 'mp4'}

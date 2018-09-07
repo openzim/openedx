@@ -7,6 +7,7 @@ import json
 from collections import defaultdict, OrderedDict
 import logging
 from openedxtozim.utils import make_dir, download, dl_dependencies, jinja, markdown
+from urllib.error import HTTPError
 
 def forum(c,mooc):
     forum_output=os.path.join(mooc.output_path, "forum")
