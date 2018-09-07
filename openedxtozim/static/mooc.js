@@ -1,4 +1,3 @@
-/* IMPROUVEMENT rewrite with hidden option */
 function show_sidemenu(){
   var e=document.getElementsByClassName("course-index")[0];
   var course_content = document.getElementById("course-content");
@@ -7,7 +6,11 @@ function show_sidemenu(){
     course_content.style.display = 'none';
   }else{
     e.style.display = 'none';
-    course_content.style.display = 'table-cell';
+    if (window.matchMedia('(max-width: 640px)').matches) {
+      course_content.style.display = 'block';
+    }else{
+      course_content.style.display = 'table-cell';
+    }
   }
 }
 
@@ -16,10 +19,16 @@ function show_pagemobilemenu(){
   var course_content = document.getElementById("course-content");
   if(e.style.display == 'none' || e.style.display == '') {
     e.style.display = 'block';
-    course_content.style.display = 'none';
+    //course_content.style.display = 'none';
   }else{
     e.style.display = 'none';
-    course_content.style.display = 'table-cell';
+   /*
+    if (window.matchMedia('(max-width: 640px)').matches) {
+      course_content.style.display = 'block';
+    }else{
+      course_content.style.display = 'table-cell';
+    }
+*/
   }
 }
 
@@ -31,7 +40,11 @@ function show_forum_menu(){
     forum_content.style.display = 'none';
   }else{
     e.style.display = 'none';
-    forum_content.style.display = 'table-cell';
+    if (window.matchMedia('(max-width: 640px)').matches) {
+      forum_content.style.display = 'block';
+    }else{
+      forum_content.style.display = 'table-cell';
+    }
   }
 
 

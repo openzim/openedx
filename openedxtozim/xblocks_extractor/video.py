@@ -71,7 +71,7 @@ class Video:
                 if youtube:
                     download_youtube(url,video_path)
                 else:
-                    download(url, video_path,c)
+                    download(unquote(url), video_path,c)
                 if self.mooc.convert_in_webm:
                     convert_video_to_webm(video_path, video_path)
         real_subtitle=download_and_convert_subtitles(self.output_path,subs_lang,c)

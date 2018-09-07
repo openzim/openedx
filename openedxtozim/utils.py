@@ -109,7 +109,7 @@ def download(url, output, instance_url,timeout=20,retry=2):
 
     #for IRI
     split_url = list(urllib.parse.urlsplit(url))
-    split_url[2] = urllib.parse.quote(split_url[2])    # the third component is the path of the URL/IRI
+    #split_url[2] = urllib.parse.quote(split_url[2])    # the third component is the path of the URL/IRI
     url = urllib.parse.urlunsplit(split_url)
 
     ctx = ssl.create_default_context()

@@ -9,7 +9,7 @@
 <section class="discussion discussion-board page-content-container" id="discussion-container" data-course-id="{{ mooc.course_id }}">
   <div class="page-content" lang="en">
     <div class="discussion-body">
-      <aside class="forum-nav" role="complementary" aria-label="Liste des discussions">
+      <aside class="forum-nav" role="complementary" aria-label="Liste des discussions" {% if display_on_mobile %} style="display:block" {% endif %}>
         <div class="forum-nav-browse-menu-wrapper" aria-label="Discussion topics list">
           <ul class="forum-nav-browse-menu" role="listbox" id="discussion_topics_listbox">
           {% for cat in category %}

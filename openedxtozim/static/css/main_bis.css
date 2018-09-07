@@ -188,7 +188,7 @@ overflow: auto;
 .wrapper-course-material ol.course-tabs {
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
-    margin-left: 10px;
+/*    margin-left: 10px;*/
     padding: 15px 0 15px 0;
 }
 
@@ -354,6 +354,7 @@ div.course-wrapper section.course-content {
 }
 .course-content {
     margin-top: 30px;
+    max-width:100%;
 }
 div.course-wrapper section.course-content .xblock {
     overflow-wrap: break-word;
@@ -653,6 +654,7 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
 
 .topmobilebar{
     display:none;
+    background-color:#f0f0f0;
 }
 
 .dragdrop-item {
@@ -1326,6 +1328,13 @@ div.book-wrapper .book {
   .course-index, .courseware{
     display:none;
   }
+
+
+  div.course-wrapper section.course-content {
+	display: block;
+	width:100%;
+	max-width:100%;
+  }
   #course-content{
     padding:2em 0.5em;
   }
@@ -1365,7 +1374,7 @@ div.book-wrapper .book {
     width:100%;
   }
   .forum-nav {
-    display:none;
+   display:none;
     max-width:100%;
     width:100%;
   }

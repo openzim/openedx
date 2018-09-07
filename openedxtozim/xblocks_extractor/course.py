@@ -43,5 +43,6 @@ class Course:
                 course=self,
                 rooturl=self.rooturl,
                 mooc=self.mooc,
-		all_side_menu_open=True
+		all_side_menu_open=True,
+                display_on_mobile=True
             )

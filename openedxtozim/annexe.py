@@ -106,7 +106,7 @@ def render_forum(mooc):
             staff_user=staff_user,
             mooc=mooc,
             rooturl="../",
-            forum_menu=True
+            display_on_mobile=True
     )
     for thread in threads:
         jinja(
@@ -134,6 +134,7 @@ def wiki(c,mooc):
     # "[url]" : { "rooturl": , "path": , "text": , "title": , "dir" : , "children": [] }
     #Extract wiki name
     wiki_name = first_page.replace(mooc.instance_url + "/wiki/", "")[:-1]
+    wiki_path = os.path.join("wiki", first_page.replace(mooc.instance_url + "/wiki/",""))
 
     while page_to_visit:
         url = page_to_visit.pop()
@@ -191,7 +192,7 @@ def wiki(c,mooc):
                         if link["href"] not in wiki_data and link["href"] not in page_to_visit:
                             page_to_visit.append(mooc.instance_url + link["href"])
                         wiki_data[url]["children"].append(mooc.instance_url + link["href"])
-    return wiki_data, wiki_name
+    return wiki_data, wiki_name, wiki_path
 
 def render_wiki(mooc):
     wiki_data=mooc.wiki

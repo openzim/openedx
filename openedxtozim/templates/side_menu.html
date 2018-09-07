@@ -1,4 +1,4 @@
-<div class="course-index">
+<div class="course-index" {% if display_on_mobile %} style="display:block" {% endif %}>
   <div class="accordion">
     <nav class="course-navigation" aria-label="Course">
     {% for chapter_ in mooc.head.descendants %}

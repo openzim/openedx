@@ -123,7 +123,7 @@ class Mooc:
                 if path == "course/" or "edxnotes" in path or "progress" in path or "info" in path or "courseware" in path:
                     continue
                 if "wiki" in path:
-                    self.wiki, self.wiki_name=annexe.wiki(c,self)
+                    self.wiki, self.wiki_name, path=annexe.wiki(c,self)
                 elif "forum" in path:
                     path="forum/"
                     self.forum_thread, self.forum_category, self.staff_user_forum = annexe.forum(c,self)
@@ -158,7 +158,6 @@ class Mooc:
             html_content=soup.find_all('div', attrs={"class": re.compile("info-wrapper")})
             if html_content == [] :
                 self.no_homepage=True
-                return
             else:
                 for x in range(0,len(html_content)):
                     article=html_content[x]
@@ -223,7 +222,7 @@ class Mooc:
     def zim(self,lang,publisher,zimpath,nofulltextindex):
         logging.info("Create zim")
         if self.no_homepage:
-            homepage=os.path.join(self.head.path,self.head.folder_name)
+            homepage=os.path.join(self.head.path,"index.html")
         else:
             homepage="index.html"
         done=create_zims(self.info["name"],lang,publisher,self.info["short_description"], self.info["org"],self.output_path,zimpath,nofulltextindex,homepage)
