@@ -11,6 +11,8 @@ import html
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen,Request
 import urllib.parse
+from urllib.parse import urlparse
+from urllib.parse import unquote
 from lxml.etree import parse as string2xml
 from lxml.html import fromstring as string2html
 from lxml.html import tostring as html2string
@@ -19,9 +21,11 @@ from webvtt import WebVTT
 import youtube_dl
 import re
 import mistune #markdown
-from urllib.parse import unquote
 
 MARKDOWN = mistune.Markdown()
+
+def is_absolute(url):
+    return bool(urlparse(url).netloc)
 
 def exec_cmd(cmd, timeout=None):
     try:
@@ -54,6 +58,8 @@ def check_missing_binary(no_zim):
         sys.exit("You should install ffmpeg or avconv")
 
 def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_path,noindex,home):
+    if lang_input == None:
+        lang_input="eng"
     if zim_path == None:
         zim_path = os.path.join("output/", "{title}_{lang}_all_{date}.zim".format(title=slugify(title),lang=lang_input,date=datetime.datetime.now().strftime('%Y-%m')))
 
@@ -123,14 +129,18 @@ def download(url, output, instance_url,timeout=20,retry=2):
         with open(output, 'wb') as f:
             f.write(output_content)
         return response.headers
-    except Exception as e:
+    except HTTPError as e:
         if retry >= 0:
+            if e.code == 403 or e.code == 404:
+		logging.warning(str(e.code) + " : " + url)
+                return False
             print(url)
             print(e)
             logging.warning("Retry download")
-            download(url, output, instance_url,timeout=timeout,retry=retry-1)
+            return download(url, output, instance_url,timeout=timeout,retry=retry-1)
         else:
             return False
+
 
 def download_and_convert_subtitles(path,lang_and_url,c):
     real_subtitles={}
@@ -143,13 +153,13 @@ def download_and_convert_subtitles(path,lang_and_url,c):
                 subtitle=html.unescape(subtitle)
                 with open(path_lang, 'w') as f:
                     f.write(subtitle)
-                if not is_webvtt(path_lang): #already_in_vtt: #TODO Find way to know is they are already in vtt or not ; maybe try ?
+                if not is_webvtt(path_lang): #already_in_vtt:
                     webvtt = WebVTT().from_srt(path_lang)
                     webvtt.save()
                 real_subtitles[lang]=lang + ".vtt"
             except HTTPError as e:
                 if e.code == 404 or e.code == 403:
-                    logging.error("Fail to get or convert subtitle from {}".format(lang_and_url[lang]))
+                    logging.error("Fail to get subtitle from {}".format(lang_and_url[lang]))
                     pass
         else:
             real_subtitles[lang]=lang + ".vtt"
@@ -268,10 +278,10 @@ def dl_dependencies(content, path, folder_name,c):
             ext = os.path.splitext(src.split("?")[0])[1]
             filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
             out = os.path.join(path, filename)
-            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF", ".mp4", ".MP4", ".webm", ".WEBM", ".mp3", ".MP3", ".zip", ".ZIP", ".TXT", ".txt", ".CSV", ".csv"]: #IMPROUVEMENT make list from moocs
+            if ext in [".doc", ".docx", ".pdf", ".DOC", ".DOCX", ".PDF", ".mp4", ".MP4", ".webm", ".WEBM", ".mp3", ".MP3", ".zip", ".ZIP", ".TXT", ".txt", ".CSV", ".csv", ".R", ".r"] or (not is_absolute(src) and not "wiki" in src): #Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
                 if not os.path.exists(out):
                     try:
-                        download(unquote(src), out,c.conf["instance_url"] , timeout=180) #TODO check if unquote is not problem
+                        download(unquote(src), out,c.conf["instance_url"] , timeout=180) 
                     except : 
                         logging.warning("error with " + src)
                         pass
@@ -306,7 +316,7 @@ def dl_dependencies(content, path, folder_name,c):
                     logging.warning("error with " + src)
                     pass
             src = os.path.join(folder_name,filename )
-            js.attrib['href'] = src 
+            js.attrib['src'] = src 
     iframes = body.xpath('//iframe')
     for iframe in iframes:
         if "src" in iframe.attrib:

@@ -6,6 +6,7 @@ from uuid import uuid4
 import json
 from collections import defaultdict, OrderedDict
 import logging
+from html import unescape
 from openedxtozim.utils import make_dir, download, dl_dependencies, jinja, markdown
 from urllib.error import HTTPError
 
@@ -17,12 +18,16 @@ def forum(c,mooc):
     category=OrderedDict()
     if good_content:
         soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
+
         all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"})
+        if len(all_category) == 0:
+            soup=BeautifulSoup.BeautifulSoup(good_content.text, 'lxml') #On Fun plateform, categorie list is in script with id thread-list-template
+            all_category=soup.find_all('li', attrs={"class": "forum-nav-browse-menu-item"}) 
         for cat in all_category:
-            if cat.has_attr("id") and cat["id"] in [ "all_discussions", "posts_following" ]:
+            if (cat.has_attr("id") and cat["id"] in [ "all_discussions", "posts_following" ]) or (cat.has_attr("class") and ("forum-nav-browse-menu-all" in cat["class"] or "forum-nav-browse-menu-following" in cat["class"])):
                 continue
             if not cat.has_attr("data-discussion-id"): #and cat.find("a") != None:
-                category[str(uuid4())] = { "title" : cat.find("span", attrs={"class": "forum-nav-browse-title"}).text, "catego_with_sub_catego" : True}
+                category[str(uuid4())] = { "title" : cat.find(["a", "span"], attrs={"class": "forum-nav-browse-title"}).text, "catego_with_sub_catego" : True}
             elif cat.has_attr("data-discussion-id"):
                 category[cat["data-discussion-id"]] = {"title": str(cat.text).replace("\n","")}
 
@@ -34,7 +39,10 @@ def forum(c,mooc):
     json_user={}
     section_user = BeautifulSoup.BeautifulSoup(content, 'lxml').find("section", attrs={"id": "discussion-container"})
     if section_user and section_user.has_attr("data-roles"):
-        json_user = json.loads(section_user["data-roles"])
+        if "&#34;" in section_user["data-roles"]:
+            json_user = json.loads(unescape(section_user["data-roles"]))
+        else:
+            json_user = json.loads(section_user["data-roles"])
     else:
         section_user = re.search("roles: [^\n]*", content)
         if section_user: #TODO check ok in this case
@@ -138,11 +146,15 @@ def wiki(c,mooc):
     wiki_path = os.path.join("wiki", first_page.replace(mooc.instance_url + "/wiki/",""))
 
     while page_to_visit:
+        get_page_error=False
         url = page_to_visit.pop()
         try:
             content=c.get_page(url)
         except HTTPError as e:
             if e.code == 404 or e.code == 403:
+                get_page_error=True 
+            else:
+                logging.warning("Fail to get " + url + "Error :" + str(e.code))
                 pass
 
         wiki_data[url]={}
@@ -154,6 +166,7 @@ def wiki(c,mooc):
         for x in range(0,len(web_path.split("/"))):
             rooturl+="../"
         wiki_data[url]["rooturl"]= rooturl
+        wiki_data[url]["children"]=[]
 
 
         #Parse content page
@@ -175,6 +188,11 @@ def wiki(c,mooc):
             wiki_data[url]["text"] = dl_dependencies(str(text),path,"",c)
             wiki_data[url]["title"] = soup.find("title").text
             wiki_data[url]["last-modif"] = soup.find("span", attrs={"class": "date"}).text
+            wiki_data[url]["children"]=[]
+        elif get_page_error:
+            wiki_data[url]["text"] = """<div><h1 class="page-header">Permission Denied</h1><p class="alert denied">Sorry, you don't have permission to view this page.</p></div>""" 
+            wiki_data[url]["title"] = "Permission Denied | Wiki" 
+            wiki_data[url]["last-modif"] = "Unknow" 
             wiki_data[url]["children"]=[]
 
         #find new url of wiki in the list children page

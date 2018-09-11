@@ -3,14 +3,13 @@ import os
 from slugify import slugify
 from openedxtozim.utils import make_dir, jinja,download_and_convert_subtitles, download,convert_video_to_webm
 
-class Libcast_xblock:
+class Libcast:
     def __init__(self,json,path,rooturl,id,descendants,mooc):
         self.mooc=mooc
         self.path=path
         self.rooturl=rooturl
         self.json=json
         self.id=id
-        self.is_video=True
         self.folder_name=slugify(json["display_name"])
         self.output_path = os.path.join(self.mooc.output_path,self.path)
         make_dir(self.output_path)
@@ -47,6 +46,6 @@ class Libcast_xblock:
                 False,
                 format="webm" if self.mooc.convert_in_webm else "mp4",
                 folder_name=self.folder_name,
-                title=json["display_name"],
+                title=self.json["display_name"],
                 subs=self.subs
             )

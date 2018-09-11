@@ -4,21 +4,20 @@ import os
 from slugify import slugify
 
 class Example:
-    def __init__(self,json,path,rooturl,id,descendants,mooc):
+    def __init__(self,json,path,rooturl,id,descendants,mooc): #It's require to have, at least these object variable
         self.mooc=mooc
         self.json=json
         self.path=path
         self.rooturl=rooturl
         self.id=id
-        self.is_video=True
         self.folder_name = slugify(json["display_name"])
         self.output_path = os.path.join(self.mooc.output_path,self.path)
         make_dir(self.output_path)
 
-    def download(self, c):
+    def download(self, c): #You do what ever you want to offline your xblocks
       return
 
-    def render(self):
+    def render(self): #You should return html that can we integrate in an html page (using vertical xblock)
             return jinja(
                 None,
                 "example.html",

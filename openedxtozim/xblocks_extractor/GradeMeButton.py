@@ -9,7 +9,6 @@ class GradeMeButton:
         self.path=path
         self.rooturl=rooturl
         self.id=id
-        self.is_video=True
         self.output_path=self.mooc.output_path
         self.folder_name = slugify(json["display_name"])
         self.output_path = os.path.join(self.mooc.output_path,self.path)
@@ -19,4 +18,4 @@ class GradeMeButton:
       return
 
     def render(self):
-            return "Grade Me ! ; Not available offline" #TODO loca, to bettter
+            return "Grade Me ! ; Not available offline"

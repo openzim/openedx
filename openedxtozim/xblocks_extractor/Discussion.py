@@ -18,7 +18,6 @@ class Discussion:
         self.category_title=""
 
     def download(self,c):
-#        print(self.json)
         if self.mooc.forum_thread != None:
             content=c.get_page(self.json["student_view_url"])
             soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
@@ -26,12 +25,10 @@ class Discussion:
             if discussion_block != None:
                 discussion_id=discussion_block["data-discussion-id"]
                 for thread in self.mooc.forum_thread:
-
-#TODO REMOVE? Not so sure                    if thread["category_id"] == discussion_id :
                     if thread["commentable_id"] == discussion_id :
                         self.data.append(thread)
-#                print(self.mooc.forum_category)
-                self.category_title=self.mooc.forum_category[discussion_id]
+                if len(self.data) != 0:
+                    self.category_title=self.mooc.forum_category[discussion_id]
 
     def render(self):
         if self.category_title != "":

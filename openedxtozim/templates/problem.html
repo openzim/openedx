@@ -18,7 +18,7 @@
           {% if problem.answers %}
             <script>
               problem_answers_array["{{ problem.problem_id }}"]=[ {% for ans in problem.answers %}"{{ ans }}", {% endfor %} ]; 
-              problem_explanation_array["{{ problem.problem_id }}"]=[ {% for ans in problem.explanation %}"{ "{{ ans["name"] }}" : "{{ ans["value"] }}", {% endfor %} ];
+              problem_explanation_array["{{ problem.problem_id }}"]={ {% for ans in problem.explanation %} "{{ ans["name"] }}" : "{{ ans["value"] }}" , {% endfor %} };
             </script>
             <button onclick="problem_check_answers('{{ problem.problem_id }}')">Check answers</button> 
             <button onclick="problem_show_answers('{{ problem.problem_id }}')">Show answers and explanation</button> 

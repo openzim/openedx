@@ -37,9 +37,7 @@ class Connection:
         else:
             self.pw=password
         self.instance=course_url.split("//")[1].split("/")[0]
-        self.conf=get_config(self.instance) #but in object
-        if self.conf == None:
-            sys.exit("No configuation found for this instance, please open a issue https://github.com/openzim/openedx/issues")
+        self.conf=get_config(self.instance)
         #Make headers
         self.cookiejar = LWPCookieJar('lol.cookies')
         opener = build_opener(HTTPCookieProcessor(self.cookiejar))

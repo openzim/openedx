@@ -17,21 +17,21 @@ from openedxtozim.utils import create_zims, make_dir, download, dl_dependencies,
 
 import openedxtozim.annexe as annexe
 
-from openedxtozim.xblocks_extractor.course import Course
-from openedxtozim.xblocks_extractor.chapter import Chapter
-from openedxtozim.xblocks_extractor.sequential import Sequential
-from openedxtozim.xblocks_extractor.vertical import Vertical
+from openedxtozim.xblocks_extractor.Course import Course
+from openedxtozim.xblocks_extractor.Chapter import Chapter
+from openedxtozim.xblocks_extractor.Sequential import Sequential
+from openedxtozim.xblocks_extractor.Vertical import Vertical
 from openedxtozim.xblocks_extractor.video import Video
-from openedxtozim.xblocks_extractor.libcast_xblock import Libcast_xblock
-from openedxtozim.xblocks_extractor.html import Html
-from openedxtozim.xblocks_extractor.problem import Problem
-from openedxtozim.xblocks_extractor.discussion import Discussion
+from openedxtozim.xblocks_extractor.Libcast import Libcast
+from openedxtozim.xblocks_extractor.Html import Html
+from openedxtozim.xblocks_extractor.Problem import Problem
+from openedxtozim.xblocks_extractor.Discussion import Discussion
 from openedxtozim.xblocks_extractor.FreeTextResponse import FreeTextResponse
 from openedxtozim.xblocks_extractor.Unavailable import Unavailable
 from openedxtozim.xblocks_extractor.Lti import Lti
 from openedxtozim.xblocks_extractor.DragAndDropV2 import DragAndDropV2
 
-BLOCKS_TYPE = { "course": Course, "chapter": Chapter, "sequential": Sequential, "vertical" : Vertical, "video": Video, "libcast_xblock": Libcast_xblock, "html": Html,"problem": Problem, "discussion": Discussion, "qualtricssurvey" : Html , "freetextresponse": FreeTextResponse , "grademebutton": Unavailable, "drag-and-drop-v2" : DragAndDropV2, "lti": Lti, "unavailable": Unavailable}
+BLOCKS_TYPE = { "course": Course, "chapter": Chapter, "sequential": Sequential, "vertical" : Vertical, "video": Video, "libcast_xblock": Libcast, "html": Html,"problem": Problem, "discussion": Discussion, "qualtricssurvey" : Html , "freetextresponse": FreeTextResponse , "grademebutton": Unavailable, "drag-and-drop-v2" : DragAndDropV2, "lti": Lti, "unavailable": Unavailable}
 
 def get_course_id(url, course_page_name, course_prefix, instance_url):
     clean_url=re.match(instance_url+course_prefix+".*"+course_page_name,url)
@@ -113,7 +113,10 @@ class Mooc:
         if top_bs != None:
             for top_elem in top_bs.find_all("li"):
                 top_elem=top_elem.find("a")
-                path=re.sub("/courses/[^/]*/","",top_elem["href"])
+                if top_elem["href"][-1] == "/":
+                    path=top_elem["href"][:-1].split("/")[-1]
+                else:
+                    path=top_elem["href"].split("/")[-1]
                 if path == "course/" or "courseware" in path:
                     name = top_elem.get_text().replace(", current location", "")
                     self.top[name] = "course/" + self.head.folder_name + "/index.html"
