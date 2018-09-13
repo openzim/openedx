@@ -34,9 +34,10 @@
                 <li {% if vertical_.id == vertical.id %} class="current_vertical" {% endif %}>
                   <a id="tab_0" tabindex=0 data-id="{{ vertical_.json["id"] }}" data-page-title="{{ vertical_.display_name }}" href="{{ rooturl }}{{ vertical_.path }}/index.html" title="{{ vertical_.display_name }}">
                     <i class="icon fa {{ vertical_.icon_type }}" aria-hidden="true"></i>
+		    <!--
                     <p>
                       {{ vertical_.display_name }}
-                    </p>
+                    </p>-->
                   </a>
                 </li>
               {% endfor %}

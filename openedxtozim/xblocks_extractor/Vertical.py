@@ -35,8 +35,6 @@ class Vertical:
         video=False
         for x in self.descendants:
             vertical.append(x.render())
-            if x.is_video:
-                video=True
         jinja(
             os.path.join(self.output_path,self.path,"index.html"),
             "vertical.html",
@@ -50,7 +48,6 @@ class Vertical:
             vertical_content=vertical,
             pred_vertical=pred_vertical,
             next_vertical=next_vertical,
-            video=video,
             side_menu=True
         )
 

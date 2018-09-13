@@ -22,12 +22,13 @@ class FreeTextResponse:
             html_content=str(soup.find('div', attrs={"class": "course-wrapper"}))
         soup=BeautifulSoup.BeautifulSoup(html_content, "lxml")
         text_area=soup.find("textarea", attrs={"class": "student_answer"})
-        check=soup.find("button", attrs={"class": "check"})
+        check=soup.find("button", attrs={"class": "check"}).decompose()
         save=soup.find("button", attrs={"class": "save"})
         text_area["id"] = self.id
-        check["onclick"] = 'check_freetext("{}")'.format(self.id)
+        #check["onclick"] = 'check_freetext("{}")'.format(self.id)
         save["onclick"] = 'save_freetext("{}")'.format(self.id)
-        self.html=dl_dependencies(str(soup),self.output_path, self.folder_name, c)
+        html_no_answers='<div class="noanswers"><p data-l10n-id="no_answers_for_freetext" >  <b> Warning : </b> There is not correction for Freetext block. </p> </div>'
+        self.html=html_no_answers + dl_dependencies(str(soup),self.output_path, self.folder_name, c)
 
     def render(self):
             return jinja(

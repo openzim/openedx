@@ -60,8 +60,7 @@ class Problem:
                     c.get_api_json("/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/problem_check")
                     retry+=1
             if "success" in answers_content:
-                logging.warning(" fail to get answers to this problem : " + self.json["id"])
-                logging.warning(self.json["lms_web_url"])
+                logging.warning(" fail to get answers to this problem : " + self.json["id"] + " (" + self.json["lms_web_url"]  + ")")
                 self.answers=None
             else:
                 with open(path_answers,"w") as f:
@@ -77,21 +76,15 @@ class Problem:
                 self.problem_id=str(uuid4())
 
             """
-            #HINT #TODO fix it !
+            #HINT fix it !
             if self.has_hint:
-                print("Has hint")
                 self.hint = []
                 hint_index=0
                 referer=self.mooc.instance_url + "/courses/" + self.mooc.course_id + "/?activate_block_id=" + self.json["id"]
                 referer=self.json["lms_web_url"] + "/?activate_block_id=" + self.json["id"]
-                print(referer)
-                print(self.json["id"])
                 post_data=urlencode({'hint_index': hint_index, 'input_id': self.json["id"]}).encode('utf-8')
-                print(post_data)
                 url_hint = "/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/hint_button"
-                print(url_hint)
                 get_info=c.get_api_json(url_hint, post_data, referer)
-                print(get_info)
                 if "success" in get_info:
                     self.hint.append(get_info)
                     hint_index+=1

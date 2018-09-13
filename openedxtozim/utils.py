@@ -20,6 +20,7 @@ from hashlib import sha256
 from webvtt import WebVTT
 import youtube_dl
 import re
+from iso639 import languages as iso_languages
 import mistune #markdown
 
 MARKDOWN = mistune.Markdown()
@@ -58,8 +59,6 @@ def check_missing_binary(no_zim):
         sys.exit("You should install ffmpeg or avconv")
 
 def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_path,noindex,home):
-    if lang_input == None:
-        lang_input="eng"
     if zim_path == None:
         zim_path = os.path.join("output/", "{title}_{lang}_all_{date}.zim".format(title=slugify(title),lang=lang_input,date=datetime.datetime.now().strftime('%Y-%m')))
 
@@ -69,7 +68,7 @@ def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_p
     logging.info("Writting ZIM for {}".format(title))
 
     context = {
-        'languages': lang_input,
+        'languages': iso_languages.get(alpha2=lang_input,).part3,
         'title': title,
         'description': description,
         'creator': creator,
@@ -132,11 +131,9 @@ def download(url, output, instance_url,timeout=20,retry=2):
     except HTTPError as e:
         if retry >= 0:
             if e.code == 403 or e.code == 404:
-		logging.warning(str(e.code) + " : " + url)
+                logging.warning(str(e.code) + " : " + url)
                 return False
-            print(url)
-            print(e)
-            logging.warning("Retry download")
+            logging.warning(str(e) + " : " + url + " but retry download")
             return download(url, output, instance_url,timeout=timeout,retry=retry-1)
         else:
             return False
@@ -153,7 +150,7 @@ def download_and_convert_subtitles(path,lang_and_url,c):
                 subtitle=html.unescape(subtitle)
                 with open(path_lang, 'w') as f:
                     f.write(subtitle)
-                if not is_webvtt(path_lang): #already_in_vtt:
+                if not is_webvtt(path_lang):
                     webvtt = WebVTT().from_srt(path_lang)
                     webvtt.save()
                 real_subtitles[lang]=lang + ".vtt"
@@ -262,8 +259,7 @@ def dl_dependencies(content, path, folder_name,c):
                     type_of_file=get_filetype(headers,out)
                     optimize_one(out,type_of_file)
                 except Exception as e:
-                    print(e)
-                    logging.warning("error with " + src)
+                    logging.warning(str(e) + " : error with " + src)
                     pass
             src = os.path.join(folder_name,filename)
             img.attrib['src'] = src
@@ -330,8 +326,7 @@ def dl_dependencies(content, path, folder_name,c):
                     try:
                         download_youtube(src, out)
                     except Exception as e:
-                        print(e)
-                        logging.warning("error with " + src)
+                        logging.warning(str(e) + " : error with " + src)
                         pass
                 x = jinja(
                             None,

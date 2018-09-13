@@ -74,7 +74,7 @@ class Connection:
             tmp_headers = copy.deepcopy(self.headers)
             tmp_headers['Referer'] = referer
             request = Request(self.conf["instance_url"] + page, post, tmp_headers)
-            if "hint" in page: #TODO fix it
+            if "hint" in page: #see with xblocks_extractor/Problem.py
                 return {}
         else:
             request = Request(self.conf["instance_url"] + page, post, self.headers)

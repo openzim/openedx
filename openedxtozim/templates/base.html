@@ -9,9 +9,12 @@
     <link href="{{ rooturl }}static/css/main.css" rel="stylesheet" type="text/css" />
     <link href="{{ rooturl }}static/css/font-awesome.css" rel="stylesheet" type="text/css" />
     <link href="{{ rooturl }}static/css/video-js.css" rel="stylesheet" type="text/css">
-	<script src="{{ rooturl }}static/video.js"></script>
+    <script type="text/javascript" src="{{ rooturl }}static/jquery-2.1.4.min.js"></script>
+    <script src="{{ rooturl }}static/video.js"></script>
     {% block addhead %}{% endblock %}
     <script type="text/javascript" src="{{ rooturl }}static/mooc.js"></script>
+    <script type="application/l10n">{% include "l10n_strings.json" %}</script>
+    <script src="{{ rooturl }}static/l10n.js" type="text/javascript"></script>
     <link rel="icon" type="image/png" href="{{ rooturl }}/favicon.png">
   </head>
   <body class="{% block bodyclass %}{% endblock %}">

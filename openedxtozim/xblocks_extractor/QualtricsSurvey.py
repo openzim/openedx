@@ -17,4 +17,4 @@ class QualtricsSurvey: #Replace by Html
       return
 
     def render(self):
-            return "Not available offline" #TODO loca, to bettter
+      return '<div class="not_available">  <p data-l10n-id="not_available" >  <b> Info : </b> Not available offline. </p></div>'

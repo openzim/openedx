@@ -13,6 +13,7 @@ from slugify import slugify
 from uuid import uuid4
 from distutils.dir_util import copy_tree
 import bs4 as BeautifulSoup
+
 from openedxtozim.utils import create_zims, make_dir, download, dl_dependencies, jinja
 
 import openedxtozim.annexe as annexe
@@ -21,7 +22,7 @@ from openedxtozim.xblocks_extractor.Course import Course
 from openedxtozim.xblocks_extractor.Chapter import Chapter
 from openedxtozim.xblocks_extractor.Sequential import Sequential
 from openedxtozim.xblocks_extractor.Vertical import Vertical
-from openedxtozim.xblocks_extractor.video import Video
+from openedxtozim.xblocks_extractor.Video import Video
 from openedxtozim.xblocks_extractor.Libcast import Libcast
 from openedxtozim.xblocks_extractor.Html import Html
 from openedxtozim.xblocks_extractor.Problem import Problem
@@ -48,10 +49,11 @@ class Mooc:
     block_id_id=None
     json_tree=None
 
-    def __init__(self,c,course_url,convert_in_webm,ignore_missing_xblock):
+    def __init__(self,c,course_url,convert_in_webm,ignore_missing_xblock,lang):
         self.course_url=course_url
         self.convert_in_webm=convert_in_webm
         self.ignore_missing_xblock=ignore_missing_xblock
+        self.lang = lang or "en"
         self.instance_url=c.conf["instance_url"]
         self.course_id=get_course_id(self.course_url, c.conf["course_page_name"], c.conf["course_prefix"], self.instance_url)
         logging.info("Get info about course")
@@ -94,7 +96,7 @@ class Mooc:
                     logging.error("Some part of your course are not supported by openedx2zim : {} ({})\n You should open an issue at https://github.com/openzim/openedx/issues (with this message and Mooc URL, you can ignore this with --ignore-unsupported-xblocks".format(current_json["type"],current_json["student_view_url"]))
                     sys.exit(1)
                 else:
-                    print("Unavailable xblocks: " + current_json["student_view_url"])
+                    logging.warning("Unavailable xblocks: " + current_json["student_view_url"])
                     obj = BLOCKS_TYPE["unavailable"](current_json,path,rooturl,random_id,descendants,self)
 
             if current_json["type"] == "course":
@@ -117,13 +119,13 @@ class Mooc:
                     path=top_elem["href"][:-1].split("/")[-1]
                 else:
                     path=top_elem["href"].split("/")[-1]
-                if path == "course/" or "courseware" in path:
+                if path == "course" or "courseware" in path:
                     name = top_elem.get_text().replace(", current location", "")
                     self.top[name] = "course/" + self.head.folder_name + "/index.html"
                 if "info" in path:
                     name = top_elem.get_text().replace(", current location", "")
                     self.top[name] = "/index.html" 
-                if path == "course/" or "edxnotes" in path or "progress" in path or "info" in path or "courseware" in path:
+                if path == "course" or "edxnotes" in path or "progress" in path or "info" in path or "courseware" in path:
                     continue
                 if "wiki" in path:
                     self.wiki, self.wiki_name, path=annexe.wiki(c,self)
@@ -222,13 +224,13 @@ class Mooc:
             )
         copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(self.output_path, 'static'))
 
-    def zim(self,lang,publisher,zimpath,nofulltextindex):
+    def zim(self,publisher,zimpath,nofulltextindex):
         logging.info("Create zim")
         if self.no_homepage:
             homepage=os.path.join(self.head.path,"index.html")
         else:
             homepage="index.html"
-        done=create_zims(self.info["name"],lang,publisher,self.info["short_description"], self.info["org"],self.output_path,zimpath,nofulltextindex,homepage)
+        done=create_zims(self.info["name"],self.lang,publisher,self.info["short_description"], self.info["org"],self.output_path,zimpath,nofulltextindex,homepage)
 
 
 

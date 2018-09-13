@@ -1,0 +1,111 @@
+{
+    "default_locale": "{{ mooc.lang }}",
+    "locales": {
+        "en": {
+            "isocode": {
+                "textContent": "en"
+            },
+            "no_answers_for_problem": {
+                "innerHTML" : "<b> Warning : </b> There is not automatic correction available for this problem."
+            },
+	    "discussion" : {
+		"textContent": "discussion"
+	    },
+            "question" : {
+                "textContent": "question"
+            },
+            "posted_at" : {
+                "textContent": "posted at"
+            },
+            "by" : {
+                "textContent": "by"
+            },
+            "title" : {
+                "textContent": "Title"
+            },
+            "last_modified" : {
+                "textContent": "Last modified"
+            },
+            "last_modified_two_points" : {
+                "textContent": "Last modified :"
+            },
+            "wiki_nb_article_level" : {
+                "textContent": "There are {% raw %} {{ nb_articles }} {% endraw %} articles in this level."
+            },
+	    "menu" : {
+		"textContent": "Menu"
+	    },
+	    "video_not_dl" : {
+		"textContent": "Sorry this video has not been downloaded"
+	    },
+	    "no_answers_for_freetext" : {
+		"innerHTML": "<b> Warning : </b> There is not correction for Freetext block. </p> "
+	    },
+	    "wiki_see_sub_page" : {
+		"textContent": "See sub page"
+	    },
+	    "comments" : {
+		"textContent": "comments"
+	    },
+	    "not_available" : {
+		"innerHTML": "<b> Info : </b> Not available offline. "
+	    },
+	    "download_lti" : {
+		"textContent": "This content can be download <a href="{% raw %} {{ url }} {% endraw %}"> here </a>"
+	    }
+        },
+        "fr": {
+            "isocode": {
+                "textContent": "fr"
+            },
+            "no_answers_for_problem": {
+                "innerHTML" : "<b> Attention : </b> Il n'y a pas de correction automatique disponible pour cet exercice"
+            },
+	    "discussion" : {
+		"textContent": "discussion"
+	    },
+            "question" : {
+                "textContent": "question"
+            },
+            "posted_at" : {
+                "textContent": "publié le"
+            },
+            "by" : {
+                "textContent": "par"
+            },
+            "title" : {
+                "textContent": "Titre"
+            },
+            "last_modified" : {
+                "textContent": "Dernière modification"
+            },
+            "last_modified_two_points" : {
+                "textContent": "Dernière modification :"
+            },
+            "wiki_nb_article_level" : {
+                "textContent": "Il y a {% raw %} {{ nb_articles }} {% endraw %} articles à ce niveau."
+            },
+	    "menu" : {
+		"textContent": "Menu"
+	    },
+	    "video_not_dl" : {
+		"textContent": "Désolé, cette video n'a pas été téléchargé"
+	    },
+	    "no_answers_for_freetext" : {
+		"innerHTML": "<b> Attention : </b> Il n'y a pas de correction pour les block de texte libre. </p> "
+	    },
+	    "wiki_see_sub_page" : {
+		"textContent": "Voir les sous-pages"
+	    },
+	    "comments" : {
+		"textContent": "commentaires"
+	    },
+	    "not_available" : {
+		"innerHTML": "<b> Info : </b> N'est pas disponible hors ligne. "
+	    },
+	    "download_lti" : {
+		"textContent": "Ce contenue peut être téléchargé <a href="{% raw %} {{ url }} {% endraw %}"> ici </a>"
+	    }
+        },
+    }
+}

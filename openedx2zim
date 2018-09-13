@@ -3,7 +3,7 @@
 """openedx2zim.
 
 Usage:
-  openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex] [--transcode2webm] [--ignore-unsupported-xblocks]
+  openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex] [--transcode2webm] [--ignore-unsupported-xblocks] [--lang=<lang>]
   openedx2zim (-h | --help)
   openedx2zim --version
 
@@ -16,36 +16,7 @@ Options:
   --nofulltextindex        Dont index content
   --transcode2webm  Transcode videos in webm
   --ignore-unsupported-xblocks  Ignore unsupported content (xblock)
-
-"""
-"""
-import json
-import re
-from http.cookiejar import LWPCookieJar
-from urllib.error import HTTPError, URLError
-from urllib.parse import (
-    urlencode,
-    quote_plus,
-    unquote,
-)
-from urllib.request import (
-    urlopen,
-    build_opener,
-    install_opener,
-    HTTPCookieProcessor,
-    Request,
-    urlretrieve,
-)
-import ssl
-import sys
-import os
-import bs4 as BeautifulSoup
-
-from lxml.etree import parse as string2xml
-from lxml.html import fromstring as string2html
-from lxml.html import tostring as html2string
-from webvtt import WebVTT
-import youtube_dl
+  --lang 	Default lang of interface, and lang of zim content (in ISO639-1 : "en", "fr" etc..)
 
 """
 
@@ -69,13 +40,13 @@ def run():
 
     jinja_init(os.path.join(os.path.abspath(os.path.dirname(__file__)),"openedxtozim","templates/"))
 
-    mooc=Mooc(c,arguments["<course_url>"], arguments["--transcode2webm"], arguments["--ignore-unsupported-xblocks"])
+    mooc=Mooc(c,arguments["<course_url>"], arguments["--transcode2webm"], arguments["--ignore-unsupported-xblocks"], arguments["--lang"])
     mooc.parser_json()
     mooc.annexe(c)
     mooc.download(c)
     mooc.render()
     if not arguments['--nozim']:
-        mooc.zim("eng",arguments["<publisher>"],arguments["--zimpath"],arguments["--nofulltextindex"])
+        mooc.zim(arguments["<publisher>"],arguments["--zimpath"],arguments["--nofulltextindex"])
 
 if __name__ == '__main__':
     run()

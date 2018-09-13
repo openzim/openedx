@@ -17,11 +17,10 @@ class Lti:
     def download(self, c):
         #IMPROUVEMENT LTI can be lot of content type ? Here pdf
         url = self.json["lms_web_url"].replace("/jump_to/","/xblock/") + "/handler/preview_handler"
-        print(url)
         content=c.get_page(url)
         soup=BeautifulSoup.BeautifulSoup(content, 'lxml')
         content_url=soup.find('form')
         download(content_url["action"],os.path.join(self.output_path,"content.pdf"),c)
 
     def render(self):
-            return "<p> This content can be download <a href='{}'> here </a>".format(os.path.join(self.folder_name,"content.pdf")) #TODO loca + do better
+            return """<p data-l10n-id="download_lti" data-l10n-args='{ "url": "{}" }'> This content can be download <a href='{}'> here </a>""".format(os.path.join(self.folder_name,"content.pdf"),os.path.join(self.folder_name,"content.pdf"))

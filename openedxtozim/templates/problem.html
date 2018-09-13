@@ -1,4 +1,9 @@
           <div id="{{ problem.problem_id }}">
+            {% if not problem.answers %}
+		<div class="noanswers">
+          		<p data-l10n-id="no_answers_for_problem" >  <b> Warning : </b> There is not automatic correction available for this problem. </p>
+	        </div>
+            {% endif %}
             {{ problem.html_content }}
           </div>
           {% if problem.has_hint %}
@@ -22,8 +27,4 @@
             </script>
             <button onclick="problem_check_answers('{{ problem.problem_id }}')">Check answers</button> 
             <button onclick="problem_show_answers('{{ problem.problem_id }}')">Show answers and explanation</button> 
-          {% else %}
-            </br>
-            <button disabled title="Sorry, we haven't answers" >Check answers</button> 
-            <!--<p> Sorry, we haven't answers</p>-->
           {% endif %}

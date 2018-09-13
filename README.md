@@ -50,3 +50,4 @@ You should only use this to MOOC with a free licence.
 
 
 
+Add loca : openedxtozim/templates/l10n_strings.json + language code in openedxtozim/templates/l10n_strings.json (lign 35)

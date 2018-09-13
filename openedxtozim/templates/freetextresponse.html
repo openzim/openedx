@@ -1,9 +1,11 @@
 {{ freetextresponse.html }}
 <script>
 
+/*
 function check_freetext(text_id){
-  alert("Sorry, we cannot check free text offline"); // TODO loca, + do better
+  alert("Sorry, we cannot check free text offline"); 
 }
+*/
 
 function save_freetext(text_id){
   document.cookie = "{{ mooc.name }}-" + text_id + "=" + document.getElementById(text_id).value;

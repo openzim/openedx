@@ -6,7 +6,7 @@
           <header class="post-header">
             <div class="post-header-content">
               <h2 class="post-title">{{ thread["title"] }}</h2>
-              <p class="posted-details"> {% if thread["thread_type"] == "discussion" %} discussion {% else %} question {% endif %} posted at <span class="timeago" title="{{ thread["created_at"] | remove_newline }}">{{ thread["created_at"] | remove_newline }}</span> by <a class="username">{{ thread["username"] }}</a>{% if thread["user_id"] in staff_user %} <span class="user-label-staff">(Staff)</span> {% endif %}</p> {# TODO loca #}
+              <p class="posted-details"> {% if thread["thread_type"] == "discussion" %} <span data-l10n-id="discussion" >discussion</span> {% else %} <span data-l10n-id="question"> question</span> {% endif %}<span data-l10n-id="posted_at"> posted at </span> <span class="timeago" title="{{ thread["created_at"] | remove_newline }}">{{ thread["created_at"] | remove_newline }}</span> <span data-l10n-id="by" >by </span> <a class="username">{{ thread["username"] }}</a>{% if thread["user_id"] in staff_user %} <span class="user-label-staff">(Staff)</span> {% endif %}</p>
             </div>
           </header>
           <div class="post-body">
@@ -44,7 +44,7 @@
                     <p> {{ comment_of_comment["body"] }} </p>
                   </div>
                   <p class="posted-details">
-                        Posted <span class="timeago" title="{{ comment_of_comment["created_at"] | remove_newline }}">{{ comment_of_comment["created_at"] | remove_newline }}</span> by <a class="username">{{ comment_of_comment["username"] }}</a> {# TODO loca #}
+                        <span data-l10n-id="posted_at">Posted <span><span class="timeago" title="{{ comment_of_comment["created_at"] | remove_newline }}">{{ comment_of_comment["created_at"] | remove_newline }}</span> <span data-l10n-id="by"> by</span> <a class="username">{{ comment_of_comment["username"] }}</a>
                   </p>
                 </div>
               </li>

@@ -26,7 +26,8 @@ setup(
         'python-slugify',
         'jinja2',
         'mistune',
-        'requests'
+        'requests',
+        'iso-639'
         ],
     platforms='Linux',
     scripts=['openedx2zim.py'],

@@ -29,7 +29,6 @@ class DragAndDropV2: #IMPROVEMENT We can only see it, not interracting with it
         name=os.path.basename(self.content["target_img_expanded_url"])
         download(self.content["target_img_expanded_url"], os.path.join(self.output_path,name),self.mooc.instance_url)
         self.content["target_img_expanded_url"]=os.path.join(self.folder_name,name)
-        print(self.content)
 
     def render(self):
             return jinja(
