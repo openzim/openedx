@@ -30,7 +30,7 @@ setup(
         'iso-639'
         ],
     platforms='Linux',
-    scripts=['openedx2zim.py'],
+    scripts=['openedx2zim'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
