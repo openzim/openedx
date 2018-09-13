@@ -256,9 +256,9 @@ div.course-wrapper {
 .container > div {
     table-layout: fixed;
     width: 100%;
-/*
     border-radius: 3px;
     border: 1px solid #aaa;
+/*
     background: #fff;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 */
