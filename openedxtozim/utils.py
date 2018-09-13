@@ -227,9 +227,9 @@ def jinja(output, template,deflate, **context):
             else:
                 f.write(page)
 
-def jinja_init(templates):
+def jinja_init():
     global ENV
-    templates = os.path.abspath(templates)
+    templates = os.path.join(os.path.abspath(os.path.dirname(__file__)),"templates/")
     ENV = Environment(loader=FileSystemLoader((templates,)))
     filters = dict(
             slugify=slugify,

@@ -209,7 +209,7 @@ class Mooc:
 
         if self.wiki:
             annexe.render_wiki(self)
-        if self.forum_thread:
+        if self.forum_category:
             annexe.render_forum(self)
         if len(self.book_list_list) != 0:
             annexe.render_booknav(self)
