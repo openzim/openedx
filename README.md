@@ -8,6 +8,8 @@ The goal of this project is to create a suite of tools to create [zim](http://ww
 
 ## Getting started
 
+You can use your docker : openzim/openedx
+
 Install non python dependencies:
 
 Here for Debian : 
@@ -37,17 +39,16 @@ pip install openedx2zim
 ##Usage
 
 ```
-openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex]
+openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex] [--transcode2webm] [--ignore-unsupported-xblocks] [--lang=<lang>]
 ```
 
 course_url is something like this https://courses.edx.org/courses/[course name or id]/info you can find it from your dashboard and click on the MOOC you want to offline
 You should already have enrolled course to make it offline.
 Also you should not connect on your browser or with an other run of openedx2zim to the same account while openedx2zim is still running.
-
-
 You should only use this to MOOC with a free licence.
+If your mooc is not in english you should add language code with --lang="" (in two-letter code iso639)
 
 
 
-
-Add loca : openedxtozim/templates/l10n_strings.json + language code in openedxtozim/templates/l10n_strings.json (lign 35)
+## Info for contributor 
+To add loca : openedxtozim/templates/l10n_strings.json + language code in openedxtozim/templates/l10n_strings.json (lign 35)

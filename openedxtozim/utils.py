@@ -158,6 +158,9 @@ def download_and_convert_subtitles(path,lang_and_url,c):
                 if e.code == 404 or e.code == 403:
                     logging.error("Fail to get subtitle from {}".format(lang_and_url[lang]))
                     pass
+            except Exception as e:
+                logging.error("Error when converting subtitle {} : {}".format(lang_and_url[lang],e))
+                pass
         else:
             real_subtitles[lang]=lang + ".vtt"
     return real_subtitles
@@ -313,6 +316,21 @@ def dl_dependencies(content, path, folder_name,c):
                     pass
             src = os.path.join(folder_name,filename )
             js.attrib['src'] = src 
+    sources = body.xpath('//source')
+    for source in sources:
+        if "src" in source.attrib:
+            src = source.attrib['src']
+            ext = os.path.splitext(src.split("?")[0])[1]
+            filename = sha256(str(src).encode('utf-8')).hexdigest() + ext
+            out = os.path.join(path, filename)
+            if not os.path.exists(out):
+                try:
+                    download(src, out,c.conf["instance_url"], timeout=180)
+                except :
+                    logging.warning("error with " + src)
+                    pass
+            src = os.path.join(folder_name,filename )
+            source.attrib['src'] = src
     iframes = body.xpath('//iframe')
     for iframe in iframes:
         if "src" in iframe.attrib:
@@ -350,7 +368,7 @@ def dl_dependencies(content, path, folder_name,c):
                         pass
                 src = os.path.join(folder_name,filename )
                 iframe.attrib['src'] = src
-    if imgs or docs or csss or jss or iframes:
+    if imgs or docs or csss or jss or sources or iframes:
         content = html2string(body, encoding="unicode")
     return content
 

@@ -1348,7 +1348,18 @@ div.book-wrapper .book {
   .course-index, .courseware{
     display:none;
   }
-
+  section.updates {
+    box-sizing: border-box;
+    display: block;
+    padding: 1em 1em;
+    vertical-align: top;
+    width: 76.27119%;
+    max-width: 100%;
+  }
+  .wiki-wrapper section.wiki .article-functions {
+    float: left;
+    width: 50%;
+  }
 
   div.course-wrapper section.course-content {
 	display: block;

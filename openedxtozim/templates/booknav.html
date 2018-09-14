@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block bodyclass %}{% endblock %}
+
+{% block title %} Textbook {% endblock %}
+
+{% block body %}
+<div class="container">
+<main id="main" aria-label="Content" tabindex="-1">
+<div class="book-wrapper">
+    <section class="book-sidebar" aria-label="Textbook Navigation">
+	    <ul id="booknav">
+	    {% for book in book_list %}
+		  <li>
+		    <a class="chapter" rel="{{ book["url"] }}" href="{{ rooturl }}{{ dir_path }}/{{ book["url"] }}" onclick="return booknav_change(this)"> {{ book["name"] }}</a>
+		  </li>
+	    {% endfor %}
+	    </ul>
+    </section>
+    <div class="book">
+	    <iframe
+	    title="{{ book_list[0]["name"] }}"
+	    id="viewer-frame"
+	    src="{{ rooturl }}{{ dir_path }}/{{ book_list[0]["url"] }}"
+	    width="856"
+	    height="1108"
+	    frameborder="0"
+	    tabindex="-1"
+	    seamless></iframe>
+    </div>
+</div>
+</main>
+</div>
+<script>
+function booknav_change(e){
+	if (window.matchMedia('(max-width: 640px)').matches) { // On mobile, we launch download of pdf
+		return true;
+        }else{
+		document.getElementById("viewer-frame").src = e.href;
+		return false;
+	}
+}
+</script>
+
+{% endblock %}

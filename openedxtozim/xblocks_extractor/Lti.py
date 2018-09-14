@@ -23,4 +23,4 @@ class Lti:
         download(content_url["action"],os.path.join(self.output_path,"content.pdf"),c)
 
     def render(self):
-            return """<p data-l10n-id="download_lti" data-l10n-args='{ "url": "{}" }'> This content can be download <a href='{}'> here </a>""".format(os.path.join(self.folder_name,"content.pdf"),os.path.join(self.folder_name,"content.pdf"))
+            return """<p data-l10n-id='download_lti' data-l10n-args="{ 'url': '{""" + os.path.join(self.folder_name,"content.pdf") + """}' }"> This content can be download <a href='{""" + os.path.join(self.folder_name,"content.pdf") + """}'> here </a>"""

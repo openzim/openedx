@@ -52,7 +52,6 @@
 	    },
 	    "download_lti" : {
 		"textContent": "This content can be download <a href="{% raw %} {{ url }} {% endraw %}"> here </a>"
-	    }
         },
         "fr": {
             "isocode": {
@@ -105,7 +104,6 @@
 	    },
 	    "download_lti" : {
 		"textContent": "Ce contenue peut être téléchargé <a href="{% raw %} {{ url }} {% endraw %}"> ici </a>"
-	    }
         },
     }
 }
