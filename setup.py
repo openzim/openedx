@@ -4,7 +4,7 @@ from pip.req import parse_requirements
 
 setup(
     name='openedx2zim',
-    version='0.1',
+    version='0.5.0',
     description="Make zimfile from open edx MOOCs",
     long_description=open('README.md').read(),
     author='dattaz',
