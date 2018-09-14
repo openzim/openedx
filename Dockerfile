@@ -34,7 +34,7 @@ RUN cd gifsicle-1.88 && make all install
 
 # Install sotoki
 RUN locale-gen "en_US.UTF-8"
-RUN pip install openedx2zim
+RUN pip3 install openedx2zim
 #RUN git clone https://github.com/openzim/openedx/
 #RUN cd openedx && git checkout summer2018 && sed -i "s/_internal.//" setup.py && python3 setup.py install
 
