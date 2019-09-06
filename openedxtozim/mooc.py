@@ -224,13 +224,13 @@ class Mooc:
             )
         copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)) ,'static'), os.path.join(self.output_path, 'static'))
 
-    def zim(self,publisher,zimpath,nofulltextindex):
+    def zim(self,publisher,zimpath,nofulltextindex,scraper_name):
         logging.info("Create zim")
         if self.no_homepage:
             homepage=os.path.join(self.head.path,"index.html")
         else:
             homepage="index.html"
-        done=create_zims(self.info["name"],self.lang,publisher,self.info["short_description"], self.info["org"],self.output_path,zimpath,nofulltextindex,homepage)
+        done=create_zims(self.info["name"],self.lang,publisher,self.info["short_description"], self.info["org"],self.output_path,zimpath,nofulltextindex,homepage, self.course_url,scraper_name)
 
 
 

@@ -58,7 +58,7 @@ def check_missing_binary(no_zim):
     if not (bin_is_present("ffmpeg") or bin_is_present("avconv")):
         sys.exit("You should install ffmpeg or avconv")
 
-def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_path,noindex,home):
+def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_path,noindex,home,source,scraper_name):
     if zim_path == None:
         zim_path = os.path.join("output/", "{title}_{lang}_all_{date}.zim".format(title=slugify(title),lang=lang_input,date=datetime.datetime.now().strftime('%Y-%m')))
 
@@ -76,20 +76,23 @@ def create_zims(title, lang_input, publisher,description, creator,html_dir,zim_p
         'home': home,
         'favicon': 'favicon.png',
         'static': html_dir,
-        'zim': zim_path
+        'zim': zim_path,
+        'name' : "kiwix." + slugify(title),
+        'tags' : "_category:openedx;openedx",
+        'scraper' : scraper_name,
+        'source' : source
+
     }
 
-    if noindex:
-        cmd = ('zimwriterfs --welcome="{home}" --favicon="{favicon}" '
+    cmd = "zimwriterfs "
+    if not noindex:
+        cmd += "--withFullTextIndex "
+    cmd = ('zimwriterfs --welcome="{home}" --favicon="{favicon}" '
            '--language="{languages}" --title="{title}" '
-           '--description="{description}" '
-           '--creator="{creator}" --publisher="{publisher}" "{static}" "{zim}"'
-           .format(**context))
-    else:
-        cmd = ('zimwriterfs --withFullTextIndex --welcome="{home}" --favicon="{favicon}" '
-           '--language="{languages}" --title="{title}" '
-           '--description="{description}" '
-           '--creator="{creator}" --publisher="{publisher}" "{static}" "{zim}"'
+           '--description="{description}" --tags="{tags} --name="{name}"'
+           '--creator="{creator}" --publisher="{publisher}"'
+           '--source="{source}" --scraper="{scraper}"'
+           '"{static}" "{zim}"'
            .format(**context))
     logging.info(cmd)
 

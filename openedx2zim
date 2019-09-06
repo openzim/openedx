@@ -30,7 +30,8 @@ from openedxtozim.connection import Connection
 from openedxtozim.mooc import Mooc
 
 def run():
-    arguments = docopt(__doc__, version='0.5.1')
+    scraper_name="Openedx 0.5.1"
+    arguments = docopt(__doc__, version=scraper_name)
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     logging.info("Test (missing) bin")
@@ -46,7 +47,7 @@ def run():
     mooc.download(c)
     mooc.render()
     if not arguments['--nozim']:
-        mooc.zim(arguments["<publisher>"],arguments["--zimpath"],arguments["--nofulltextindex"])
+        mooc.zim(arguments["<publisher>"],arguments["--zimpath"],arguments["--nofulltextindex"],scraper_name)
 
 if __name__ == '__main__':
     run()
