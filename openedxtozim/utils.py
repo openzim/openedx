@@ -23,7 +23,8 @@ import re
 from iso639 import languages as iso_languages
 import mistune #markdown
 
-MARKDOWN = mistune.Markdown()
+renderer = mistune.HTMLRenderer()
+MARKDOWN = mistune.Markdown(renderer)
 
 def is_absolute(url):
     return bool(urlparse(url).netloc)
