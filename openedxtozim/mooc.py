@@ -69,7 +69,9 @@ class Mooc:
     block_id_id = None
     json_tree = None
 
-    def __init__(self, c, course_url, convert_in_webm, ignore_missing_xblock, lang):
+    def __init__(
+        self, c, course_url, convert_in_webm, ignore_missing_xblock, lang, wiki, forum
+    ):
         self.course_url = course_url
         self.convert_in_webm = convert_in_webm
         self.ignore_missing_xblock = ignore_missing_xblock
@@ -85,7 +87,6 @@ class Mooc:
         self.info = c.get_api_json(
             "/api/courses/v1/courses/" + self.course_id + "?username=" + c.user
         )
-
         self.output_path = os.path.join("output", slugify(self.info["name"]))
         self.name = slugify(self.info["name"])
         make_dir(self.output_path)
@@ -106,10 +107,11 @@ class Mooc:
         self.top = {}
         self.object = []
         self.no_homepage = False
-        self.wiki = None
         self.forum_thread = None
         self.page_annexe = []
         self.book_list_list = []
+        self.include_wiki = wiki
+        self.include_forum = forum
 
     def parser_json(self):
         def make_objects(current_path, current_id, rooturl):
@@ -181,16 +183,16 @@ class Mooc:
                     or "courseware" in path
                 ):
                     continue
-                if "wiki" in path:
+                if "wiki" in path and self.include_wiki:
                     self.wiki, self.wiki_name, path = annexe.wiki(c, self)
-                elif "forum" in path:
+                elif "forum" in path and self.include_forum:
                     path = "forum/"
                     (
                         self.forum_thread,
                         self.forum_category,
                         self.staff_user_forum,
                     ) = annexe.forum(c, self)
-                else:
+                elif not self.include_forum and not self.include_wiki:
                     output_path = os.path.join(self.output_path, path)
                     make_dir(output_path)
                     page_content = c.get_page(self.instance_url + top_elem["href"])
@@ -314,9 +316,9 @@ class Mooc:
                 rooturl="../../",
             )
 
-        if self.wiki:
+        if hasattr(self, "wiki"):
             annexe.render_wiki(self)
-        if self.forum_category:
+        if hasattr(self, "forum_category"):
             annexe.render_forum(self)
         if len(self.book_list_list) != 0:
             annexe.render_booknav(self)
