@@ -16,12 +16,14 @@ from urllib.parse import unquote
 from lxml.etree import parse as string2xml
 from lxml.html import fromstring as string2html
 from lxml.html import tostring as html2string
+from zimscraperlib.download import save_large_file
 from hashlib import sha256
 from webvtt import WebVTT
 import youtube_dl
 import re
 from iso639 import languages as iso_languages
 import mistune  # markdown
+import magic
 
 renderer = mistune.HTMLRenderer()
 MARKDOWN = mistune.Markdown(renderer)
@@ -139,7 +141,7 @@ def remove_newline(text):
     return text.replace("\n", "")
 
 
-def download(url, output, instance_url, timeout=20, retry=2):
+def download(url, output, instance_url):
     if url[0:2] == "//":
         url = "http:" + url
     elif url[0] == "/":
@@ -149,27 +151,12 @@ def download(url, output, instance_url, timeout=20, retry=2):
     split_url = list(urllib.parse.urlsplit(url))
     # split_url[2] = urllib.parse.quote(split_url[2])    # the third component is the path of the URL/IRI
     url = urllib.parse.urlunsplit(split_url)
-
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    request_headers = {"User-Agent": "Mozilla/5.0"}
     try:
-        request = Request(url, headers=request_headers)
-        response = urlopen(request, timeout=timeout, context=ctx)
-        output_content = response.read()
-        with open(output, "wb") as f:
-            f.write(output_content)
-        return response.headers
-    except HTTPError as e:
-        if retry >= 0:
-            if e.code == 403 or e.code == 404:
-                logging.warning(str(e.code) + " : " + url)
-                return False
-            logging.warning(str(e) + " : " + url + " but retry download")
-            return download(url, output, instance_url, timeout=timeout, retry=retry - 1)
-        else:
-            return False
+        save_large_file(url, output)
+        return True
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Download failed for {url} - {e}")
+        return False
 
 
 def download_and_convert_subtitles(path, lang_and_url, c):
@@ -244,24 +231,16 @@ def convert_video_to_webm(video_path, video_final_path):
             logging.warning("Error when convert " + video_path + " to webm")
 
 
-def get_filetype(headers, path):
-    if headers == None:
-        file_type = os.path.splitext(path.split("?")[0])[1]
-    else:
-        file_type = headers.get_content_type()
-    type = "none"
-    if ("png" in file_type) or ("PNG" in file_type):
-        type = "png"
-    elif (
-        ("jpg" in file_type)
-        or ("jpeg" in file_type)
-        or ("JPG" in file_type)
-        or ("JPEG" in file_type)
-    ):
-        type = "jpeg"
-    elif ("gif" in file_type) or ("GIF" in file_type):
-        type = "gif"
-    return type
+def get_filetype(path):
+    ftype = "none"
+    mime = magic.from_file(path)
+    if "PNG" in mime:
+        ftype = "png"
+    elif "JPEG" in mime:
+        ftype = "jpeg"
+    elif "GIF" in mime:
+        ftype = "gif"
+    return ftype
 
 
 def optimize_one(path, type):
@@ -322,8 +301,8 @@ def dl_dependencies(content, path, folder_name, c):
             # download the image only if it's not already downloaded
             if not os.path.exists(out):
                 try:
-                    headers = download(src, out, c.conf["instance_url"], timeout=180)
-                    type_of_file = get_filetype(headers, out)
+                    download(src, out, c.conf["instance_url"])
+                    type_of_file = get_filetype(out)
                     optimize_one(out, type_of_file)
                 except Exception as e:
                     logging.warning(str(e) + " : error with " + src)
@@ -367,7 +346,7 @@ def dl_dependencies(content, path, folder_name, c):
             ):  # Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
                 if not os.path.exists(out):
                     try:
-                        download(unquote(src), out, c.conf["instance_url"], timeout=180)
+                        download(unquote(src), out, c.conf["instance_url"])
                     except:
                         logging.warning("error with " + src)
                         pass
@@ -382,7 +361,7 @@ def dl_dependencies(content, path, folder_name, c):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 try:
-                    download(src, out, c.conf["instance_url"], timeout=180)
+                    download(src, out, c.conf["instance_url"])
                 except:
                     logging.warning("error with " + src)
                     pass
@@ -397,7 +376,7 @@ def dl_dependencies(content, path, folder_name, c):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 try:
-                    download(src, out, c.conf["instance_url"], timeout=180)
+                    download(src, out, c.conf["instance_url"])
                 except:
                     logging.warning("error with " + src)
                     pass
@@ -412,7 +391,7 @@ def dl_dependencies(content, path, folder_name, c):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 try:
-                    download(src, out, c.conf["instance_url"], timeout=180)
+                    download(src, out, c.conf["instance_url"])
                 except:
                     logging.warning("error with " + src)
                     pass
@@ -444,7 +423,7 @@ def dl_dependencies(content, path, folder_name, c):
                 out = os.path.join(path, filename)
                 if not os.path.exists(out):
                     try:
-                        download(unquote(src), out, c.conf["instance_url"], timeout=180)
+                        download(unquote(src), out, c.conf["instance_url"])
                     except:
                         logging.warning("error with " + src)
                         pass

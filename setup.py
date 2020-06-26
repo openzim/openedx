@@ -25,6 +25,8 @@ setup(
         "mistune",
         "requests",
         "iso-639",
+        "zimscraperlib",
+        "python-magic",
     ],
     platforms="Linux",
     scripts=["openedx2zim"],
