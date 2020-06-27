@@ -141,7 +141,7 @@ def remove_newline(text):
     return text.replace("\n", "")
 
 
-def download(url, output, instance_url):
+def download(url, output, instance_url, with_headers=False):
     if url[0:2] == "//":
         url = "http:" + url
     elif url[0] == "/":
@@ -152,7 +152,7 @@ def download(url, output, instance_url):
     # split_url[2] = urllib.parse.quote(split_url[2])    # the third component is the path of the URL/IRI
     url = urllib.parse.urlunsplit(split_url)
     try:
-        save_large_file(url, output)
+        save_large_file(url, output, with_headers=with_headers)
         return True
     except subprocess.CalledProcessError as e:
         logging.error(f"Download failed for {url} - {e}")
@@ -231,15 +231,25 @@ def convert_video_to_webm(video_path, video_final_path):
             logging.warning("Error when convert " + video_path + " to webm")
 
 
-def get_filetype(path):
+def get_filetype(headers, path):
     ftype = "none"
-    mime = magic.from_file(path)
-    if "PNG" in mime:
-        ftype = "png"
-    elif "JPEG" in mime:
-        ftype = "jpeg"
-    elif "GIF" in mime:
-        ftype = "gif"
+    if "content-type" in headers:
+        if "png" in headers["content-type"].lower():
+            ftype = "png"
+        elif ("jpg" in headers["content-type"].lower()) or (
+            "jpeg" in headers["content-type"].lower()
+        ):
+            ftype = "jpeg"
+        elif "gif" in headers["content-type"].lower():
+            ftype = "gif"
+    if ftype == "none":
+        mime = magic.from_file(path)
+        if "PNG" in mime:
+            ftype = "png"
+        elif "JPEG" in mime:
+            ftype = "jpeg"
+        elif "GIF" in mime:
+            ftype = "gif"
     return ftype
 
 
@@ -301,8 +311,10 @@ def dl_dependencies(content, path, folder_name, c):
             # download the image only if it's not already downloaded
             if not os.path.exists(out):
                 try:
-                    download(src, out, c.conf["instance_url"])
-                    type_of_file = get_filetype(out)
+                    headers = download(
+                        src, out, c.conf["instance_url"], with_headers=True
+                    )
+                    type_of_file = get_filetype(headers, out)
                     optimize_one(out, type_of_file)
                 except Exception as e:
                     logging.warning(str(e) + " : error with " + src)
