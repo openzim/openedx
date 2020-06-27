@@ -25,6 +25,7 @@ setup(
         "mistune",
         "requests",
         "iso-639",
+        "zimscraperlib",
     ],
     platforms="Linux",
     scripts=["openedx2zim"],
