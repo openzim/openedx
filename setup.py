@@ -25,7 +25,6 @@ setup(
         "requests>=2.24,<3.0",
         "iso-639==0.4.5",
         "zimscraperlib>=1.1.2,<1.2",
-        "python-magic==0.4.18",
         "youtube_dl",
     ],
     platforms="Linux",
