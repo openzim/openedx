@@ -7,7 +7,7 @@ import json
 from collections import defaultdict, OrderedDict
 import logging
 from html import unescape
-from openedxtozim.utils import make_dir, download, dl_dependencies, jinja, markdown
+from .utils import make_dir, download, dl_dependencies, jinja, markdown
 from urllib.error import HTTPError
 
 

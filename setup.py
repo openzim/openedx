@@ -1,39 +1,47 @@
-from setuptools import setup, find_packages
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# vim: ai ts=4 sts=4 et sw=4 nu
+
+import pathlib
+import subprocess
+from setuptools import setup
+
+root_dir = pathlib.Path(__file__).parent
+
+
+def read(*names, **kwargs):
+    with open(root_dir.joinpath(*names), "r") as fh:
+        return fh.read()
+
 
 setup(
     name="openedx2zim",
-    version="0.5.1",
-    description="Make zimfile from open edx MOOCs",
-    long_description=open("README.md").read(),
+    version=read("openedx2zim", "VERSION").strip(),
+    description="Turn MOOCs on openedx instances into ZIMs",
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     author="dattaz",
     author_email="taz@dattaz.fr",
-    url="http://github.com/kiwix/openedx",
-    keywords="kiwix zim openedx edx offline",
-    license="GPL",
-    packages=find_packages(exclude=["contrib", "docs", "tests*"]),
-    package_dir={"openedxtozim": "openedxtozim"},
+    url="https://github.com/openzim/openedx",
+    keywords="kiwix zim openedx offline",
+    license="GPLv3+",
+    packages=["openedx2zim"],
+    install_requires=[
+        line.strip()
+        for line in read("requirements.txt").splitlines()
+        if not line.strip().startswith("#")
+    ],
     zip_safe=False,
     include_package_data=True,
-    install_requires=[
-        "docopt==0.6.2",
-        "beautifulsoup4==4.9.1",
-        "lxml==4.5.1",
-        "webvtt-py==0.4.5",
-        "python-slugify==4.0.0",
-        "Jinja2==2.11.2",
-        "mistune==2.0.0a4",
-        "requests>=2.24,<3.0",
-        "iso-639==0.4.5",
-        "zimscraperlib>=1.1.2,<1.2",
-        "python-magic==0.4.18",
-        "youtube_dl",
-    ],
-    platforms="Linux",
-    scripts=["openedx2zim"],
+    entry_points={
+        "console_scripts": ["openedx2zim=openedx2zim.__main__:main"]
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.8",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     ],
+    python_requires=">=3.6",
 )

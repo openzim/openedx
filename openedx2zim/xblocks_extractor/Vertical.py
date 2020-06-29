@@ -1,6 +1,6 @@
 import os
 from slugify import slugify
-from openedxtozim.utils import make_dir, jinja
+from ..utils import make_dir, jinja
 
 
 class Vertical:

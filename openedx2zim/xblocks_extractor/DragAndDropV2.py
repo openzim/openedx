@@ -2,7 +2,7 @@ import bs4 as BeautifulSoup
 import os
 from slugify import slugify
 import json
-from openedxtozim.utils import make_dir, jinja, download
+from ..utils import make_dir, jinja, download
 
 
 class DragAndDropV2:  # IMPROVEMENT We can only see it, not interracting with it

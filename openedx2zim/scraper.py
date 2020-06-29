@@ -1,106 +1,84 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# vim: ai ts=4 sts=4 et sw=4 nu
+
+import sys
+import os
 import re
+from uuid import uuid4
+from distutils.dir_util import copy_tree
+
 from urllib.parse import (
     urlencode,
     quote_plus,
     unquote,
     urlparse,
 )
-import json
-import logging
-import os
-import sys
 from slugify import slugify
-from uuid import uuid4
-from distutils.dir_util import copy_tree
 import bs4 as BeautifulSoup
 
-from openedxtozim.utils import create_zims, make_dir, download, dl_dependencies, jinja
-
-import openedxtozim.annexe as annexe
-
-from openedxtozim.xblocks_extractor.Course import Course
-from openedxtozim.xblocks_extractor.Chapter import Chapter
-from openedxtozim.xblocks_extractor.Sequential import Sequential
-from openedxtozim.xblocks_extractor.Vertical import Vertical
-from openedxtozim.xblocks_extractor.Video import Video
-from openedxtozim.xblocks_extractor.Libcast import Libcast
-from openedxtozim.xblocks_extractor.Html import Html
-from openedxtozim.xblocks_extractor.Problem import Problem
-from openedxtozim.xblocks_extractor.Discussion import Discussion
-from openedxtozim.xblocks_extractor.FreeTextResponse import FreeTextResponse
-from openedxtozim.xblocks_extractor.Unavailable import Unavailable
-from openedxtozim.xblocks_extractor.Lti import Lti
-from openedxtozim.xblocks_extractor.DragAndDropV2 import DragAndDropV2
-
-BLOCKS_TYPE = {
-    "course": Course,
-    "chapter": Chapter,
-    "sequential": Sequential,
-    "vertical": Vertical,
-    "video": Video,
-    "libcast_xblock": Libcast,
-    "html": Html,
-    "problem": Problem,
-    "discussion": Discussion,
-    "qualtricssurvey": Html,
-    "freetextresponse": FreeTextResponse,
-    "grademebutton": Unavailable,
-    "drag-and-drop-v2": DragAndDropV2,
-    "lti": Lti,
-    "unavailable": Unavailable,
-}
+from .utils import check_missing_binary, jinja_init, create_zims, make_dir, download, dl_dependencies, jinja
+from .connection import Connection
+from .constants import SCRAPER, BLOCKS_TYPE, getLogger
+from .annexe import wiki, forum, booknav, render_wiki, render_forum, render_booknav
 
 
-def get_course_id(url, course_page_name, course_prefix, instance_url):
-    clean_url = re.match(instance_url + course_prefix + ".*" + course_page_name, url)
-    clean_id = clean_url.group(0)[
-        len(instance_url + course_prefix) : -len(course_page_name)
-    ]
-    if "%3" in clean_id:  # course_id seems already encode
-        return clean_id
-    else:
-        return quote_plus(clean_id)
+logger = getLogger()
 
 
-class Mooc:
-    json = None
-    course_url = None
-    course_id = None
-    block_id_id = None
-    json_tree = None
-
+class Openedx2Zim:
     def __init__(
-        self, c, course_url, convert_in_webm, ignore_missing_xblock, lang, wiki, forum
+        self,
+        course_url,
+        course_publisher,
+        email,
+        password,
+        zimpath,
+        no_fulltext_index,
+        convert_in_webm,
+        ignore_missing_xblock,
+        lang,
+        add_wiki,
+        add_forum,
+        no_zim,
+        debug,
     ):
-        self.course_url = course_url
-        self.convert_in_webm = convert_in_webm
-        self.ignore_missing_xblock = ignore_missing_xblock
-        self.lang = lang or "en"
-        self.instance_url = c.conf["instance_url"]
-        self.course_id = get_course_id(
-            self.course_url,
-            c.conf["course_page_name"],
-            c.conf["course_prefix"],
-            self.instance_url,
-        )
-        logging.info("Get info about course")
-        self.info = c.get_api_json(
-            "/api/courses/v1/courses/" + self.course_id + "?username=" + c.user
-        )
-        self.output_path = os.path.join("output", slugify(self.info["name"]))
-        self.name = slugify(self.info["name"])
-        make_dir(self.output_path)
-        logging.info("Get course blocks")
-        json_from_api = c.get_api_json(
-            "/api/courses/v1/blocks/?course_id="
-            + self.course_id
-            + "&username="
-            + c.user
-            + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
-        )
-        self.json = json_from_api["blocks"]
-        self.root_id = json_from_api["root"]
 
+        # video-encoding info
+        self.convert_in_webm = convert_in_webm
+
+        # zim params
+        self.zimpath = zimpath
+        self.lang = lang or "en"
+        self.no_fulltext_index = no_fulltext_index
+        self.name = None
+
+        # output path
+        self.output_path = None
+
+        # scraper options
+        self.course_url = course_url
+        self.course_publisher = course_publisher
+        self.add_wiki = add_wiki
+        self.add_forum = add_forum
+        self.ignore_missing_xblock = ignore_missing_xblock
+
+        # authentication
+        self.email = email
+        self.password = password
+
+        # debug/developer options
+        self.no_zim = no_zim
+        self.debug = debug
+
+        # class variables
+        self.info = None
+        self.json = None
+        self.instance_url = None
+        self.course_id = None
+        self.block_id_id = None
+        self.json_tree = None
+        self.root_id = None
         self.course_root = None
         self.path = ""
         self.rooturl = ""
@@ -110,10 +88,47 @@ class Mooc:
         self.forum_thread = None
         self.page_annexe = []
         self.book_list_list = []
-        self.include_wiki = wiki
-        self.include_forum = forum
 
-    def parser_json(self):
+    def get_course_id(self, url, course_page_name, course_prefix, instance_url):
+        clean_url = re.match(instance_url + course_prefix + ".*" + course_page_name, url)
+        clean_id = clean_url.group(0)[
+            len(instance_url + course_prefix): -len(course_page_name)
+        ]
+        if "%3" in clean_id:  # course_id seems already encode
+            return clean_id
+        else:
+            return quote_plus(clean_id)
+
+    def prepare(self, c):
+        self.instance_url = c.conf["instance_url"]
+        self.course_id = self.get_course_id(
+            self.course_url,
+            c.conf["course_page_name"],
+            c.conf["course_prefix"],
+            self.instance_url,
+        )
+        logger.info("Getting info about the course")
+        self.info = c.get_api_json(
+            "/api/courses/v1/courses/" + self.course_id + "?username=" + c.user
+        )
+        self.info = c.get_api_json(
+            "/api/courses/v1/courses/" + self.course_id + "?username=" + c.user
+        )
+        self.output_path = os.path.join("output", slugify(self.info["name"]))
+        self.name = slugify(self.info["name"])
+        make_dir(self.output_path)
+        logger.info("Getting course blocks")
+        json_from_api = c.get_api_json(
+            "/api/courses/v1/blocks/?course_id="
+            + self.course_id
+            + "&username="
+            + c.user
+            + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
+        )
+        self.json = json_from_api["blocks"]
+        self.root_id = json_from_api["root"]   
+
+    def parse_json(self):
         def make_objects(current_path, current_id, rooturl):
             current_json = self.json[current_id]
             path = os.path.join(current_path, slugify(current_json["display_name"]))
@@ -130,14 +145,14 @@ class Mooc:
                 )
             else:
                 if not self.ignore_missing_xblock:
-                    logging.error(
+                    logger.error(
                         "Some part of your course are not supported by openedx2zim : {} ({})\n You should open an issue at https://github.com/openzim/openedx/issues (with this message and Mooc URL, you can ignore this with --ignore-unsupported-xblocks".format(
                             current_json["type"], current_json["student_view_url"]
                         )
                     )
                     sys.exit(1)
                 else:
-                    logging.warning(
+                    logger.warning(
                         "Unavailable xblocks: " + current_json["student_view_url"]
                     )
                     obj = BLOCKS_TYPE["unavailable"](
@@ -149,11 +164,11 @@ class Mooc:
             self.object.append(obj)
             return obj
 
-        logging.info("Parse json and make folder tree")
+        logger.info("Parse json and make folder tree")
         make_objects(self.path + "course/", self.root_id, self.rooturl + "../")
 
     def annexe(self, c):
-        logging.info("Try to get specific page of mooc")
+        logger.info("Try to get specific page of mooc")
         content = c.get_page(self.course_url)
         soup = BeautifulSoup.BeautifulSoup(content, "lxml")
         top_bs = (
@@ -162,7 +177,7 @@ class Mooc:
             or soup.find("ul", attrs={"class": "navbar-nav"})
             or soup.find("ol", attrs={"class": "course-tabs"})
         )
-        if top_bs != None:
+        if top_bs is not None:
             for top_elem in top_bs.find_all("li"):
                 top_elem = top_elem.find("a")
                 if top_elem["href"][-1] == "/":
@@ -183,16 +198,16 @@ class Mooc:
                     or "courseware" in path
                 ):
                     continue
-                if "wiki" in path and self.include_wiki:
-                    self.wiki, self.wiki_name, path = annexe.wiki(c, self)
-                elif "forum" in path and self.include_forum:
+                if "wiki" in path and self.add_wiki:
+                    self.wiki, self.wiki_name, path = wiki(c, self)
+                elif "forum" in path and self.add_forum:
                     path = "forum/"
                     (
                         self.forum_thread,
                         self.forum_category,
                         self.staff_user_forum,
-                    ) = annexe.forum(c, self)
-                elif ("wiki" not in path) and ("forum" not in path):
+                    ) = forum(c, self)
+                elif not self.add_forum and not self.add_wiki:
                     output_path = os.path.join(self.output_path, path)
                     make_dir(output_path)
                     page_content = c.get_page(self.instance_url + top_elem["href"])
@@ -200,7 +215,7 @@ class Mooc:
                     just_content = soup_page.find(
                         "section", attrs={"class": "container"}
                     )
-                    if just_content != None:
+                    if just_content is not None:
                         html_content = dl_dependencies(
                             str(just_content), output_path, "", c
                         )
@@ -215,18 +230,18 @@ class Mooc:
                         book = soup_page.find(
                             "section", attrs={"class": "book-sidebar"}
                         )
-                        if book != None:
+                        if book is not None:
                             self.book_list_list.append(
                                 {
                                     "output_path": output_path,
-                                    "book_list": annexe.booknav(
+                                    "book_list": booknav(
                                         self, book, output_path
                                     ),
                                     "dir_path": path,
                                 }
                             )
                         else:
-                            logging.warning(
+                            logger.warning(
                                 "Oh it's seems we does not support one type of extra content (in top bar) :"
                                 + path
                             )
@@ -240,7 +255,7 @@ class Mooc:
             None,
         )
 
-        logging.info("Get homepage")
+        logger.info("Get homepage")
         content = c.get_page(self.course_url)
         make_dir(os.path.join(self.output_path, "home"))
         self.html_homepage = []
@@ -256,17 +271,17 @@ class Mooc:
                 for x in range(0, len(html_content)):
                     article = html_content[x]
                     dismiss = article.find("div", attrs={"class": "dismiss-message"})
-                    if dismiss != None:
+                    if dismiss is not None:
                         dismiss.decompose()
                     bookmark = article.find(
                         "a", attrs={"class": "action-show-bookmarks"}
                     )
-                    if bookmark != None:
+                    if bookmark is not None:
                         bookmark.decompose()
                     buttons = article.find_all(
                         "button", attrs={"class": "toggle-visibility-button"}
                     )
-                    if buttons != None:
+                    if buttons is not None:
                         for button in buttons:
                             button.decompose()
                     article["class"] = "toggle-visibility-element article-content"
@@ -280,15 +295,15 @@ class Mooc:
                     )
         else:
             dismiss = html_content.find("div", attrs={"class": "dismiss-message"})
-            if dismiss != None:
+            if dismiss is not None:
                 dismiss.decompose()
             bookmark = html_content.find("a", attrs={"class": "action-show-bookmarks"})
-            if bookmark != None:
+            if bookmark is not None:
                 bookmark.decompose()
             buttons = html_content.find_all(
                 "button", attrs={"class": "toggle-visibility-button"}
             )
-            if buttons != None:
+            if buttons is not None:
                 for button in buttons:
                     button.decompose()
             self.html_homepage.append(
@@ -299,7 +314,7 @@ class Mooc:
                     c,
                 )
             )
-        logging.info("Get content")
+        logger.info("Get content")
         for x in self.object:
             x.download(c)
 
@@ -317,11 +332,11 @@ class Mooc:
             )
 
         if hasattr(self, "wiki"):
-            annexe.render_wiki(self)
+            render_wiki(self)
         if hasattr(self, "forum_category"):
-            annexe.render_forum(self)
+            render_forum(self)
         if len(self.book_list_list) != 0:
-            annexe.render_booknav(self)
+            render_booknav(self)
         if not self.no_homepage:
             jinja(  # Render home page
                 os.path.join(self.output_path, "index.html"),
@@ -337,12 +352,12 @@ class Mooc:
         )
 
     def zim(self, publisher, zimpath, nofulltextindex, scraper_name):
-        logging.info("Create zim")
+        logger.info("Create zim")
         if self.no_homepage:
             homepage = os.path.join(self.head.path, "index.html")
         else:
             homepage = "index.html"
-        done = create_zims(
+        create_zims(
             self.info["name"],
             self.lang,
             publisher,
@@ -354,4 +369,28 @@ class Mooc:
             homepage,
             self.course_url,
             scraper_name,
+        ) 
+
+    def run(self):
+        logger.info(f"Starting {SCRAPER} with:\n"
+                    f"  Course URL: {self.course_url}\n"
+                    f"  Email ID: {self.email}")
+        logger.debug("Checking for missing binaries")
+        check_missing_binary(self.no_zim)
+        logger.debug("Testing credentials")
+        c = Connection(
+            self.password, self.course_url, self.email
         )
+        jinja_init()
+        self.prepare(c)
+        self.parse_json()
+        self.annexe(c)
+        self.download(c)
+        self.render()
+        if not self.no_zim:
+            self.zim(
+                self.course_publisher,
+                self.zimpath,
+                self.no_fulltext_index,
+                SCRAPER,
+            )

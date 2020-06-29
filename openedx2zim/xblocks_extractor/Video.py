@@ -4,7 +4,7 @@ from slugify import slugify
 import logging
 import json
 import re
-from openedxtozim.utils import (
+from ..utils import (
     make_dir,
     jinja,
     download_and_convert_subtitles,

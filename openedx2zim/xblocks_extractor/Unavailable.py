@@ -1,9 +1,9 @@
 import os
 from slugify import slugify
-from openedxtozim.utils import make_dir, jinja
+from ..utils import make_dir
 
 
-class GradeMeButton:
+class Unavailable:
     def __init__(self, json, path, rooturl, id, descendants, mooc):
         self.mooc = mooc
         self.json = json
@@ -19,4 +19,4 @@ class GradeMeButton:
         return
 
     def render(self):
-        return "Grade Me ! ; Not available offline"
+        return '<div class="not_available">  <p data-l10n-id="not_available" >  <b> Info : </b> Not available offline. </p></div>'

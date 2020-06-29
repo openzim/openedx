@@ -1,5 +1,5 @@
 #import bs4 as BeautifulSoup
-from openedxtozim.utils import make_dir, jinja
+from ..utils import make_dir, jinja
 import os
 from slugify import slugify
 

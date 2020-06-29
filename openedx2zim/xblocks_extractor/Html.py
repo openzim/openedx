@@ -1,7 +1,7 @@
 import bs4 as BeautifulSoup
 import os
 from slugify import slugify
-from openedxtozim.utils import make_dir, dl_dependencies
+from ..utils import make_dir, dl_dependencies
 
 
 class Html:
