@@ -192,7 +192,7 @@ class Mooc:
                         self.forum_category,
                         self.staff_user_forum,
                     ) = annexe.forum(c, self)
-                elif not self.include_forum and not self.include_wiki:
+                elif ("wiki" not in path) and ("forum" not in path):
                     output_path = os.path.join(self.output_path, path)
                     make_dir(output_path)
                     page_content = c.get_page(self.instance_url + top_elem["href"])
