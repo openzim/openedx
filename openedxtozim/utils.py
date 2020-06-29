@@ -1,6 +1,7 @@
 import subprocess
 import shlex
 import os
+import pathlib
 import datetime
 import logging
 from jinja2 import Environment
@@ -22,6 +23,8 @@ import youtube_dl
 import re
 from iso639 import languages as iso_languages
 import mistune  # markdown
+from zimscraperlib.video.encoding import reencode
+from zimscraperlib.video.presets import VideoWebmLow
 
 renderer = mistune.HTMLRenderer()
 MARKDOWN = mistune.Markdown(renderer)
@@ -220,28 +223,16 @@ def download_youtube(youtube_url, video_path):
 
 def convert_video_to_webm(video_path, video_final_path):
     logging.info("convert " + video_path + "to webm")
-    if bin_is_present("avconv"):
-        cmd = (
-            "avconv -y -i file:"
-            + video_path
-            + " -codec:v libvpx -qscale 1 -cpu-used 0 -b:v 300k -qmin 30 -qmax 42 -maxrate 300k -bufsize 1000k -threads 8 -vf scale=480:-1 -codec:a libvorbis -b:a 128k file:"
-            + video_final_path
+    try:
+        reencode(
+            pathlib.Path(video_path),
+            pathlib.Path(video_final_path),
+            VideoWebmLow().to_ffmpeg_args(),
+            delete_src=True,
+            failsafe=False,
         )
-        if exec_cmd(cmd) == 0:
-            os.remove(video_path)
-        else:
-            logging.warning("Error when convert " + video_path + " to webm")
-    else:
-        cmd = (
-            "ffmpeg -y -i file:"
-            + video_path
-            + " -codec:v libvpx -quality best -cpu-used 0 -b:v 300k -qmin 30 -qmax 42 -maxrate 300k -bufsize 1000k -threads 8 -vf scale=480:-1 -codec:a libvorbis -b:a 128k file:"
-            + video_final_path
-        )
-        if exec_cmd(cmd) == 0:
-            os.remove(video_path)
-        else:
-            logging.warning("Error when convert " + video_path + " to webm")
+    except Exception as exc:
+        logging.error(f"{video_path} - Error while converting to WebM\n {exc}")
 
 
 def get_filetype(headers, path):
