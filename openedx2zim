@@ -3,7 +3,7 @@
 """openedx2zim.
 
 Usage:
-  openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex] [--transcode2webm] [--ignore-unsupported-xblocks] [--lang=<lang>]
+  openedx2zim <course_url> <publisher> <email> [--password=<pass>] [--nozim] [--zimpath=<zimpath>] [--nofulltextindex] [--transcode2webm] [--ignore-unsupported-xblocks] [--lang=<lang>] [--wiki] [--forum]
   openedx2zim (-h | --help)
   openedx2zim --version
 
@@ -17,6 +17,8 @@ Options:
   --transcode2webm  Transcode videos in webm
   --ignore-unsupported-xblocks  Ignore unsupported content (xblock)
   --lang 	Default lang of interface, and lang of zim content (in ISO639-1 : "en", "fr" etc..)
+  --wiki  Add wiki to the ZIM
+  --forum  Add forum to the ZIM
 
 """
 
@@ -25,30 +27,46 @@ import sys
 import os
 import logging
 
-from openedxtozim.utils import check_missing_binary,jinja_init
+from openedxtozim.utils import check_missing_binary, jinja_init
 from openedxtozim.connection import Connection
 from openedxtozim.mooc import Mooc
 
+
 def run():
-    scraper_name="Openedx 0.5.1"
+    scraper_name = "Openedx 0.5.1"
     arguments = docopt(__doc__, version=scraper_name)
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     logging.info("Test (missing) bin")
-    check_missing_binary(arguments['--nozim'])
+    check_missing_binary(arguments["--nozim"])
     logging.info("Testing connection")
-    c=Connection(arguments["--password"], arguments["<course_url>"], arguments["<email>"])
+    c = Connection(
+        arguments["--password"], arguments["<course_url>"], arguments["<email>"]
+    )
 
     jinja_init()
 
-    mooc=Mooc(c,arguments["<course_url>"], arguments["--transcode2webm"], arguments["--ignore-unsupported-xblocks"], arguments["--lang"])
+    mooc = Mooc(
+        c,
+        arguments["<course_url>"],
+        arguments["--transcode2webm"],
+        arguments["--ignore-unsupported-xblocks"],
+        arguments["--lang"],
+        arguments["--wiki"],
+        arguments["--forum"],
+    )
     mooc.parser_json()
     mooc.annexe(c)
     mooc.download(c)
     mooc.render()
-    if not arguments['--nozim']:
-        mooc.zim(arguments["<publisher>"],arguments["--zimpath"],arguments["--nofulltextindex"],scraper_name)
+    if not arguments["--nozim"]:
+        mooc.zim(
+            arguments["<publisher>"],
+            arguments["--zimpath"],
+            arguments["--nofulltextindex"],
+            scraper_name,
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     run()
-
