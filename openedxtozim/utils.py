@@ -24,6 +24,7 @@ import re
 from iso639 import languages as iso_languages
 import mistune  # markdown
 import magic
+import requests
 
 renderer = mistune.HTMLRenderer()
 MARKDOWN = mistune.Markdown(renderer)
@@ -141,7 +142,7 @@ def remove_newline(text):
     return text.replace("\n", "")
 
 
-def download(url, output, instance_url, with_headers=False):
+def prepare_url(url, instance_url):
     if url[0:2] == "//":
         url = "http:" + url
     elif url[0] == "/":
@@ -150,9 +151,13 @@ def download(url, output, instance_url, with_headers=False):
     # for IRI
     split_url = list(urllib.parse.urlsplit(url))
     # split_url[2] = urllib.parse.quote(split_url[2])    # the third component is the path of the URL/IRI
-    url = urllib.parse.urlunsplit(split_url)
+    return urllib.parse.urlunsplit(split_url)
+
+
+def download(url, output, instance_url):
+    url = prepare_url(url, instance_url)
     try:
-        save_large_file(url, output, with_headers=with_headers)
+        save_large_file(url, output)
         return True
     except subprocess.CalledProcessError as e:
         logging.error(f"Download failed for {url} - {e}")
@@ -299,6 +304,16 @@ def clean_top(t):
     return "/".join(t.split("/")[:-1])
 
 
+def get_headers(url, instance_url):
+    url = prepare_url(url, instance_url)
+    for attempt in range(5):
+        try:
+            return requests.head(url=url, allow_redirects=True, timeout=30).headers
+        except requests.exceptions.Timeout:
+            print(f"{url} > HEAD request timed out ({attempt})")
+    raise Exception("Max retries exceeded")
+
+
 def dl_dependencies(content, path, folder_name, c):
     body = string2html(str(content))
     imgs = body.xpath("//img")
@@ -311,9 +326,8 @@ def dl_dependencies(content, path, folder_name, c):
             # download the image only if it's not already downloaded
             if not os.path.exists(out):
                 try:
-                    headers = download(
-                        src, out, c.conf["instance_url"], with_headers=True
-                    )
+                    headers = get_headers(src, c.conf["instance_url"])
+                    download(src, out, c.conf["instance_url"])
                     type_of_file = get_filetype(headers, out)
                     optimize_one(out, type_of_file)
                 except Exception as e:
@@ -357,11 +371,7 @@ def dl_dependencies(content, path, folder_name, c):
                 not is_absolute(src) and not "wiki" in src
             ):  # Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
                 if not os.path.exists(out):
-                    try:
-                        download(unquote(src), out, c.conf["instance_url"])
-                    except:
-                        logging.warning("error with " + src)
-                        pass
+                    download(unquote(src), out, c.conf["instance_url"])
                 src = os.path.join(folder_name, filename)
                 a.attrib["href"] = src
     csss = body.xpath("//link")
@@ -372,11 +382,7 @@ def dl_dependencies(content, path, folder_name, c):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                try:
-                    download(src, out, c.conf["instance_url"])
-                except:
-                    logging.warning("error with " + src)
-                    pass
+                download(src, out, c.conf["instance_url"])
             src = os.path.join(folder_name, filename)
             css.attrib["href"] = src
     jss = body.xpath("//script")
@@ -387,11 +393,7 @@ def dl_dependencies(content, path, folder_name, c):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                try:
-                    download(src, out, c.conf["instance_url"])
-                except:
-                    logging.warning("error with " + src)
-                    pass
+                download(src, out, c.conf["instance_url"])
             src = os.path.join(folder_name, filename)
             js.attrib["src"] = src
     sources = body.xpath("//source")
@@ -402,11 +404,7 @@ def dl_dependencies(content, path, folder_name, c):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                try:
-                    download(src, out, c.conf["instance_url"])
-                except:
-                    logging.warning("error with " + src)
-                    pass
+                download(src, out, c.conf["instance_url"])
             src = os.path.join(folder_name, filename)
             source.attrib["src"] = src
     iframes = body.xpath("//iframe")
@@ -434,11 +432,7 @@ def dl_dependencies(content, path, folder_name, c):
                 filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
                 out = os.path.join(path, filename)
                 if not os.path.exists(out):
-                    try:
-                        download(unquote(src), out, c.conf["instance_url"])
-                    except:
-                        logging.warning("error with " + src)
-                        pass
+                    download(unquote(src), out, c.conf["instance_url"])
                 src = os.path.join(folder_name, filename)
                 iframe.attrib["src"] = src
     if imgs or docs or csss or jss or sources or iframes:
