@@ -228,25 +228,18 @@ def convert_video_to_webm(video_path, video_final_path):
 
 
 def get_filetype(headers, path):
-    ftype = "none"
-    if "content-type" in headers:
-        if "png" in headers["content-type"].lower():
-            ftype = "png"
-        elif ("jpg" in headers["content-type"].lower()) or (
-            "jpeg" in headers["content-type"].lower()
-        ):
-            ftype = "jpeg"
-        elif "gif" in headers["content-type"].lower():
-            ftype = "gif"
-    if ftype == "none":
-        mime = magic.from_file(path)
-        if "PNG" in mime:
-            ftype = "png"
-        elif "JPEG" in mime:
-            ftype = "jpeg"
-        elif "GIF" in mime:
-            ftype = "gif"
-    return ftype
+    extensions = ("png", "jpeg", "gif")
+    content_type = headers.get("content-type", "").lower().strip()
+    for ext in extensions:
+        if ext in content_type:
+            return ext
+    if "jpg" in content_type:
+        return "jpeg"
+    mime = magic.from_file(path)
+    for ext in extensions:
+        if ext.upper() in mime:
+            return ext
+    return "none"
 
 
 def optimize_one(path, type):
