@@ -1,7 +1,7 @@
 import bs4 as BeautifulSoup
 import os
 from slugify import slugify
-from openedxtozim.utils import (
+from ..utils import (
     make_dir,
     jinja,
     download_and_convert_subtitles,

@@ -5,7 +5,7 @@ import logging
 import json
 from uuid import uuid4
 from urllib.parse import urlencode
-from openedxtozim.utils import make_dir, jinja, dl_dependencies
+from ..utils import make_dir, jinja, dl_dependencies
 
 
 class Problem:

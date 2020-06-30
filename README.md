@@ -51,4 +51,4 @@ If your mooc is not in english you should add language code with --lang="" (in t
 
 
 ## Info for contributor 
-To add loca : openedxtozim/templates/l10n_strings.json + language code in openedxtozim/templates/l10n_strings.json (lign 35)
+To add loca : openedx2zim/templates/l10n_strings.json + language code in openedx2zim/templates/l10n_strings.json (lign 35)

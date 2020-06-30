@@ -1,2 +1,3 @@
 include *.md
-recursive-include openedxtozim *.txt *.js *.css *.html *.ttf *.svg *.eot *.ttf *.woff  *.png *.json
+include requirements.txt
+recursive-include openedx2zim *

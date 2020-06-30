@@ -2,7 +2,7 @@ import os
 import re
 import bs4 as BeautifulSoup
 from slugify import slugify
-from openedxtozim.utils import make_dir, jinja
+from ..utils import make_dir, jinja
 
 
 class Discussion:
