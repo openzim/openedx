@@ -33,9 +33,7 @@ setup(
     ],
     zip_safe=False,
     include_package_data=True,
-    entry_points={
-        "console_scripts": ["openedx2zim=openedx2zim.__main__:main"]
-    },
+    entry_points={"console_scripts": ["openedx2zim=openedx2zim.__main__:main"]},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

@@ -17,7 +17,15 @@ from urllib.parse import (
 from slugify import slugify
 import bs4 as BeautifulSoup
 
-from .utils import check_missing_binary, jinja_init, create_zims, make_dir, download, dl_dependencies, jinja
+from .utils import (
+    check_missing_binary,
+    jinja_init,
+    create_zims,
+    make_dir,
+    download,
+    dl_dependencies,
+    jinja,
+)
 from .connection import Connection
 from .constants import SCRAPER, BLOCKS_TYPE, getLogger
 from .annexe import wiki, forum, booknav, render_wiki, render_forum, render_booknav
@@ -90,9 +98,11 @@ class Openedx2Zim:
         self.book_list_list = []
 
     def get_course_id(self, url, course_page_name, course_prefix, instance_url):
-        clean_url = re.match(instance_url + course_prefix + ".*" + course_page_name, url)
+        clean_url = re.match(
+            instance_url + course_prefix + ".*" + course_page_name, url
+        )
         clean_id = clean_url.group(0)[
-            len(instance_url + course_prefix): -len(course_page_name)
+            len(instance_url + course_prefix) : -len(course_page_name)
         ]
         if "%3" in clean_id:  # course_id seems already encode
             return clean_id
@@ -126,7 +136,7 @@ class Openedx2Zim:
             + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
         )
         self.json = json_from_api["blocks"]
-        self.root_id = json_from_api["root"]   
+        self.root_id = json_from_api["root"]
 
     def parse_json(self):
         def make_objects(current_path, current_id, rooturl):
@@ -207,7 +217,7 @@ class Openedx2Zim:
                         self.forum_category,
                         self.staff_user_forum,
                     ) = forum(c, self)
-                elif not self.add_forum and not self.add_wiki:
+                elif ("wiki" not in path) and ("forum" not in path):
                     output_path = os.path.join(self.output_path, path)
                     make_dir(output_path)
                     page_content = c.get_page(self.instance_url + top_elem["href"])
@@ -234,9 +244,7 @@ class Openedx2Zim:
                             self.book_list_list.append(
                                 {
                                     "output_path": output_path,
-                                    "book_list": booknav(
-                                        self, book, output_path
-                                    ),
+                                    "book_list": booknav(self, book, output_path),
                                     "dir_path": path,
                                 }
                             )
@@ -369,18 +377,18 @@ class Openedx2Zim:
             homepage,
             self.course_url,
             scraper_name,
-        ) 
+        )
 
     def run(self):
-        logger.info(f"Starting {SCRAPER} with:\n"
-                    f"  Course URL: {self.course_url}\n"
-                    f"  Email ID: {self.email}")
+        logger.info(
+            f"Starting {SCRAPER} with:\n"
+            f"  Course URL: {self.course_url}\n"
+            f"  Email ID: {self.email}"
+        )
         logger.debug("Checking for missing binaries")
         check_missing_binary(self.no_zim)
         logger.debug("Testing credentials")
-        c = Connection(
-            self.password, self.course_url, self.email
-        )
+        c = Connection(self.password, self.course_url, self.email)
         jinja_init()
         self.prepare(c)
         self.parse_json()
@@ -389,8 +397,5 @@ class Openedx2Zim:
         self.render()
         if not self.no_zim:
             self.zim(
-                self.course_publisher,
-                self.zimpath,
-                self.no_fulltext_index,
-                SCRAPER,
+                self.course_publisher, self.zimpath, self.no_fulltext_index, SCRAPER,
             )

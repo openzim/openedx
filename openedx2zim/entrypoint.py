@@ -9,22 +9,23 @@ from .constants import NAME, SCRAPER, getLogger, setDebug
 
 def main():
     parser = argparse.ArgumentParser(
-        prog=NAME,
-        description="Scraper to create ZIM files MOOCs on openedx instances",
+        prog=NAME, description="Scraper to create ZIM files MOOCs on openedx instances",
     )
 
     parser.add_argument(
-        "--course-url",
-        help="URL of the course you wnat to scrape",
+        "--course-url", help="URL of the course you wnat to scrape", required=True,
+    )
+
+    parser.add_argument(
+        "--course-publisher",
+        help="Name of the publisher of the course you want to scrape",
         required=True,
     )
 
     parser.add_argument(
-        "--course-publisher", help="Name of the publisher of the course you want to scrape", required=True,
-    )
-
-    parser.add_argument(
-        "--email", help="Your registered e-mail ID on the platform. Used for authentication", required=True,
+        "--email",
+        help="Your registered e-mail ID on the platform. Used for authentication",
+        required=True,
     )
 
     parser.add_argument(
@@ -33,8 +34,7 @@ def main():
     )
 
     parser.add_argument(
-        "--zimpath",
-        help="Path to the final ZIM file",
+        "--zimpath", help="Path to the final ZIM file",
     )
 
     parser.add_argument(
@@ -64,12 +64,17 @@ def main():
     )
 
     parser.add_argument(
-        "--add-wiki", help="Add wiki (if available) to the ZIM", action="store_true", default=False,
+        "--add-wiki",
+        help="Add wiki (if available) to the ZIM",
+        action="store_true",
+        default=False,
     )
 
     parser.add_argument(
         "--add-forum",
-        help="Add forum (if available) to the ZIM", action="store_true", default=False,
+        help="Add forum (if available) to the ZIM",
+        action="store_true",
+        default=False,
     )
 
     parser.add_argument(
