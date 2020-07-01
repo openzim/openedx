@@ -5,17 +5,15 @@
 import sys
 import os
 import re
-from uuid import uuid4
-from distutils.dir_util import copy_tree
+import tempfile
+import pathlib
+import uuid
+import distutils
+import urllib
 
-from urllib.parse import (
-    urlencode,
-    quote_plus,
-    unquote,
-    urlparse,
-)
-from slugify import slugify
 import bs4 as BeautifulSoup
+from slugify import slugify
+from zimscraperlib.zim import ZimInfo, make_zim_file
 
 from .utils import (
     check_missing_binary,
@@ -33,22 +31,32 @@ from .annexe import wiki, forum, booknav, render_wiki, render_forum, render_book
 
 logger = getLogger()
 
+class 
+
 
 class Openedx2Zim:
     def __init__(
         self,
         course_url,
-        course_publisher,
         email,
         password,
-        zimpath,
-        no_fulltext_index,
+        name,
+        title,
+        description,
+        creator,
+        publisher,
+        tags,
         convert_in_webm,
         ignore_missing_xblock,
         lang,
         add_wiki,
         add_forum,
+        output_dir,
+        tmp_dir,
+        fname,
+        no_fulltext_index,
         no_zim,
+        keep_build_dir,
         debug,
     ):
 
@@ -56,17 +64,36 @@ class Openedx2Zim:
         self.convert_in_webm = convert_in_webm
 
         # zim params
-        self.zimpath = zimpath
+        self.fname = fname
+        self.tags = [] if tags is None else [t.strip() for t in tags.split(",")]
+        self.title = title
+        self.description = description
+        self.creator = creator
+        self.publisher = publisher
+        self.name = name
         self.lang = lang or "en"
         self.no_fulltext_index = no_fulltext_index
-        self.name = None
 
-        # output path
-        self.output_path = None
+        # directory setup
+        self.output_dir = pathlib.Path(output_dir).expanduser().resolve()
+        if tmp_dir:
+            pathlib.Path(tmp_dir).mkdir(parents=True, exist_ok=True)
+        self.build_dir = pathlib.Path(tempfile.mkdtemp(dir=tmp_dir))
+
+        # zim info
+        self.zim_info = ZimInfo(
+            # index path shall be updated
+            homepage="index.html",
+            tags=self.tags + ["_category:openedx", "openedx"], # put videos-yes
+            creator=self.creator,
+            publisher=self.publisher,
+            name=self.name,
+            scraper=SCRAPER,
+            favicon="favicon.png",
+        )
 
         # scraper options
         self.course_url = course_url
-        self.course_publisher = course_publisher
         self.add_wiki = add_wiki
         self.add_forum = add_forum
         self.ignore_missing_xblock = ignore_missing_xblock
@@ -79,7 +106,7 @@ class Openedx2Zim:
         self.no_zim = no_zim
         self.debug = debug
 
-        # class variables
+        self.name = None
         self.info = None
         self.json = None
         self.instance_url = None
@@ -107,43 +134,38 @@ class Openedx2Zim:
         if "%3" in clean_id:  # course_id seems already encode
             return clean_id
         else:
-            return quote_plus(clean_id)
+            return urllib.parse.quote_plus(clean_id)
 
-    def prepare(self, c):
-        self.instance_url = c.conf["instance_url"]
+    def prepare(self, connection):
+        self.instance_url = connection.conf["instance_url"]
         self.course_id = self.get_course_id(
             self.course_url,
-            c.conf["course_page_name"],
-            c.conf["course_prefix"],
+            connection.conf["course_page_name"],
+            connection.conf["course_prefix"],
             self.instance_url,
         )
-        logger.info("Getting info about the course")
-        self.info = c.get_api_json(
-            "/api/courses/v1/courses/" + self.course_id + "?username=" + c.user
+        logger.info("Getting course info ...")
+        self.info = connection.get_api_json(
+            "/api/courses/v1/courses/" + self.course_id + "?username=" + connection.user
         )
-        self.info = c.get_api_json(
-            "/api/courses/v1/courses/" + self.course_id + "?username=" + c.user
-        )
-        self.output_path = os.path.join("output", slugify(self.info["name"]))
         self.name = slugify(self.info["name"])
-        make_dir(self.output_path)
-        logger.info("Getting course blocks")
-        json_from_api = c.get_api_json(
+        logger.info("Getting course xblocks ...")
+        json_response = connection.get_api_json(
             "/api/courses/v1/blocks/?course_id="
             + self.course_id
             + "&username="
-            + c.user
+            + connection.user
             + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
         )
-        self.json = json_from_api["blocks"]
-        self.root_id = json_from_api["root"]
+        self.json = json_response["blocks"]
+        self.root_id = json_response["root"]
 
     def parse_json(self):
         def make_objects(current_path, current_id, rooturl):
             current_json = self.json[current_id]
             path = os.path.join(current_path, slugify(current_json["display_name"]))
             rooturl = rooturl + "../"
-            random_id = str(uuid4())
+            random_id = str(uuid.uuid4())
             descendants = None
             if "descendants" in current_json:
                 descendants = []
@@ -177,9 +199,9 @@ class Openedx2Zim:
         logger.info("Parse json and make folder tree")
         make_objects(self.path + "course/", self.root_id, self.rooturl + "../")
 
-    def annexe(self, c):
+    def annexe(self, connection):
         logger.info("Try to get specific page of mooc")
-        content = c.get_page(self.course_url)
+        content = connection.get_page(self.course_url)
         soup = BeautifulSoup.BeautifulSoup(content, "lxml")
         top_bs = (
             soup.find("ol", attrs={"class": "course-material"})
@@ -209,25 +231,25 @@ class Openedx2Zim:
                 ):
                     continue
                 if "wiki" in path and self.add_wiki:
-                    self.wiki, self.wiki_name, path = wiki(c, self)
+                    self.wiki, self.wiki_name, path = wiki(connection, self)
                 elif "forum" in path and self.add_forum:
                     path = "forum/"
                     (
                         self.forum_thread,
                         self.forum_category,
                         self.staff_user_forum,
-                    ) = forum(c, self)
+                    ) = forum(connection, self)
                 elif ("wiki" not in path) and ("forum" not in path):
-                    output_path = os.path.join(self.output_path, path)
+                    output_path = os.path.join(self.build_dir, path)
                     make_dir(output_path)
-                    page_content = c.get_page(self.instance_url + top_elem["href"])
+                    page_content = connection.get_page(self.instance_url + top_elem["href"])
                     soup_page = BeautifulSoup.BeautifulSoup(page_content, "lxml")
                     just_content = soup_page.find(
                         "section", attrs={"class": "container"}
                     )
                     if just_content is not None:
                         html_content = dl_dependencies(
-                            str(just_content), output_path, "", c
+                            str(just_content), output_path, "", connection
                         )
                         self.page_annexe.append(
                             {
@@ -256,16 +278,16 @@ class Openedx2Zim:
                             continue
                 self.top[top_elem.get_text()] = path + "/index.html"
 
-    def download(self, c):
+    def download(self, connection):
         download(
             "https://www.google.com/s2/favicons?domain=" + self.instance_url,
-            os.path.join(self.output_path, "favicon.png"),
+            os.path.join(self.build_dir, "favicon.png"),
             None,
         )
 
         logger.info("Get homepage")
-        content = c.get_page(self.course_url)
-        make_dir(os.path.join(self.output_path, "home"))
+        content = connection.get_page(self.course_url)
+        make_dir(os.path.join(self.build_dir, "home"))
         self.html_homepage = []
         soup = BeautifulSoup.BeautifulSoup(content, "lxml")
         html_content = soup.find("div", attrs={"class": "welcome-message"})
@@ -296,9 +318,9 @@ class Openedx2Zim:
                     self.html_homepage.append(
                         dl_dependencies(
                             article.prettify(),
-                            os.path.join(self.output_path, "home"),
+                            os.path.join(self.build_dir, "home"),
                             "home",
-                            c,
+                            connection,
                         )
                     )
         else:
@@ -317,14 +339,14 @@ class Openedx2Zim:
             self.html_homepage.append(
                 dl_dependencies(
                     html_content.prettify(),
-                    os.path.join(self.output_path, "home"),
+                    os.path.join(self.build_dir, "home"),
                     "home",
-                    c,
+                    connection,
                 )
             )
         logger.info("Get content")
         for x in self.object:
-            x.download(c)
+            x.download(connection)
 
     def render(self):
         self.head.render()  # Render course
@@ -347,16 +369,16 @@ class Openedx2Zim:
             render_booknav(self)
         if not self.no_homepage:
             jinja(  # Render home page
-                os.path.join(self.output_path, "index.html"),
+                os.path.join(self.build_dir, "index.html"),
                 "home.html",
                 False,
                 messages=self.html_homepage,
                 mooc=self,
                 render_homepage=True,
             )
-        copy_tree(
+        distutils.dir_util.copy_tree(
             os.path.join(os.path.abspath(os.path.dirname(__file__)), "static"),
-            os.path.join(self.output_path, "static"),
+            os.path.join(self.build_dir, "static"),
         )
 
     def zim(self, publisher, zimpath, nofulltextindex, scraper_name):
@@ -371,7 +393,7 @@ class Openedx2Zim:
             publisher,
             self.info["short_description"],
             self.info["org"],
-            self.output_path,
+            self.build_dir,
             zimpath,
             nofulltextindex,
             homepage,
@@ -388,14 +410,14 @@ class Openedx2Zim:
         logger.debug("Checking for missing binaries")
         check_missing_binary(self.no_zim)
         logger.debug("Testing credentials")
-        c = Connection(self.password, self.course_url, self.email)
+        connection = Connection(self.password, self.course_url, self.email)
         jinja_init()
-        self.prepare(c)
+        self.prepare(connection)
         self.parse_json()
-        self.annexe(c)
-        self.download(c)
+        self.annexe(connection)
+        self.download(connection)
         self.render()
         if not self.no_zim:
             self.zim(
-                self.course_publisher, self.zimpath, self.no_fulltext_index, SCRAPER,
+                self.publisher, self.zimpath, self.no_fulltext_index, SCRAPER,
             )

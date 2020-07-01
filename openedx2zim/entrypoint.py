@@ -17,12 +17,6 @@ def main():
     )
 
     parser.add_argument(
-        "--course-publisher",
-        help="Name of the publisher of the course you want to scrape",
-        required=True,
-    )
-
-    parser.add_argument(
         "--email",
         help="Your registered e-mail ID on the platform. Used for authentication",
         required=True,
@@ -34,14 +28,29 @@ def main():
     )
 
     parser.add_argument(
-        "--zimpath", help="Path to the final ZIM file",
+        "--name",
+        help="ZIM name. Used as identifier and filename (date will be appended)",
+        required=True,
     )
 
     parser.add_argument(
-        "--no-fulltext-index",
-        help="Don't index the scraped content in the ZIM",
-        action="store_true",
-        default=False,
+        "--title", help="Custom title for your ZIM. Based on MOOC otherwise.",
+    )
+
+    parser.add_argument(
+        "--description",
+        help="Custom description for your ZIM. Based on MOOC otherwise.",
+    )
+
+    parser.add_argument("--creator", help="Name of content creator", default="edX")
+
+    parser.add_argument(
+        "--publisher", help="Custom publisher name (ZIM metadata)", default="Kiwix"
+    )
+
+    parser.add_argument(
+        "--tags",
+        help="List of comma-separated Tags for the ZIM file. category:openedx, openedx, and _videos:yes (if present) added automatically",
     )
 
     parser.add_argument(
@@ -78,10 +87,43 @@ def main():
     )
 
     parser.add_argument(
+        "--output",
+        help="Output folder for ZIM file",
+        default="/output",
+        dest="output_dir",
+    )
+
+    parser.add_argument(
+        "--tmp-dir",
+        help="Path to create temp folder in. Used for building ZIM file. Receives all data",
+    )
+
+    parser.add_argument(
+        "--zim-file",
+        help="ZIM file name (based on --name if not provided)",
+        dest="fname",
+    )
+
+    parser.add_argument(
+        "--no-fulltext-index",
+        help="Don't index the scraped content in the ZIM",
+        action="store_true",
+        default=False,
+    )
+
+    parser.add_argument(
         "--no-zim",
         help="Don't produce a ZIM file, create build folder only.",
         action="store_true",
         default=False,
+    )
+
+    parser.add_argument(
+        "--keep",
+        help="Don't remove build folder on start (for debug/devel)",
+        default=False,
+        action="store_true",
+        dest="keep_build_dir",
     )
 
     parser.add_argument(
