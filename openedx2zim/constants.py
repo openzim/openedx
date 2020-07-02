@@ -29,7 +29,7 @@ with open(ROOT_DIR.joinpath("VERSION"), "r") as fh:
 
 SCRAPER = f"{NAME} {VERSION}"
 
-BLOCKS_TYPE = {
+XBLOCK_EXTRACTORS = {
     "course": Course,
     "chapter": Chapter,
     "sequential": Sequential,
