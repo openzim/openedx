@@ -25,7 +25,7 @@ class Vertical(BaseXblock):
         for x in self.descendants:
             vertical.append(x.render())
         jinja(
-            self.output_path.joinpath(self.relative_path).joinpath("index.html"),
+            self.output_path.joinpath("index.html"),
             "vertical.html",
             False,
             rooturl=self.root_url,

@@ -28,7 +28,7 @@ class Course(BaseXblock):
             logger.warning("This course has no content")
         else:
             jinja(
-                self.output_path.joinpath(self.relative_path).joinpath("index.html"),
+                self.output_path.joinpath("index.html"),
                 "course_menu.html",
                 False,
                 course=self,

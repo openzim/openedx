@@ -43,7 +43,7 @@ class Openedx2Zim:
         publisher,
         tags,
         convert_in_webm,
-        ignore_missing_xblock,
+        ignore_missing_xblocks,
         lang,
         add_wiki,
         add_forum,
@@ -83,15 +83,14 @@ class Openedx2Zim:
             name=self.name,
             scraper=SCRAPER,
             favicon="favicon.png",
-            language=self.lang,
-            withoutFTIndex=True if self.no_fulltext_index else False,
+            language="eng",
         )
 
         # scraper options
         self.course_url = course_url
         self.add_wiki = add_wiki
         self.add_forum = add_forum
-        self.ignore_missing_xblocks = ignore_missing_xblock
+        self.ignore_missing_xblocks = ignore_missing_xblocks
 
         # authentication
         self.email = email
@@ -165,7 +164,7 @@ class Openedx2Zim:
     def parse_course_xblocks(self):
         def make_objects(current_path, current_id, root_url):
             current_xblock = self.course_xblocks[current_id]
-            xblock_path = f"{current_path}/{slugify(current_xblock['display_name'])}"
+            xblock_path = current_path.joinpath(slugify(current_xblock["display_name"]))
 
             # update root url respective to the current xblock
             root_url = root_url + "../"
@@ -213,7 +212,7 @@ class Openedx2Zim:
             return obj
 
         logger.info("Parsing xblocks and preparing extractor objects")
-        make_objects("course/", self.root_xblock_id, "../")
+        make_objects(pathlib.Path("course"), self.root_xblock_id, "../")
 
     def annex(self, connection):
         logger.info("Getting course tabs ...")
@@ -256,7 +255,9 @@ class Openedx2Zim:
                         self.forum_thread,
                         self.forum_category,
                         self.staff_user_forum,
-                    ) = forum(connection, self)
+                    ) = forum(
+                        connection, self.build_dir, self.instance_url, self.course_id
+                    )
                 elif ("wiki" not in tab_path) and ("forum" not in tab_path):
                     output_path = self.build_dir.joinpath(tab_path)
                     output_path.mkdir(parents=True, exist_ok=True)
@@ -411,7 +412,7 @@ class Openedx2Zim:
 
     def update_zim_info(self):
         if not self.has_homepage:
-            homepage = f"{self.head_course_xblock.path}/index.html"
+            homepage = f"{self.head_course_xblock.relative_path}/index.html"
         else:
             homepage = "index.html"
 
@@ -449,7 +450,13 @@ class Openedx2Zim:
             logger.debug(self.zim_info.to_zimwriterfs_args())
             if not self.output_dir.exists():
                 self.output_dir.mkdir(parents=True)
-            make_zim_file(self.build_dir, self.output_dir, self.fname, self.zim_info)
+            make_zim_file(
+                self.build_dir,
+                self.output_dir,
+                self.fname,
+                self.zim_info,
+                withoutFTIndex=True if self.no_fulltext_index else False,
+            )
             if not self.keep_build_dir:
                 logger.info("Removing temp folder...")
                 shutil.rmtree(self.build_dir, ignore_errors=True)

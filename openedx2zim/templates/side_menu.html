@@ -26,7 +26,7 @@
             {% if sequential_.descendants|length > 0 %}
               {% if sequential and sequential_.id == sequential.id %}
                 <div class="menu-item active">
-                  <a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >
+                  <a href="{{ rooturl }}{{ sequential_.descendants[0].relative_path }}/index.html" >
                     <p>
                       {{ sequential_.display_name }}
                       <span class="sr">current section</span>
@@ -35,7 +35,7 @@
                 </div>
               {% else %}
                 <div class="menu-item">
-                  <a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >
+                  <a href="{{ rooturl }}{{ sequential_.descendants[0].relative_path }}/index.html" >
                     <p>
                       {{ sequential_.display_name }}
                     </p>

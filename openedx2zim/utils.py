@@ -194,7 +194,7 @@ def resize_one(path, type, nb_pix):
 
 def jinja(output, template, deflate, **context):
     template = ENV.get_template(template)
-    page = template.render(**context, output_path=output)
+    page = template.render(**context, output_path=str(output))
     if output == None:
         return page
     else:

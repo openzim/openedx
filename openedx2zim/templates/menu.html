@@ -22,16 +22,16 @@
           {% for sequential_ in chapter_.descendants %}
             {% if sequential_.descendants|length > 0 %}
               {% if sequential and sequential_.id == sequential.id %} {# idem #}
-                <li style="background-color:#ddd;"><a style="color:black;" href="{{ rooturl }}{{ sequential.descendants[0].path }}/index.html" >{{ sequential_.display_name }}</a></li>
+                <li style="background-color:#ddd;"><a style="color:black;" href="{{ rooturl }}{{ sequential.descendants[0].relative_path }}/index.html" >{{ sequential_.display_name }}</a></li>
               {% else %}
-                <li><a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >{{ sequential_.display_name }}</a></li>
+                <li><a href="{{ rooturl }}{{ sequential_.descendants[0].relative_path }}/index.html" >{{ sequential_.display_name }}</a></li>
               {% endif %}
             {% endif %}
           {% endfor %}
           </ul>
         </li>
       {% else %}
-        <li><a href="{{ rooturl }}{{ chapter.path }}/index.html" >{{ chapter.display_name }}</a></li>
+        <li><a href="{{ rooturl }}{{ chapter.relative_path }}/index.html" >{{ chapter.display_name }}</a></li>
       {% endif %}
     {% endfor %}
   </ul>
