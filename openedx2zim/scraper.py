@@ -2,15 +2,14 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
-import os
-import sys
 import re
-import tempfile
-import pathlib
+import sys
 import uuid
 import shutil
 import urllib
-
+import pathlib
+import datetime
+import tempfile
 
 from bs4 import BeautifulSoup
 from slugify import slugify
@@ -19,15 +18,13 @@ from zimscraperlib.zim import ZimInfo, make_zim_file
 from .utils import (
     check_missing_binary,
     jinja_init,
-    create_zims,
-    make_dir,
     download,
     dl_dependencies,
     jinja,
 )
 from .connection import Connection
 from .constants import ROOT_DIR, SCRAPER, XBLOCK_EXTRACTORS, getLogger
-from .annexe import wiki, forum, booknav, render_wiki, render_forum, render_booknav
+from .annex import wiki, forum, booknav, render_wiki, render_forum, render_booknav
 
 
 logger = getLogger()
@@ -81,14 +78,13 @@ class Openedx2Zim:
 
         # zim info
         self.zim_info = ZimInfo(
-            # index path shall be updated
-            homepage="index.html",
-            tags=self.tags + ["_category:openedx", "openedx"],  # put videos-yes
-            creator=self.creator,
+            tags=self.tags + ["_category:openedx", "openedx"],
             publisher=self.publisher,
             name=self.name,
             scraper=SCRAPER,
             favicon="favicon.png",
+            language=self.lang,
+            withoutFTIndex=True if self.no_fulltext_index else False,
         )
 
         # scraper options
@@ -104,13 +100,16 @@ class Openedx2Zim:
         # debug/developer options
         self.no_zim = no_zim
         self.debug = debug
+        self.keep_build_dir = keep_build_dir
 
-        # class variables
-        self.no_homepage = False
+        # course info
         self.course_id = None
         self.instance_url = None
         self.course_info = None
         self.course_name_slug = None
+        self.has_homepage = True
+
+        # scraper data
         self.xblock_extractor_objects = []
         self.head_course_xblock = None
         self.annexed_pages = []
@@ -118,6 +117,11 @@ class Openedx2Zim:
         self.course_tabs = {}
         self.course_xblocks = None
         self.root_xblock_id = None
+
+        # forum related stuff
+        self.forum_thread = None
+        self.forum_category = None
+        self.staff_user_forum = None
 
     def get_course_id(self, url, course_page_name, course_prefix, instance_url):
         clean_url = re.match(
@@ -161,9 +165,7 @@ class Openedx2Zim:
     def parse_course_xblocks(self):
         def make_objects(current_path, current_id, root_url):
             current_xblock = self.course_xblocks[current_id]
-            xblock_path = os.path.join(
-                current_path, slugify(current_xblock["display_name"])
-            )
+            xblock_path = f"{current_path}/{slugify(current_xblock['display_name'])}"
 
             # update root url respective to the current xblock
             root_url = root_url + "../"
@@ -314,7 +316,7 @@ class Openedx2Zim:
                 "div", attrs={"class": re.compile("info-wrapper")}
             )
             if html_content == []:
-                self.no_homepage = True
+                self.has_homepage = False
             else:
                 for x in range(0, len(html_content)):
                     article = html_content[x]
@@ -336,7 +338,7 @@ class Openedx2Zim:
                     self.html_homepage.append(
                         dl_dependencies(
                             article.prettify(),
-                            os.path.join(self.build_dir, "home"),
+                            self.build_dir.joinpath("home"),
                             "home",
                             connection,
                         )
@@ -357,7 +359,7 @@ class Openedx2Zim:
             self.html_homepage.append(
                 dl_dependencies(
                     html_content.prettify(),
-                    os.path.join(self.build_dir, "home"),
+                    self.build_dir.joinpath("home"),
                     "home",
                     connection,
                 )
@@ -387,13 +389,13 @@ class Openedx2Zim:
             render_wiki(self)
 
         # render forum if available
-        if hasattr(self, "forum_category"):
+        if self.forum_category:
             render_forum(self)
 
         # render book lists
         if len(self.book_lists) != 0:
             render_booknav(self)
-        if not self.no_homepage:
+        if self.has_homepage:
             # render homepage
             jinja(
                 self.build_dir.joinpath("index.html"),
@@ -407,25 +409,19 @@ class Openedx2Zim:
             ROOT_DIR.joinpath("static"), self.build_dir.joinpath("static"),
         )
 
-    def zim(self, publisher, fname, nofulltextindex, scraper_name):
-        logger.info("Create zim")
-        if self.no_homepage:
-            homepage = os.path.join(self.head_course_xblock.path, "index.html")
+    def update_zim_info(self):
+        if not self.has_homepage:
+            homepage = f"{self.head_course_xblock.path}/index.html"
         else:
             homepage = "index.html"
-        zimpath = self.output_dir.joinpath(f"{fname}.zim")
-        create_zims(
-            self.name,
-            self.lang,
-            publisher,
-            self.description,
-            self.creator,
-            self.build_dir,
-            zimpath,
-            nofulltextindex,
-            homepage,
-            self.course_url,
-            scraper_name,
+
+        self.zim_info.update(
+            description=self.description
+            if self.description
+            else self.course_info["short_description"],
+            title=self.title if self.title else self.course_info["name"],
+            creator=self.creator if self.creator else self.course_info["org"],
+            homepage=homepage,
         )
 
     def run(self):
@@ -445,6 +441,16 @@ class Openedx2Zim:
         self.download(connection)
         self.render()
         if not self.no_zim:
-            self.zim(
-                self.publisher, self.fname, self.no_fulltext_index, SCRAPER,
-            )
+            self.fname = (
+                self.fname or f"{self.name.replace(' ', '-')}_{{period}}.zim"
+            ).format(period=datetime.datetime.now().strftime("%Y-%m"))
+            logger.info("building ZIM file")
+            self.update_zim_info()
+            logger.debug(self.zim_info.to_zimwriterfs_args())
+            if not self.output_dir.exists():
+                self.output_dir.mkdir(parents=True)
+            make_zim_file(self.build_dir, self.output_dir, self.fname, self.zim_info)
+            if not self.keep_build_dir:
+                logger.info("Removing temp folder...")
+                shutil.rmtree(self.build_dir, ignore_errors=True)
+        logger.info("Done everything")

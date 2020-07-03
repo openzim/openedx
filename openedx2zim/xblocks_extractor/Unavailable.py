@@ -1,19 +1,9 @@
-import os
-from slugify import slugify
-from ..utils import make_dir
+from .base_xblock import BaseXblock
 
 
-class Unavailable:
-    def __init__(self, json, path, rooturl, id, descendants, mooc):
-        self.mooc = mooc
-        self.json = json
-        self.path = path
-        self.rooturl = rooturl
-        self.id = id
-        self.output_path = self.mooc.output_path
-        self.folder_name = slugify(json["display_name"])
-        self.output_path = os.path.join(self.mooc.output_path, self.path)
-        make_dir(self.output_path)
+class Unavailable(BaseXblock):
+    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
+        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
 
     def download(self, c):
         return

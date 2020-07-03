@@ -61,7 +61,7 @@ def main():
     )
 
     parser.add_argument(
-        "--ignore-missing-xblock",
+        "--ignore-missing-xblocks",
         help="Ignore unsupported content (xblock)",
         action="store_true",
         default=False,

@@ -13,7 +13,7 @@
         {% include "side_menu.html" %}
     {% endif %}
     <section id="course-content" class="course-content" role="main" aria-label="Content">
-      <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
+      <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.json["id"] }}" data-type="Sequence" data-course-id="{{ course_id }}">
         <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.json["id"] }}" data-position="1">
           <div class="sequence-nav">
               {% if pred_vertical %}
