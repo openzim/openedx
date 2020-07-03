@@ -7,7 +7,7 @@
 
 
 
-    {% for chapter_ in mooc.head.descendants %}
+    {% for chapter_ in mooc.head_course_xblock.descendants %}
       {% if chapter_.descendants|length > 0 %}
         <li>
           {% if chapter and chapter_.id == chapter.id %}

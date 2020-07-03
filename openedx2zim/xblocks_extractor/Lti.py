@@ -17,9 +17,7 @@ class Lti(BaseXblock):
         content = c.get_page(url)
         soup = BeautifulSoup(content, "lxml")
         content_url = soup.find("form")
-        download(
-            content_url["action"], self.output_path.joinpath("content.pdf"), c
-        )
+        download(content_url["action"], self.output_path.joinpath("content.pdf"), c)
 
     def render(self):
         return (

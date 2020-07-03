@@ -31,5 +31,10 @@ class FreeTextResponse(BaseXblock):
 
     def render(self):
         return jinja(
-            None, "freetextresponse.html", False, freetextresponse_html=self.html, freetextresponse_id=self.id, mooc=self.scraper
+            None,
+            "freetextresponse.html",
+            False,
+            freetextresponse_html=self.html,
+            freetextresponse_id=self.id,
+            mooc=self.scraper,
         )

@@ -29,7 +29,7 @@ class Vertical(BaseXblock):
             "vertical.html",
             False,
             rooturl=self.root_url,
-            course_id=self.scraper.course_id,
+            mooc=self.scraper,
             chapter=chapter,
             sequential=sequential,
             vertical=self,

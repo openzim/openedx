@@ -49,7 +49,9 @@ class Video(BaseXblock):
                 in self.xblock_json["student_view_data"]["encoded_videos"]["fallback"]
             ):
                 url = urllib.parse.unquote(
-                    self.xblock_json["student_view_data"]["encoded_videos"]["fallback"]["url"]
+                    self.xblock_json["student_view_data"]["encoded_videos"]["fallback"][
+                        "url"
+                    ]
                 )
             elif (
                 "mobile_low" in self.xblock_json["student_view_data"]["encoded_videos"]
@@ -57,15 +59,18 @@ class Video(BaseXblock):
                 in self.xblock_json["student_view_data"]["encoded_videos"]["mobile_low"]
             ):
                 url = urllib.parse.unquote(
-                    self.xblock_json["student_view_data"]["encoded_videos"]["mobile_low"][
-                        "url"
-                    ]
+                    self.xblock_json["student_view_data"]["encoded_videos"][
+                        "mobile_low"
+                    ]["url"]
                 )
             elif (
                 "youtube" in self.xblock_json["student_view_data"]["encoded_videos"]
-                and "url" in self.xblock_json["student_view_data"]["encoded_videos"]["youtube"]
+                and "url"
+                in self.xblock_json["student_view_data"]["encoded_videos"]["youtube"]
             ):
-                url = self.xblock_json["student_view_data"]["encoded_videos"]["youtube"]["url"]
+                url = self.xblock_json["student_view_data"]["encoded_videos"][
+                    "youtube"
+                ]["url"]
                 youtube = True
             else:
                 content = c.get_page(self.xblock_json["student_view_url"])
@@ -89,7 +94,9 @@ class Video(BaseXblock):
                 else:
                     self.no_video = True
                     logger.error(
-                        "Cannot get video for {}".format(self.xblock_json["lms_web_url"])
+                        "Cannot get video for {}".format(
+                            self.xblock_json["lms_web_url"]
+                        )
                     )
                     logger.error(self.xblock_json)
                     return

@@ -27,7 +27,9 @@ class Libcast(BaseXblock):
                 if track["src"][0:4] == "http":
                     subs_lang[track["srclang"]] = track["src"]
                 else:
-                    subs_lang[track["srclang"]] = self.scraper.instance_url + track["src"]
+                    subs_lang[track["srclang"]] = (
+                        self.scraper.instance_url + track["src"]
+                    )
             download_and_convert_subtitles(self.output_path, subs_lang, c)
             self.subs = [
                 {"file": f"{self.folder_name}/{lang}.vtt", "code": lang}

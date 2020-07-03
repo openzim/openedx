@@ -8,7 +8,9 @@ from .base_xblock import BaseXblock
 from ..utils import jinja, download
 
 
-class DragAndDropV2(BaseXblock):  # IMPROVEMENT We can only see it, not interracting with it
+class DragAndDropV2(
+    BaseXblock
+):  # IMPROVEMENT We can only see it, not interracting with it
     def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
         super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
 

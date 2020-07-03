@@ -11,7 +11,9 @@ class BaseXblock:
         self.descendants = descendants
         self.display_name = xblock_json["display_name"]
         self.folder_name = slugify(self.display_name)
-        self.output_path = self.scraper.build_dir.joinpath(self.relative_path).joinpath(self.folder_name)
+        self.output_path = self.scraper.build_dir.joinpath(self.relative_path).joinpath(
+            self.folder_name
+        )
 
         # make xblock output directory
         self.output_path.mkdir(parents=True, exist_ok=True)
