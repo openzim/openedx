@@ -14,6 +14,8 @@ import tempfile
 from bs4 import BeautifulSoup
 from slugify import slugify
 from zimscraperlib.zim import ZimInfo, make_zim_file
+from zimscraperlib.video.encoding import reencode
+from zimscraperlib.video.presets import VideoWebmLow, VideoMp4Low
 
 from .utils import (
     check_missing_binary,
@@ -21,6 +23,8 @@ from .utils import (
     download,
     dl_dependencies,
     jinja,
+    get_meta_from_url,
+    is_optimizable,
 )
 from .connection import Connection
 from .constants import ROOT_DIR, SCRAPER, XBLOCK_EXTRACTORS, getLogger
@@ -36,17 +40,21 @@ class Openedx2Zim:
         course_url,
         email,
         password,
+        video_format,
+        low_quality,
+        autoplay,
         name,
         title,
         description,
         creator,
         publisher,
         tags,
-        convert_in_webm,
         ignore_missing_xblocks,
         lang,
         add_wiki,
         add_forum,
+        s3_url_with_credentials,
+        use_any_optimized_version,
         output_dir,
         tmp_dir,
         fname,
@@ -57,7 +65,9 @@ class Openedx2Zim:
     ):
 
         # video-encoding info
-        self.convert_in_webm = convert_in_webm
+        self.video_format = video_format
+        self.low_quality = low_quality
+        self.autoplay = autoplay
 
         # zim params
         self.fname = fname
@@ -95,6 +105,11 @@ class Openedx2Zim:
         # authentication
         self.email = email
         self.password = password
+
+        # optimization cache
+        self.s3_url_with_credentials = s3_url_with_credentials
+        self.use_any_optimized_version = use_any_optimized_version
+        self.s3_storage = None
 
         # debug/developer options
         self.no_zim = no_zim
@@ -297,7 +312,7 @@ class Openedx2Zim:
                             continue
                 self.course_tabs[tab.get_text()] = tab_path + "/index.html"
 
-    def download(self, connection):
+    def get_content(self, connection):
 
         # download favicon
         download(
@@ -369,6 +384,131 @@ class Openedx2Zim:
         for obj in self.xblock_extractor_objects:
             obj.download(connection)
 
+    def s3_credentials_ok(self):
+        logger.info("Testing S3 Optimization Cache credentials")
+        self.s3_storage = KiwixStorage(self.s3_url_with_credentials)
+        if not self.s3_storage.check_credentials(
+            list_buckets=True, bucket=True, write=True, read=True, failsafe=True
+        ):
+            logger.error("S3 cache connection error testing permissions.")
+            logger.error(f"  Server: {self.s3_storage.url.netloc}")
+            logger.error(f"  Bucket: {self.s3_storage.bucket_name}")
+            logger.error(f"  Key ID: {self.s3_storage.params.get('keyid')}")
+            logger.error(f"  Public IP: {get_public_ip()}")
+            return False
+        return True
+
+    def download_from_cache(self, key, fpath, meta):
+        """ whether it downloaded from S3 cache """
+
+        if self.use_any_optimized_version:
+            if not self.s3_storage.has_object(key, self.s3_storage.bucket_name):
+                return False
+        else:
+            if not self.s3_storage.has_object_matching_meta(
+                key, tag="encoder_version", value=f"v{encoder_version}"
+            ):
+                return False
+        fpath.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            self.s3_storage.download_file(key, fpath)
+        except Exception as exc:
+            logger.error(f"{key} failed to download from cache: {exc}")
+            return False
+        logger.info(f"downloaded {fpath} from cache at {key}")
+        return True
+
+    def upload_to_cache(self, key, fpath, meta):
+        """ whether it uploaded to S3 cache """
+
+        try:
+            self.s3_storage.upload_file(
+                fpath, key, meta=meta
+            )
+        except Exception as exc:
+            logger.error(f"{key} failed to upload to cache: {exc}")
+            return False
+        logger.info(f"uploaded {fpath} to cache at {key}")
+        return True
+
+    def downlaod_form_url(self, url, fpath):
+        download_path = fpath
+        if filetype and fpath.suffix != filetype:
+            download_path = pathlib.Path(tempfile.NamedTemporaryFile(suffix=f".{filetype}", dir=fpath.parent, delete=False).name)
+        save_large_file(url, download_path)
+        return download_path
+
+    def convert_video(self, downloaded_file, fpath):
+        if (downloaded_file.suffix != self.video_format) or self.low_quality:
+            preset = VideoWebmLow() if self.video_format == "webm" else VideoMp4Low()
+            reencode(
+                pathlib.Path(downloaded_file),
+                pathlib.Path(fpath),
+                preset.to_ffmpeg_args(),
+                delete_src=True,
+                failsafe=False,
+            )
+
+    def optimize_image(self, downloaded_file, fpath, resize=None):
+        if resize:
+            resize_image()
+        if downloaded_file.suffix == "jpeg":
+            exec_cmd("jpegoptim --strip-all -m50 " + str(downloaded_file), timeout=10)
+        elif downloaded_file.suffix == "png":
+            exec_cmd("pngquant --verbose --nofs --force --ext=.png " + str(downloaded_file), timeout=10)
+            exec_cmd("advdef -q -z -4 -i 5  " + str(downloaded_file), timeout=10)
+        elif downloaded_file.suffix == "gif":
+            exec_cmd("gifsicle --batch -O3 -i " + str(downloaded_file), timeout=10)
+        shutil.move(downloaded_file, fpath)
+
+    def optimize_file(self, downloaded_file, fpath):
+        if downloaded_file.suffix in VIDEO_FORMATS:
+            self.convert_video(downloaded_file, fpath)
+        else:
+            self.optimize_image(downloaded_file, fpath)
+
+
+    def generate_s3_key(self, url, fpath):
+        if fpath.suffix in VIDEO_FORMATS:
+            quality = "low" if self.low_quality else "high"
+        else:
+            quality = "default"
+        src_url = urllib.parse.urlparse(url)
+        prefix = f"{src_url.scheme}://{src_url.netloc}/"
+        safe_url = f"{src_url.netloc}/{urllib.parse.quote_plus(src_url.geturl()[len(prefix):])}"
+        # safe url looks similar to ww2.someplace.state.gov/data%2F%C3%A9t%C3%A9%2Fsome+chars%2Fimage.jpeg%3Fv%3D122%26from%3Dxxx%23yes
+        return f"{fpath.suffix}/{safe_url}/{quality}"
+
+    def download_file(self, url, fpath, scraper):
+        youtube = False
+        if "youtube" in url:
+            youtube = True
+        downloaded_from_cache = False
+        meta, filetype = get_meta_from_url(url)
+        if scraper.s3_storage:
+            s3_key = self.generate_s3_key(url, fpath)
+            downloaded_from_cache = self.download_from_cache(s3_key, fpath, meta)
+        if not downloaded_from_cache:
+            try:
+                if youtube:
+                    downloaded_file = self.downlaod_form_youtube(url, fpath)
+                else:
+                    downloaded_file = self.downlaod_form_url(url, fpath, filetype)
+            except Exception as exc:
+                logger.error(f"Error while downloading {fpath}: {exc}")
+                os.unlink(downloaded_file, ignore_errors=True)
+                return
+            if is_optimizable(fpath):
+                try:
+                    self.optimize_file(downloaded_file, fpath)
+                except Exception:
+                    logger.error(f"Error while optimizing {fpath}: {exc}")
+                    return
+                else:
+                    if s3_storage:
+                        upload_to_cache(s3_key, fpath, meta)
+
+
     def render(self):
         # Render course
         self.head_course_xblock.render()
@@ -433,6 +573,13 @@ class Openedx2Zim:
         )
         logger.debug("Checking for missing binaries")
         check_missing_binary(self.no_zim)
+        logger.info("Checking S3 cache credentials")
+        if self.s3_url_with_credentials and not self.s3_credentials_ok():
+            raise ValueError("Unable to connect to Optimization Cache. Check its URL.")
+        if self.s3_storage:
+            logger.info(
+                f"Using cache: {self.s3_storage.url.netloc} with bucket: {self.s3_storage.bucket_name}"
+            )
         logger.debug("Testing credentials")
         connection = Connection(self.password, self.course_url, self.email)
         jinja_init()

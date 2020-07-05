@@ -358,11 +358,32 @@ def dl_dependencies(content, path, folder_name, c):
         content = html2string(body, encoding="unicode")
     return content
 
-
-def make_dir(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-
 def first_word(text):
     return " ".join(text.split(" ")[0:5])
+
+def get_meta_from_url(url):
+    def get_response_headers(url):
+        for attempt in range(5):
+            try:
+                return requests.head(url=url, allow_redirects=True, timeout=30).headers
+            except requests.exceptions.Timeout:
+                print(f"{url} > HEAD request timed out ({attempt})")
+        raise Exception("Max retries exceeded")
+    try:
+        response_headers = get_response_headers(url)
+    except Exception as exc:
+        print(f"{url} > Problem with head request\n{exc}\n")
+        return None
+    else:
+        filetype = response_headers.get("content-type", None)
+        if filetype:
+            filetype = filetype.split("/")[-1]
+        if response_headers.get("etag", None) is not None:
+            return {"etag": response_headers["etag"]}, filetype
+        if response_headers.get("last-modified", None) is not None:
+            return {"last-modified": response_headers["last-modified"]}, filetype
+        if response_headers.get("content-length", None) is not None:
+            return {"content-length": response_headers["content-length"]}, filetype
+    return {"default", "default"}, filetype
+
+def is_optimizable()
