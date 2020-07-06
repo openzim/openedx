@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
+import os
 import re
 import sys
 import uuid
@@ -11,23 +12,35 @@ import pathlib
 import datetime
 import tempfile
 
+import youtube_dl
 from bs4 import BeautifulSoup
 from slugify import slugify
+from pif import get_public_ip
+from kiwixstorage import KiwixStorage
 from zimscraperlib.zim import ZimInfo, make_zim_file
 from zimscraperlib.video.encoding import reencode
+from zimscraperlib.download import save_large_file
+from zimscraperlib.imaging import resize_image
 from zimscraperlib.video.presets import VideoWebmLow, VideoMp4Low
 
 from .utils import (
     check_missing_binary,
     jinja_init,
-    download,
     dl_dependencies,
     jinja,
     get_meta_from_url,
     is_optimizable,
+    exec_cmd,
 )
 from .connection import Connection
-from .constants import ROOT_DIR, SCRAPER, XBLOCK_EXTRACTORS, getLogger
+from .constants import (
+    ROOT_DIR,
+    SCRAPER,
+    XBLOCK_EXTRACTORS,
+    VIDEO_FORMATS,
+    OPTIMIZER_VERSIONS,
+    getLogger,
+)
 from .annex import wiki, forum, booknav, render_wiki, render_forum, render_booknav
 
 
@@ -271,7 +284,7 @@ class Openedx2Zim:
                         self.forum_category,
                         self.staff_user_forum,
                     ) = forum(
-                        connection, self.build_dir, self.instance_url, self.course_id
+                        connection, self
                     )
                 elif ("wiki" not in tab_path) and ("forum" not in tab_path):
                     output_path = self.build_dir.joinpath(tab_path)
@@ -283,7 +296,7 @@ class Openedx2Zim:
                     )
                     if just_content is not None:
                         html_content = dl_dependencies(
-                            str(just_content), output_path, "", connection
+                            str(just_content), output_path, "", connection, self
                         )
                         self.annexed_pages.append(
                             {
@@ -313,12 +326,10 @@ class Openedx2Zim:
                 self.course_tabs[tab.get_text()] = tab_path + "/index.html"
 
     def get_content(self, connection):
-
         # download favicon
-        download(
+        self.download_file(
             "https://www.google.com/s2/favicons?domain=" + self.instance_url,
             self.build_dir.joinpath("favicon.png"),
-            None,
         )
 
         logger.info("Getting homepage ...")
@@ -357,6 +368,7 @@ class Openedx2Zim:
                             self.build_dir.joinpath("home"),
                             "home",
                             connection,
+                            self,
                         )
                     )
         else:
@@ -378,6 +390,7 @@ class Openedx2Zim:
                     self.build_dir.joinpath("home"),
                     "home",
                     connection,
+                    self,
                 )
             )
         logger.info("Getting content for supported xblocks ...")
@@ -398,18 +411,24 @@ class Openedx2Zim:
             return False
         return True
 
-    def download_from_cache(self, key, fpath, meta):
+    def download_from_cache(self, key, fpath, required_meta):
         """ whether it downloaded from S3 cache """
 
-        if self.use_any_optimized_version:
-            if not self.s3_storage.has_object(key, self.s3_storage.bucket_name):
+        if not self.s3_storage.has_object(key):
+            return False
+        server_meta = self.s3_storage.get_object_stat(key).meta
+        for meta_key, meta_val in required_meta.items():
+            if not server_meta.get(meta_key, None) == meta_val:
                 return False
-        else:
-            if not self.s3_storage.has_object_matching_meta(
-                key, tag="encoder_version", value=f"v{encoder_version}"
+        if (
+            not self.use_any_optimized_version
+            and fpath.suffix[1:] in OPTIMIZER_VERSIONS
+        ):
+            if (
+                server_meta.get("optimizer_version", None)
+                != OPTIMIZER_VERSIONS[fpath.suffix[1:]]
             ):
                 return False
-        fpath.parent.mkdir(parents=True, exist_ok=True)
         try:
             self.s3_storage.download_file(key, fpath)
         except Exception as exc:
@@ -421,55 +440,86 @@ class Openedx2Zim:
     def upload_to_cache(self, key, fpath, meta):
         """ whether it uploaded to S3 cache """
 
+        if fpath.suffix[1:] in OPTIMIZER_VERSIONS:
+            meta.update({"optimizer_version": OPTIMIZER_VERSIONS[fpath.suffix[1:]]})
         try:
-            self.s3_storage.upload_file(
-                fpath, key, meta=meta
-            )
+            self.s3_storage.upload_file(fpath, key, meta=meta)
         except Exception as exc:
             logger.error(f"{key} failed to upload to cache: {exc}")
             return False
         logger.info(f"uploaded {fpath} to cache at {key}")
         return True
 
-    def downlaod_form_url(self, url, fpath):
+    def downlaod_form_url(self, url, fpath, filetype):
         download_path = fpath
-        if filetype and fpath.suffix != filetype:
-            download_path = pathlib.Path(tempfile.NamedTemporaryFile(suffix=f".{filetype}", dir=fpath.parent, delete=False).name)
-        save_large_file(url, download_path)
-        return download_path
+        if (
+            filetype
+            and (fpath.suffix[1:] != filetype)
+            and not (filetype == "jpeg" and fpath.suffix[1:] == "jpg")
+        ):
+            download_path = pathlib.Path(
+                tempfile.NamedTemporaryFile(
+                    suffix=f".{filetype}", dir=fpath.parent, delete=False
+                ).name
+            )
+        try:
+            save_large_file(url, download_path)
+            return download_path
+        except Exception as exc:
+            logger.error(f"Error while running save_large_file(): {exc}")
+            os.unlink(download_path)
+            return None
 
-    def convert_video(self, downloaded_file, fpath):
-        if (downloaded_file.suffix != self.video_format) or self.low_quality:
+    def download_from_youtube(self, url, fpath):
+        audext, vidext = {"webm": ("webm", "webm"), "mp4": ("m4a", "mp4")}[
+            self.video_format
+        ]
+        options = {
+            "outtmpl": fpath,
+            "preferredcodec": self.video_format,
+            "format": f"best[ext={vidext}]/bestvideo[ext={vidext}]+bestaudio[ext={audext}]/best",
+            "retries": 20,
+            "fragment-retries": 50,
+        }
+        try:
+            with youtube_dl.YoutubeDL(options) as ydl:
+                ydl.download([url])
+                return fpath
+        except Exception as exc:
+            logger.error(f"Error while running youtube_dl: {exc}")
+            return None
+        
+
+    def convert_video(self, src, dst):
+        if (src.suffix[1:] != self.video_format) or self.low_quality:
             preset = VideoWebmLow() if self.video_format == "webm" else VideoMp4Low()
             reencode(
-                pathlib.Path(downloaded_file),
-                pathlib.Path(fpath),
-                preset.to_ffmpeg_args(),
-                delete_src=True,
-                failsafe=False,
+                src, dst, preset.to_ffmpeg_args(), delete_src=True, failsafe=False,
             )
 
-    def optimize_image(self, downloaded_file, fpath, resize=None):
+    def optimize_image(self, src, dst, resize=None):
         if resize:
-            resize_image()
-        if downloaded_file.suffix == "jpeg":
-            exec_cmd("jpegoptim --strip-all -m50 " + str(downloaded_file), timeout=10)
-        elif downloaded_file.suffix == "png":
-            exec_cmd("pngquant --verbose --nofs --force --ext=.png " + str(downloaded_file), timeout=10)
-            exec_cmd("advdef -q -z -4 -i 5  " + str(downloaded_file), timeout=10)
-        elif downloaded_file.suffix == "gif":
-            exec_cmd("gifsicle --batch -O3 -i " + str(downloaded_file), timeout=10)
-        shutil.move(downloaded_file, fpath)
+            resize_image(src, width=resize, allow_upscaling=True)
+        if src.suffix[1:] == "jpeg":
+            exec_cmd("jpegoptim --strip-all -m50 " + str(src), timeout=10)
+        elif src.suffix[1:] == "png":
+            exec_cmd(
+                "pngquant --verbose --nofs --force --ext=.png " + str(src), timeout=10
+            )
+            exec_cmd("advdef -q -z -4 -i 5  " + str(src), timeout=50)
+        elif src.suffix[1:] == "gif":
+            exec_cmd("gifsicle --batch -O3 -i " + str(src), timeout=10)
+        if not src.resolve() == dst.resolve():
+            shutil.move(src, dst)
 
-    def optimize_file(self, downloaded_file, fpath):
-        if downloaded_file.suffix in VIDEO_FORMATS:
-            self.convert_video(downloaded_file, fpath)
+    def optimize_file(self, src, dst):
+        if src.suffix[1:] in VIDEO_FORMATS:
+            self.convert_video(src, dst)
         else:
-            self.optimize_image(downloaded_file, fpath)
-
+            self.optimize_image(src, dst)
 
     def generate_s3_key(self, url, fpath):
-        if fpath.suffix in VIDEO_FORMATS:
+        if fpath.suffix[1:] in VIDEO_FORMATS:
             quality = "low" if self.low_quality else "high"
         else:
             quality = "default"
@@ -477,26 +527,24 @@ class Openedx2Zim:
         prefix = f"{src_url.scheme}://{src_url.netloc}/"
         safe_url = f"{src_url.netloc}/{urllib.parse.quote_plus(src_url.geturl()[len(prefix):])}"
         # safe url looks similar to ww2.someplace.state.gov/data%2F%C3%A9t%C3%A9%2Fsome+chars%2Fimage.jpeg%3Fv%3D122%26from%3Dxxx%23yes
-        return f"{fpath.suffix}/{safe_url}/{quality}"
+        return f"{fpath.suffix[1:]}/{safe_url}/{quality}"
 
-    def download_file(self, url, fpath, scraper):
+    def download_file(self, url, fpath):
         youtube = False
         if "youtube" in url:
             youtube = True
         downloaded_from_cache = False
         meta, filetype = get_meta_from_url(url)
-        if scraper.s3_storage:
+        if self.s3_storage:
             s3_key = self.generate_s3_key(url, fpath)
             downloaded_from_cache = self.download_from_cache(s3_key, fpath, meta)
         if not downloaded_from_cache:
-            try:
-                if youtube:
-                    downloaded_file = self.downlaod_form_youtube(url, fpath)
-                else:
-                    downloaded_file = self.downlaod_form_url(url, fpath, filetype)
-            except Exception as exc:
-                logger.error(f"Error while downloading {fpath}: {exc}")
-                os.unlink(downloaded_file, ignore_errors=True)
+            if youtube:
+                downloaded_file = self.download_from_youtube(url, fpath)
+            else:
+                downloaded_file = self.downlaod_form_url(url, fpath, filetype)
+            if not downloaded_file:
+                logger.error(f"Error while downloading file from URL {url}")
                 return
             if is_optimizable(fpath):
                 try:
@@ -505,9 +553,8 @@ class Openedx2Zim:
                     logger.error(f"Error while optimizing {fpath}: {exc}")
                     return
                 else:
-                    if s3_storage:
-                        upload_to_cache(s3_key, fpath, meta)
-
+                    if self.s3_storage:
+                        self.upload_to_cache(s3_key, fpath, meta)
 
     def render(self):
         # Render course
@@ -586,7 +633,7 @@ class Openedx2Zim:
         self.prepare_mooc_data(connection)
         self.parse_course_xblocks()
         self.annex(connection)
-        self.download(connection)
+        self.get_content(connection)
         self.render()
         if not self.no_zim:
             self.fname = (

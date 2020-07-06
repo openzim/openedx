@@ -6,6 +6,7 @@ import pathlib
 import logging
 
 from zimscraperlib.logging import getLogger as lib_getLogger
+from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
 
 ROOT_DIR = pathlib.Path(__file__).parent
 NAME = ROOT_DIR.name
@@ -14,6 +15,12 @@ with open(ROOT_DIR.joinpath("VERSION"), "r") as fh:
     VERSION = fh.read().strip()
 
 SCRAPER = f"{NAME} {VERSION}"
+
+VIDEO_FORMATS = ["webm", "mp4"]
+
+IMAGE_FORMATS = ["png", "jpeg", "jpg", "gif"]
+
+OPTIMIZER_VERSIONS = {"mp4": f"v{VideoMp4Low().VERSION}", "webm": f"v{VideoWebmLow().VERSION}"}
 
 
 class Global:

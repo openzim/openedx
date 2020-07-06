@@ -10,15 +10,15 @@ import collections
 from bs4 import BeautifulSoup
 
 from .constants import getLogger
-from .utils import download, dl_dependencies, jinja, markdown
+from .utils import dl_dependencies, jinja, markdown, prepare_url
 
 logger = getLogger()
 
 
-def forum(c, build_dir, instance_url, course_id):
-    forum_output = build_dir.joinpath("forum")
+def forum(c, scraper):
+    forum_output = scraper.build_dir.joinpath("forum")
     forum_output.mkdir(parents=True, exist_ok=True)
-    content = c.get_page(instance_url + "/courses/" + course_id + "/discussion/forum")
+    content = c.get_page(scraper.instance_url + "/courses/" + scraper.course_id + "/discussion/forum")
     good_content = BeautifulSoup(content, "lxml").find(
         "script", attrs={"id": "thread-list-template"}
     )
@@ -87,7 +87,7 @@ def forum(c, build_dir, instance_url, course_id):
         forum_output.joinpath(x).mkdir(parents=True, exist_ok=True)
         url = (
             "/courses/"
-            + course_id
+            + scraper.course_id
             + "/discussion/forum/"
             + x
             + "/inline?ajax=1&page=1&sort_key=activity&sort_order=desc"
@@ -98,7 +98,7 @@ def forum(c, build_dir, instance_url, course_id):
         for i in range(1, data["num_pages"]):
             url = (
                 "/courses/"
-                + course_id
+                + scraper.course_id
                 + "/discussion/forum/"
                 + x
                 + "/inline?ajax=1&page="
@@ -112,7 +112,7 @@ def forum(c, build_dir, instance_url, course_id):
     for thread in threads:
         url = (
             "/courses/"
-            + course_id
+            + scraper.course_id
             + "/discussion/forum/"
             + thread["commentable_id"]
             + "/threads/"
@@ -122,13 +122,13 @@ def forum(c, build_dir, instance_url, course_id):
         forum_output.joinpath(thread["id"]).mkdir(parents=True, exist_ok=True)
         try:
             thread["data_thread"] = c.get_api_json(
-                url, referer=instance_url + url.split("?")[0]
+                url, referer=scraper.instance_url + url.split("?")[0]
             )
             total_answers = 100
             while total_answers < thread["data_thread"]["content"]["resp_total"]:
                 url = (
                     "/courses/"
-                    + course_id
+                    + scraper.course_id
                     + "/discussion/forum/"
                     + thread["commentable_id"]
                     + "/threads/"
@@ -138,7 +138,7 @@ def forum(c, build_dir, instance_url, course_id):
                     + "&resp_limit=100"
                 )
                 new_answers = c.get_api_json(
-                    url, referer=instance_url + url.split("?")[0]
+                    url, referer=scraper.instance_url + url.split("?")[0]
                 )["content"]["children"]
                 thread["data_thread"]["content"]["children"] += new_answers
                 total_answers += 100
@@ -146,7 +146,7 @@ def forum(c, build_dir, instance_url, course_id):
             try:
                 thread["data_thread"] = c.get_api_json(url)
             except Exception:
-                logger.debug("Can not get " + instance_url + url + "discussion")
+                logger.debug("Can not get " + scraper.instance_url + url + "discussion")
         if (
             "endorsed_responses" in thread["data_thread"]["content"]
             or "non_endorsed_responses" in thread["data_thread"]["content"]
@@ -167,10 +167,11 @@ def forum(c, build_dir, instance_url, course_id):
             forum_output.joinpath(thread["id"]),
             "",
             c,
+            scraper,
         )
         for children in thread["data_thread"]["content"]["children"]:
             children["body"] = dl_dependencies(
-                markdown(children["body"]), forum_output.joinpath(thread["id"]), "", c,
+                markdown(children["body"]), forum_output.joinpath(thread["id"]), "", c, scarper,
             )
             if "children" in children:
                 for children_children in children["children"]:
@@ -179,6 +180,7 @@ def forum(c, build_dir, instance_url, course_id):
                         forum_output.joinpath(thread["id"]),
                         "",
                         c,
+                        scraper,
                     )
 
     return threads, category, staff_user
@@ -278,7 +280,7 @@ def wiki(c, scraper):
                             + "/index.html"
                         )
 
-            wiki_data[url]["text"] = dl_dependencies(str(text), path, "", c)
+            wiki_data[url]["text"] = dl_dependencies(str(text), path, "", c, scraper)
             wiki_data[url]["title"] = soup.find("title").text
             wiki_data[url]["last-modif"] = soup.find(
                 "span", attrs={"class": "date"}
@@ -362,7 +364,7 @@ def booknav(scraper, book, output_path):
     book_list = []
     for url in pdf:
         file_name = pathlib.Path(urllib.parse.urlparse(url["rel"][0]).path).name
-        download(url["rel"][0], output_path.joinpath(file_name), scraper.instance_url)
+        scraper.download_file(prepare_url(url["rel"][0], scraper.instance_url), output_path.joinpath(file_name))
         book_list.append({"url": file_name, "name": url.get_text()})
     return book_list
 

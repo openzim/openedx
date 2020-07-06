@@ -8,9 +8,7 @@ from .base_xblock import BaseXblock
 from ..utils import (
     jinja,
     download_and_convert_subtitles,
-    download,
-    download_youtube,
-    convert_video_to_webm,
+    prepare_url
 )
 from ..constants import getLogger
 
@@ -103,17 +101,15 @@ class Video(BaseXblock):
             if subs_lang == {}:
                 subs_lang = self.xblock_json["student_view_data"]["transcripts"]
 
-        if self.scraper.convert_in_webm:
+        if self.scraper.video_format == "webm":
             video_path = self.output_path.joinpath("video.webm")
         else:
             video_path = self.output_path.joinpath("video.mp4")
         if not video_path.exists():
             if youtube:
-                download_youtube(url, video_path)
+                self.scraper.download_file(url, video_path)
             else:
-                download(urllib.parse.unquote(url), video_path, c)
-            if self.scraper.convert_in_webm:
-                convert_video_to_webm(video_path, video_path)
+                self.scraper.download_file(prepare_url(urllib.parse.unquote(url), self.scraper.instance_url), video_path)
         real_subtitle = download_and_convert_subtitles(self.output_path, subs_lang, c)
         self.subs = [
             {"file": f"{self.folder_name}/{lang}.vtt", "code": lang}
@@ -125,7 +121,7 @@ class Video(BaseXblock):
             None,
             "video.html",
             False,
-            format="webm" if self.scraper.convert_in_webm else "mp4",
+            format=self.scraper.video_format,
             folder_name=self.folder_name,
             title=self.xblock_json["display_name"],
             subs=self.subs,
