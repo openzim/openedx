@@ -1,7 +1,7 @@
 <div class="course-index" {% if display_on_mobile %} style="display:block" {% endif %}>
   <div class="accordion">
     <nav class="course-navigation" aria-label="Course">
-    {% for chapter_ in mooc.head.descendants %}
+    {% for chapter_ in mooc.head_course_xblock.descendants %}
       {% if chapter_.descendants|length > 0 %}
 <!--        <li>-->
           {% if chapter and chapter_.id == chapter.id  or all_side_menu_open %}
@@ -26,7 +26,7 @@
             {% if sequential_.descendants|length > 0 %}
               {% if sequential and sequential_.id == sequential.id %}
                 <div class="menu-item active">
-                  <a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >
+                  <a href="{{ rooturl }}{{ sequential_.descendants[0].relative_path }}/index.html" >
                     <p>
                       {{ sequential_.display_name }}
                       <span class="sr">current section</span>
@@ -35,7 +35,7 @@
                 </div>
               {% else %}
                 <div class="menu-item">
-                  <a href="{{ rooturl }}{{ sequential_.descendants[0].path }}/index.html" >
+                  <a href="{{ rooturl }}{{ sequential_.descendants[0].relative_path }}/index.html" >
                     <p>
                       {{ sequential_.display_name }}
                     </p>

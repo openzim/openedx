@@ -1,26 +1,18 @@
+import getpass
+import sys
+import json
+import logging
+import copy
+
 from http.cookiejar import LWPCookieJar
-from urllib.error import HTTPError, URLError
-from urllib.parse import (
-    urlencode,
-    quote_plus,
-    unquote,
-)
+from urllib.parse import urlencode
 from urllib.request import (
     urlopen,
     build_opener,
     install_opener,
     HTTPCookieProcessor,
     Request,
-    urlretrieve,
 )
-import requests
-import ssl
-import getpass
-import sys
-import json
-import logging
-import re
-import copy
 
 
 def get_config(instance):
@@ -116,7 +108,7 @@ class Connection:
         request = Request(url, None, h)
         try:
             response = urlopen(request)
-        except:
+        except Exception:
             response = urlopen(request)
         return response.read().decode("utf-8")
 

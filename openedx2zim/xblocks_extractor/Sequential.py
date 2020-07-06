@@ -1,22 +1,9 @@
-import os
-from slugify import slugify
-from ..utils import make_dir
+from .base_xblock import BaseXblock
 
 
-class Sequential:
-    def __init__(self, json, path, rooturl, id, descendants, mooc):
-        self.mooc = mooc
-        self.json = json
-        self.path = path
-        self.rooturl = rooturl
-        self.id = id
-        self.descendants = descendants
-        self.top = self.mooc.top
-        self.output_path = self.mooc.output_path
-        self.display_name = json["display_name"]
-        self.folder_name = slugify(self.display_name)
-        path = os.path.join(self.output_path, self.path, self.folder_name)
-        make_dir(path)
+class Sequential(BaseXblock):
+    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
+        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
 
     def download(self, c):
         for x in self.descendants:

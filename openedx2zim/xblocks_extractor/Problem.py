@@ -1,41 +1,42 @@
-import bs4 as BeautifulSoup
-import os
-from slugify import slugify
-import logging
 import json
-from uuid import uuid4
-from urllib.parse import urlencode
-from ..utils import make_dir, jinja, dl_dependencies
+import uuid
+
+from bs4 import BeautifulSoup
+
+from .base_xblock import BaseXblock
+from ..utils import jinja, dl_dependencies
+from ..constants import getLogger
 
 
-class Problem:
-    is_video = False
+logger = getLogger()
 
-    def __init__(self, json, path, rooturl, id, descendants, mooc):
-        self.mooc = mooc
-        self.json = json
-        self.path = path
-        self.rooturl = rooturl
-        self.id = id
-        self.folder_name = slugify(json["display_name"])
-        self.output_path = os.path.join(self.mooc.output_path, self.path)
-        make_dir(self.output_path)
+
+class Problem(BaseXblock):
+    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
+        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+
+        # extra vars
+        self.is_video = False
+        self.html_content = ""
+        self.answers = []
+        self.explanation = []
+        self.problem_id = None
 
     def download(self, c):
-        content = c.get_page(self.json["student_view_url"])
-        soup = BeautifulSoup.BeautifulSoup(content, "lxml")
+        content = c.get_page(self.xblock_json["student_view_url"])
+        soup = BeautifulSoup(content, "lxml")
         try:
             html_content_from_div = str(
                 soup.find("div", attrs={"class": "problems-wrapper"})["data-content"]
             )
-        except:
+        except Exception:
             problem_json_url = str(
                 soup.find("div", attrs={"class": "problems-wrapper"})["data-url"]
             )
             html_content_from_div = str(
                 c.get_api_json(problem_json_url + "/problem_get")["html"]
             )
-        soup = BeautifulSoup.BeautifulSoup(html_content_from_div, "lxml")
+        soup = BeautifulSoup(html_content_from_div, "lxml")
         # self.has_hint=soup.find("button", attrs={"class" : "hint-button"}) #Remove comment when  hint ok
         for div in soup.find_all("div", attrs={"class": "notification"}):
             div.decompose()
@@ -56,7 +57,7 @@ class Problem:
         self.html_content = str(html_content)
 
         # Save json answers
-        path_answers = os.path.join(self.output_path, "problem_show")
+        answers_path = self.output_path.joinpath("problem_show")
         answers_content = {"success": None}
         retry = 0
         while (
@@ -64,9 +65,9 @@ class Problem:
         ):  # We use our check to finally get anwers
             answers_content = c.get_api_json(
                 "/courses/"
-                + self.mooc.course_id
+                + self.scraper.course_id
                 + "/xblock/"
-                + self.json["id"]
+                + self.xblock_json["id"]
                 + "/handler/xmodule_handler/problem_show"
             )
             if "success" in answers_content:
@@ -77,28 +78,26 @@ class Problem:
                     """
                 c.get_api_json(
                     "/courses/"
-                    + self.mooc.course_id
+                    + self.scraper.course_id
                     + "/xblock/"
-                    + self.json["id"]
+                    + self.xblock_json["id"]
                     + "/handler/xmodule_handler/problem_check"
                 )
                 retry += 1
         if "success" in answers_content:
-            logging.warning(
+            logger.warning(
                 " fail to get answers to this problem : "
-                + self.json["id"]
+                + self.xblock_json["id"]
                 + " ("
-                + self.json["lms_web_url"]
+                + self.xblock_json["lms_web_url"]
                 + ")"
             )
             self.answers = None
         else:
-            with open(path_answers, "w") as f:
+            with open(answers_path, "w") as f:
                 json.dump(answers_content, f)
-            self.answers = []
-            self.explanation = []
             for qid in answers_content["answers"]:
-                if not "solution" in qid:
+                if "solution" not in qid:
                     for response in answers_content["answers"][qid]:
                         self.answers.append("input_" + qid + "_" + response)
                 else:
@@ -108,7 +107,7 @@ class Problem:
                             "value": json.dumps(answers_content["answers"][qid]),
                         }
                     )
-            self.problem_id = str(uuid4())
+            self.problem_id = str(uuid.uuid4())
 
         """
             #HINT fix it !

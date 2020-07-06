@@ -13,11 +13,11 @@
         {% include "side_menu.html" %}
     {% endif %}
     <section id="course-content" class="course-content" role="main" aria-label="Content">
-      <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
-        <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.json["id"] }}" data-position="1">
+      <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.xblock_json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
+        <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.xblock_json["id"] }}" data-position="1">
           <div class="sequence-nav">
               {% if pred_vertical %}
-              <a href="{{ rooturl }}{{ pred_vertical.path }}/index.html" title="{{ pred_vertical.display_name }}">
+              <a href="{{ rooturl }}{{ pred_vertical.relative_path }}/index.html" title="{{ pred_vertical.display_name }}">
                 <button class="sequence-nav-button button-previous">
               {% else %}
                 <button class="sequence-nav-button button-previous deactivated">
@@ -32,7 +32,7 @@
               <ol id="sequence-list" role="tablist">
               {% for vertical_ in sequential.descendants %}
                 <li {% if vertical_.id == vertical.id %} class="current_vertical" {% endif %}>
-                  <a id="tab_0" tabindex=0 data-id="{{ vertical_.json["id"] }}" data-page-title="{{ vertical_.display_name }}" href="{{ rooturl }}{{ vertical_.path }}/index.html" title="{{ vertical_.display_name }}">
+                  <a id="tab_0" tabindex=0 data-id="{{ vertical_.xblock_json["id"] }}" data-page-title="{{ vertical_.display_name }}" href="{{ rooturl }}{{ vertical_.relative_path }}/index.html" title="{{ vertical_.display_name }}">
                     <i class="icon fa {{ vertical_.icon_type }}" aria-hidden="true"></i>
 		    <!--
                     <p>
@@ -46,7 +46,7 @@
             <div class="right-shadow" style="opacity: 0;"></div>
             </nav>
                 {% if next_vertical %}
-                <a href="{{ rooturl }}{{ next_vertical.path }}/index.html" title="{{ next_vertical.display_name }}">
+                <a href="{{ rooturl }}{{ next_vertical.relative_path }}/index.html" title="{{ next_vertical.display_name }}">
                   <button class="sequence-nav-button button-next">
                 {% else %}
                   <button class="sequence-nav-button button-next deactivated">
@@ -60,7 +60,7 @@
           </div>
           <div id="seq_content">
             <div class="xblock xblock-student_view xblock-student_view-vertical xblock-initialized">
-              <h2 class="hd hd-2 unit-title"> {{ vertical.json["display_name"] }} </h2>
+              <h2 class="hd hd-2 unit-title"> {{ vertical.xblock_json["display_name"] }} </h2>
               {% for elem  in vertical_content %}
                 <div class="vert-mod">
                   <div class="vert vert-0">
@@ -73,7 +73,7 @@
             </div>
           </div>
           <nav class="sequence-bottom" aria-label="Section">
-              <a href="{{ rooturl }}{{ pred_vertical.path }}/index.html" title="{{ pred_vertical.display_name }}">
+              <a href="{{ rooturl }}{{ pred_vertical.relative_path }}/index.html" title="{{ pred_vertical.display_name }}">
               {% if pred_vertical %}
                 <button class="sequence-nav-button button-previous">
               {% else %}
@@ -82,7 +82,7 @@
                 <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
               </button>
               </a>
-              <a href="{{ rooturl }}{{ next_vertical.path }}/index.html" title="{{ next_vertical.display_name }}">
+              <a href="{{ rooturl }}{{ next_vertical.relative_path }}/index.html" title="{{ next_vertical.display_name }}">
                 {% if next_vertical %}
                   <button class="sequence-nav-button button-next">
                 {% else %}
