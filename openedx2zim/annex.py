@@ -18,7 +18,9 @@ logger = getLogger()
 def forum(c, scraper):
     forum_output = scraper.build_dir.joinpath("forum")
     forum_output.mkdir(parents=True, exist_ok=True)
-    content = c.get_page(scraper.instance_url + "/courses/" + scraper.course_id + "/discussion/forum")
+    content = c.get_page(
+        scraper.instance_url + "/courses/" + scraper.course_id + "/discussion/forum"
+    )
     good_content = BeautifulSoup(content, "lxml").find(
         "script", attrs={"id": "thread-list-template"}
     )
@@ -171,7 +173,11 @@ def forum(c, scraper):
         )
         for children in thread["data_thread"]["content"]["children"]:
             children["body"] = dl_dependencies(
-                markdown(children["body"]), forum_output.joinpath(thread["id"]), "", c, scarper,
+                markdown(children["body"]),
+                forum_output.joinpath(thread["id"]),
+                "",
+                c,
+                scarper,
             )
             if "children" in children:
                 for children_children in children["children"]:
@@ -364,7 +370,10 @@ def booknav(scraper, book, output_path):
     book_list = []
     for url in pdf:
         file_name = pathlib.Path(urllib.parse.urlparse(url["rel"][0]).path).name
-        scraper.download_file(prepare_url(url["rel"][0], scraper.instance_url), output_path.joinpath(file_name))
+        scraper.download_file(
+            prepare_url(url["rel"][0], scraper.instance_url),
+            output_path.joinpath(file_name),
+        )
         book_list.append({"url": file_name, "name": url.get_text()})
     return book_list
 

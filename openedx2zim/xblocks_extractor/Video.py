@@ -5,11 +5,7 @@ import urllib
 from bs4 import BeautifulSoup
 
 from .base_xblock import BaseXblock
-from ..utils import (
-    jinja,
-    download_and_convert_subtitles,
-    prepare_url
-)
+from ..utils import jinja, download_and_convert_subtitles, prepare_url
 from ..constants import getLogger
 
 
@@ -109,7 +105,10 @@ class Video(BaseXblock):
             if youtube:
                 self.scraper.download_file(url, video_path)
             else:
-                self.scraper.download_file(prepare_url(urllib.parse.unquote(url), self.scraper.instance_url), video_path)
+                self.scraper.download_file(
+                    prepare_url(urllib.parse.unquote(url), self.scraper.instance_url),
+                    video_path,
+                )
         real_subtitle = download_and_convert_subtitles(self.output_path, subs_lang, c)
         self.subs = [
             {"file": f"{self.folder_name}/{lang}.vtt", "code": lang}

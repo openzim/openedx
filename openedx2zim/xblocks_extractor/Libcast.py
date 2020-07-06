@@ -40,7 +40,9 @@ class Libcast(BaseXblock):
         else:
             video_path = self.output_path.joinpath("video.mp4")
         if not video_path.exists():
-            self.scraper.download_file(prepare_url(url, self.scraper.instance_url), video_path)
+            self.scraper.download_file(
+                prepare_url(url, self.scraper.instance_url), video_path
+            )
 
     def render(self):
         return jinja(

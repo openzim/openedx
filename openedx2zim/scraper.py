@@ -283,9 +283,7 @@ class Openedx2Zim:
                         self.forum_thread,
                         self.forum_category,
                         self.staff_user_forum,
-                    ) = forum(
-                        connection, self
-                    )
+                    ) = forum(connection, self)
                 elif ("wiki" not in tab_path) and ("forum" not in tab_path):
                     output_path = self.build_dir.joinpath(tab_path)
                     output_path.mkdir(parents=True, exist_ok=True)
@@ -488,7 +486,6 @@ class Openedx2Zim:
         except Exception as exc:
             logger.error(f"Error while running youtube_dl: {exc}")
             return None
-        
 
     def convert_video(self, src, dst):
         if (src.suffix[1:] != self.video_format) or self.low_quality:
@@ -555,6 +552,9 @@ class Openedx2Zim:
                 else:
                     if self.s3_storage:
                         self.upload_to_cache(s3_key, fpath, meta)
+            else:
+                if not downloaded_file.resolve() == fpath.resolve():
+                    shutil.move(downloaded_file, fpath)
 
     def render(self):
         # Render course

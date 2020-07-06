@@ -20,7 +20,10 @@ VIDEO_FORMATS = ["webm", "mp4"]
 
 IMAGE_FORMATS = ["png", "jpeg", "jpg", "gif"]
 
-OPTIMIZER_VERSIONS = {"mp4": f"v{VideoMp4Low().VERSION}", "webm": f"v{VideoWebmLow().VERSION}"}
+OPTIMIZER_VERSIONS = {
+    "mp4": f"v{VideoMp4Low().VERSION}",
+    "webm": f"v{VideoWebmLow().VERSION}",
+}
 
 
 class Global:

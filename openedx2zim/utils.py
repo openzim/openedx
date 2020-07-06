@@ -192,7 +192,9 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             # download the image only if it's not already downloaded
             if not os.path.exists(out):
                 try:
-                    scraper.download_file(prepare_url(src, c.conf["instance_url"]), pathlib.Path(out))
+                    scraper.download_file(
+                        prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                    )
                 except Exception as e:
                     logger.warning(str(e) + " : error with " + src)
                     pass
@@ -234,7 +236,10 @@ def dl_dependencies(content, path, folder_name, c, scraper):
                 not is_absolute(src) and not "wiki" in src
             ):  # Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
                 if not os.path.exists(out):
-                    scraper.download_file(prepare_url(unquote(src), c.conf["instance_url"]), pathlib.Path(out))
+                    scraper.download_file(
+                        prepare_url(unquote(src), c.conf["instance_url"]),
+                        pathlib.Path(out),
+                    )
                 src = os.path.join(folder_name, filename)
                 a.attrib["href"] = src
     csss = body.xpath("//link")
@@ -245,7 +250,9 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                scraper.download_file(prepare_url(src, c.conf["instance_url"]), pathlib.Path(out))
+                scraper.download_file(
+                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                )
             src = os.path.join(folder_name, filename)
             css.attrib["href"] = src
     jss = body.xpath("//script")
@@ -256,7 +263,9 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                scraper.download_file(prepare_url(src, c.conf["instance_url"]), pathlib.Path(out))
+                scraper.download_file(
+                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                )
             src = os.path.join(folder_name, filename)
             js.attrib["src"] = src
     sources = body.xpath("//source")
@@ -267,7 +276,9 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                scraper.download_file(prepare_url(src, c.conf["instance_url"]), pathlib.Path(out))
+                scraper.download_file(
+                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                )
             src = os.path.join(folder_name, filename)
             source.attrib["src"] = src
     iframes = body.xpath("//iframe")
@@ -295,7 +306,10 @@ def dl_dependencies(content, path, folder_name, c, scraper):
                 filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
                 out = os.path.join(path, filename)
                 if not os.path.exists(out):
-                    scraper.download_file(prepare_url(unquote(src), c.conf["instance_url"]), pathlib.Path(out))
+                    scraper.download_file(
+                        prepare_url(unquote(src), c.conf["instance_url"]),
+                        pathlib.Path(out),
+                    )
                 src = os.path.join(folder_name, filename)
                 iframe.attrib["src"] = src
     if imgs or docs or csss or jss or sources or iframes:

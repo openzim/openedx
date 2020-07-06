@@ -34,7 +34,9 @@ class DragAndDropV2(
         # Grid
         name = pathlib.Path(self.content["target_img_expanded_url"]).name
         self.scraper.download_file(
-            prepare_url(self.content["target_img_expanded_url"], self.scraper.instance_url),
+            prepare_url(
+                self.content["target_img_expanded_url"], self.scraper.instance_url
+            ),
             self.output_path.joinpath(name),
         )
         self.content["target_img_expanded_url"] = f"{slugify(self.display_name)}/{name}"

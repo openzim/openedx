@@ -17,7 +17,9 @@ class Html(BaseXblock):
         html_content = soup.find("div", attrs={"class": "edx-notes-wrapper"})
         if not html_content:
             html_content = str(soup.find("div", attrs={"class": "course-wrapper"}))
-        self.html = dl_dependencies(html_content, self.output_path, self.folder_name, c, self.scraper)
+        self.html = dl_dependencies(
+            html_content, self.output_path, self.folder_name, c, self.scraper
+        )
 
     def render(self):
         return self.html

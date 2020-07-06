@@ -18,7 +18,10 @@ class Lti(BaseXblock):
         content = c.get_page(url)
         soup = BeautifulSoup(content, "lxml")
         content_url = soup.find("form")
-        self.scraper.download_file(prepare_url(content_url["action"], self.scraper.instance_url), self.output_path.joinpath("content.pdf"))
+        self.scraper.download_file(
+            prepare_url(content_url["action"], self.scraper.instance_url),
+            self.output_path.joinpath("content.pdf"),
+        )
 
     def render(self):
         return (
