@@ -5,3 +5,4 @@
 - make wiki and forums optional
 - use zimscraperlib for downloading and optimizing videos
 - refactored Dockerfile
+- add s3 based optimization cache

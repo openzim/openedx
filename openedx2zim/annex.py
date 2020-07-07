@@ -177,7 +177,7 @@ def forum(c, scraper):
                 forum_output.joinpath(thread["id"]),
                 "",
                 c,
-                scarper,
+                scraper,
             )
             if "children" in children:
                 for children_children in children["children"]:

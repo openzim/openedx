@@ -29,7 +29,6 @@ from .utils import (
     dl_dependencies,
     jinja,
     get_meta_from_url,
-    is_optimizable,
     exec_cmd,
 )
 from .connection import Connection
@@ -38,6 +37,7 @@ from .constants import (
     SCRAPER,
     XBLOCK_EXTRACTORS,
     VIDEO_FORMATS,
+    IMAGE_FORMATS,
     OPTIMIZER_VERSIONS,
     getLogger,
 )
@@ -55,7 +55,6 @@ class Openedx2Zim:
         password,
         video_format,
         low_quality,
-        autoplay,
         name,
         title,
         description,
@@ -80,7 +79,6 @@ class Openedx2Zim:
         # video-encoding info
         self.video_format = video_format
         self.low_quality = low_quality
-        self.autoplay = autoplay
 
         # zim params
         self.fname = fname
@@ -396,7 +394,7 @@ class Openedx2Zim:
             obj.download(connection)
 
     def s3_credentials_ok(self):
-        logger.info("Testing S3 Optimization Cache credentials")
+        logger.info("Testing S3 Optimization Cache credentials ...")
         self.s3_storage = KiwixStorage(self.s3_url_with_credentials)
         if not self.s3_storage.check_credentials(
             list_buckets=True, bucket=True, write=True, read=True, failsafe=True
@@ -409,22 +407,19 @@ class Openedx2Zim:
             return False
         return True
 
-    def download_from_cache(self, key, fpath, required_meta):
+    def download_from_cache(self, key, fpath, meta_key, meta_val):
         """ whether it downloaded from S3 cache """
 
-        if not self.s3_storage.has_object(key):
+        filetype = "jpeg" if fpath.suffix in [".jpeg", ".jpg"] else fpath.suffix[1:]
+        if not self.s3_storage.has_object(key) or not meta_key or not meta_val:
             return False
         server_meta = self.s3_storage.get_object_stat(key).meta
-        for meta_key, meta_val in required_meta.items():
-            if not server_meta.get(meta_key, None) == meta_val:
-                return False
-        if (
-            not self.use_any_optimized_version
-            and fpath.suffix[1:] in OPTIMIZER_VERSIONS
-        ):
+        if server_meta.get(meta_key, None) != meta_val:
+            return False
+        if not self.use_any_optimized_version:
             if (
                 server_meta.get("optimizer_version", None)
-                != OPTIMIZER_VERSIONS[fpath.suffix[1:]]
+                != OPTIMIZER_VERSIONS[filetype]
             ):
                 return False
         try:
@@ -435,11 +430,13 @@ class Openedx2Zim:
         logger.info(f"downloaded {fpath} from cache at {key}")
         return True
 
-    def upload_to_cache(self, key, fpath, meta):
+    def upload_to_cache(self, key, fpath, meta_key, meta_val):
         """ whether it uploaded to S3 cache """
 
-        if fpath.suffix[1:] in OPTIMIZER_VERSIONS:
-            meta.update({"optimizer_version": OPTIMIZER_VERSIONS[fpath.suffix[1:]]})
+        filetype = "jpeg" if fpath.suffix in [".jpeg", ".jpg"] else fpath.suffix[1:]
+        if not meta_key or not meta_val or not filetype:
+            return False
+        meta = {meta_key: meta_val, "optimizer_version": OPTIMIZER_VERSIONS[filetype]}
         try:
             self.s3_storage.upload_file(fpath, key, meta=meta)
         except Exception as exc:
@@ -453,7 +450,7 @@ class Openedx2Zim:
         if (
             filetype
             and (fpath.suffix[1:] != filetype)
-            and not (filetype == "jpeg" and fpath.suffix[1:] == "jpg")
+            and not (filetype == "jpg" and fpath.suffix[1:] == "jpeg")
         ):
             download_path = pathlib.Path(
                 tempfile.NamedTemporaryFile(
@@ -490,30 +487,33 @@ class Openedx2Zim:
     def convert_video(self, src, dst):
         if (src.suffix[1:] != self.video_format) or self.low_quality:
             preset = VideoWebmLow() if self.video_format == "webm" else VideoMp4Low()
-            reencode(
+            return reencode(
                 src, dst, preset.to_ffmpeg_args(), delete_src=True, failsafe=False,
             )
 
-    def optimize_image(self, src, dst, resize=None):
-        if resize:
-            resize_image(src, width=resize, allow_upscaling=True)
-        if src.suffix[1:] == "jpeg":
+    def optimize_image(self, src, dst):
+        optimized = False
+        if src.suffix in [".jpeg", ".jpg"]:
             exec_cmd("jpegoptim --strip-all -m50 " + str(src), timeout=10)
-        elif src.suffix[1:] == "png":
+            optimized = True
+        elif src.suffix == ".png":
             exec_cmd(
                 "pngquant --verbose --nofs --force --ext=.png " + str(src), timeout=10
             )
             exec_cmd("advdef -q -z -4 -i 5  " + str(src), timeout=50)
-        elif src.suffix[1:] == "gif":
+            optimized = True
+        elif src.suffix == ".gif":
             exec_cmd("gifsicle --batch -O3 -i " + str(src), timeout=10)
-        if not src.resolve() == dst.resolve():
+            optimized = True
+        if src.resolve() != dst.resolve():
             shutil.move(src, dst)
+        return optimized
 
     def optimize_file(self, src, dst):
         if src.suffix[1:] in VIDEO_FORMATS:
-            self.convert_video(src, dst)
-        else:
-            self.optimize_image(src, dst)
+            return self.convert_video(src, dst)
+        if src.suffix[1:] in IMAGE_FORMATS:
+            return self.optimize_image(src, dst)
 
     def generate_s3_key(self, url, fpath):
         if fpath.suffix[1:] in VIDEO_FORMATS:
@@ -527,33 +527,31 @@ class Openedx2Zim:
         return f"{fpath.suffix[1:]}/{safe_url}/{quality}"
 
     def download_file(self, url, fpath):
-        youtube = False
-        if "youtube" in url:
-            youtube = True
+        is_youtube = "youtube" in url
         downloaded_from_cache = False
-        meta, filetype = get_meta_from_url(url)
+        meta_key, meta_val, filetype = get_meta_from_url(url)
         if self.s3_storage:
             s3_key = self.generate_s3_key(url, fpath)
-            downloaded_from_cache = self.download_from_cache(s3_key, fpath, meta)
+            downloaded_from_cache = self.download_from_cache(
+                s3_key, fpath, meta_key, meta_val
+            )
         if not downloaded_from_cache:
-            if youtube:
+            if is_youtube:
                 downloaded_file = self.download_from_youtube(url, fpath)
             else:
                 downloaded_file = self.downlaod_form_url(url, fpath, filetype)
             if not downloaded_file:
                 logger.error(f"Error while downloading file from URL {url}")
                 return
-            if is_optimizable(fpath):
-                try:
-                    self.optimize_file(downloaded_file, fpath)
-                except Exception:
-                    logger.error(f"Error while optimizing {fpath}: {exc}")
-                    return
-                else:
-                    if self.s3_storage:
-                        self.upload_to_cache(s3_key, fpath, meta)
-            else:
-                if not downloaded_file.resolve() == fpath.resolve():
+            try:
+                optimized = self.optimize_file(downloaded_file, fpath)
+                if self.s3_storage and optimized:
+                    self.upload_to_cache(s3_key, fpath, meta_key, meta_val)
+            except Exception as exc:
+                logger.error(f"Error while optimizing {fpath}: {exc}")
+                return
+            finally:
+                if downloaded_file.resolve() != fpath.resolve() and not fpath.exists():
                     shutil.move(downloaded_file, fpath)
 
     def render(self):
@@ -620,14 +618,13 @@ class Openedx2Zim:
         )
         logger.debug("Checking for missing binaries")
         check_missing_binary(self.no_zim)
-        logger.info("Checking S3 cache credentials")
         if self.s3_url_with_credentials and not self.s3_credentials_ok():
             raise ValueError("Unable to connect to Optimization Cache. Check its URL.")
         if self.s3_storage:
             logger.info(
                 f"Using cache: {self.s3_storage.url.netloc} with bucket: {self.s3_storage.bucket_name}"
             )
-        logger.debug("Testing credentials")
+        logger.info("Testing openedx instance credentials ...")
         connection = Connection(self.password, self.course_url, self.email)
         jinja_init()
         self.prepare_mooc_data(connection)

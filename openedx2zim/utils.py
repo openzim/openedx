@@ -3,6 +3,8 @@ import shlex
 import os
 import pathlib
 import datetime
+import mimetypes
+
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from slugify import slugify
@@ -27,7 +29,7 @@ import magic
 import requests
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoWebmLow
-from .constants import getLogger, VIDEO_FORMATS, IMAGE_FORMATS
+from .constants import getLogger, OPTIMIZER_VERSIONS
 
 logger = getLogger()
 
@@ -334,21 +336,17 @@ def get_meta_from_url(url):
         response_headers = get_response_headers(url)
     except Exception as exc:
         logger.error(f"{url} > Problem with head request\n{exc}\n")
-        return None, None
+        return None, None, None
     else:
-        filetype = response_headers.get("content-type", None)
-        if filetype:
-            filetype = filetype.split("/")[-1]
+        content_type = mimetypes.guess_extension(
+            response_headers.get("content-type", None).partition(";")[0].strip()
+        )[1:]
+        if content_type:
+            content_type = content_type.split("/")[-1]
         if response_headers.get("etag", None) is not None:
-            return {"etag": response_headers["etag"]}, filetype
+            return "etag", response_headers["etag"], content_type
         if response_headers.get("last-modified", None) is not None:
-            return {"last-modified": response_headers["last-modified"]}, filetype
+            return "last-modified", response_headers["last-modified"], content_type
         if response_headers.get("content-length", None) is not None:
-            return {"content-length": response_headers["content-length"]}, filetype
-    return {"default", "default"}, filetype
-
-
-def is_optimizable(fpath):
-    if fpath.suffix[1:] in VIDEO_FORMATS or fpath.suffix[1:] in IMAGE_FORMATS:
-        return True
-    return False
+            return "content-length", response_headers["content-length"], content_type
+    return None, None, content_type

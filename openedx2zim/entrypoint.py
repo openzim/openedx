@@ -43,13 +43,6 @@ def main():
     )
 
     parser.add_argument(
-        "--autoplay",
-        help="Enable autoplay on video articles. Behavior differs on platforms/browsers.",
-        action="store_true",
-        default=False,
-    )
-
-    parser.add_argument(
         "--name",
         help="ZIM name. Used as identifier and filename (date will be appended)",
         required=True,
