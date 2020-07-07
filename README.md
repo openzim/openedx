@@ -1,6 +1,10 @@
 
 # openedx2zim
 
+[![CodeFactor](https://www.codefactor.io/repository/github/openzim/openedx/badge)](https://www.codefactor.io/repository/github/openzim/openedx)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![PyPI version shields.io](https://img.shields.io/pypi/v/openedx2zim.svg)](https://pypi.org/project/openedx2zim/)
+
 *openedx to Kiwix*
 
 The goal of this project is to create a suite of tools to create [zim](http://www.openzim.org) files required by [kiwix](http://kiwix.org/) reader to make available Massive Open Online Courses (MOOCs) from [any OpenEdx instance](https://openedx.atlassian.net/wiki/spaces/COMM/pages/162245773/Sites+powered+by+Open+edX) offline (without access to Internet).
