@@ -1,43 +1,26 @@
-FROM openzim/zimwriterfs:latest
+FROM python:3.8
+
+# add zimwriterfs
+ENV ZIMWRITERFS_VERSION 1.3.10-4
+RUN wget https://download.openzim.org/release/zimwriterfs/zimwriterfs_linux-x86_64-${ZIMWRITERFS_VERSION}.tar.gz
+RUN tar -C /usr/bin --strip-components 1 -xf zimwriterfs_linux-x86_64-${ZIMWRITERFS_VERSION}.tar.gz
+RUN rm -f zimwriterfs_linux-x86_64-${ZIMWRITERFS_VERSION}.tar.gz
+RUN chmod +x /usr/bin/zimwriterfs
+RUN zimwriterfs --version
 
 # Install necessary packages
-RUN apt-get update
-RUN apt-get install -y advancecomp
-RUN apt-get install -y python-pip
-RUN apt-get install -y python-dev
-RUN apt-get install -y python3-pip
-RUN apt-get install -y python3-dev
-RUN apt-get install -y imagemagick
-RUN apt-get install -y ffmpeg
-RUN apt-get install -y git #Temp
-RUN apt-get install -y libxml2  libxslt1-dev
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends locales-all wget unzip ffmpeg libjpeg-dev libpng-dev jpegoptim pngquant gifsicle advancecomp \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install jpegoptim
-RUN apt-get install -y libjpeg-dev
-RUN wget http://www.kokkonen.net/tjko/src/jpegoptim-1.4.4.tar.gz
-RUN tar xvf jpegoptim-1.4.4.tar.gz
-RUN cd jpegoptim-1.4.4 && ./configure
-RUN cd jpegoptim-1.4.4 && make all install
+COPY requirements.txt /src/
+RUN pip3 install -r /src/requirements.txt
+COPY openedx2zim /src/openedx2zim
+COPY setup.py *.md MANIFEST.in /src/
+RUN cd /src/ && python3 ./setup.py install
 
-# Install pngquant
-RUN apt-get install -y libpng-dev
-RUN wget http://pngquant.org/pngquant-2.9.0-src.tar.gz
-RUN tar xvf pngquant-2.9.0-src.tar.gz
-RUN cd pngquant-2.9.0 && ./configure
-RUN cd pngquant-2.9.0 && make all install
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
 
-# Install gifsicle
-RUN wget https://www.lcdf.org/gifsicle/gifsicle-1.88.tar.gz
-RUN tar xvf gifsicle-1.88.tar.gz
-RUN cd gifsicle-1.88 && ./configure
-RUN cd gifsicle-1.88 && make all install
-
-# Install sotoki
-RUN locale-gen "en_US.UTF-8"
-RUN pip3 install openedx2zim
-#RUN git clone https://github.com/openzim/openedx/
-#RUN cd openedx && git checkout summer2018 && sed -i "s/_internal.//" setup.py && python3 setup.py install
-
-
-# Boot commands
-CMD openedx2zim ; /bin/bash
+CMD ["openedx2zim", "--help"]
