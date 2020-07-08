@@ -35,14 +35,44 @@ from .connection import Connection
 from .constants import (
     ROOT_DIR,
     SCRAPER,
-    XBLOCK_EXTRACTORS,
     VIDEO_FORMATS,
     IMAGE_FORMATS,
     OPTIMIZER_VERSIONS,
     getLogger,
 )
 from .annex import wiki, forum, booknav, render_wiki, render_forum, render_booknav
+from .xblocks_extractor.Course import Course
+from .xblocks_extractor.Chapter import Chapter
+from .xblocks_extractor.Sequential import Sequential
+from .xblocks_extractor.Vertical import Vertical
+from .xblocks_extractor.Video import Video
+from .xblocks_extractor.Libcast import Libcast
+from .xblocks_extractor.Html import Html
+from .xblocks_extractor.Problem import Problem
+from .xblocks_extractor.Discussion import Discussion
+from .xblocks_extractor.FreeTextResponse import FreeTextResponse
+from .xblocks_extractor.Unavailable import Unavailable
+from .xblocks_extractor.Lti import Lti
+from .xblocks_extractor.DragAndDropV2 import DragAndDropV2
 
+
+XBLOCK_EXTRACTORS = {
+    "course": Course,
+    "chapter": Chapter,
+    "sequential": Sequential,
+    "vertical": Vertical,
+    "video": Video,
+    "libcast_xblock": Libcast,
+    "html": Html,
+    "problem": Problem,
+    "discussion": Discussion,
+    "qualtricssurvey": Html,
+    "freetextresponse": FreeTextResponse,
+    "grademebutton": Unavailable,
+    "drag-and-drop-v2": DragAndDropV2,
+    "lti": Lti,
+    "unavailable": Unavailable,
+}
 
 logger = getLogger()
 
@@ -407,21 +437,20 @@ class Openedx2Zim:
             return False
         return True
 
-    def download_from_cache(self, key, fpath, meta_key, meta_val):
+    def download_from_cache(self, key, fpath, meta):
         """ whether it downloaded from S3 cache """
 
         filetype = "jpeg" if fpath.suffix in [".jpeg", ".jpg"] else fpath.suffix[1:]
-        if not self.s3_storage.has_object(key) or not meta_key or not meta_val:
+        if not self.s3_storage.has_object(key) or not meta:
             return False
-        server_meta = self.s3_storage.get_object_stat(key).meta
-        if server_meta.get(meta_key, None) != meta_val:
+        meta_dict = {
+            "version": meta,
+            "optimizer_version": None
+            if self.use_any_optimized_version
+            else OPTIMIZER_VERSIONS[filetype],
+        }
+        if not self.s3_storage.has_object_matching(key, meta_dict):
             return False
-        if not self.use_any_optimized_version:
-            if (
-                server_meta.get("optimizer_version", None)
-                != OPTIMIZER_VERSIONS[filetype]
-            ):
-                return False
         try:
             self.s3_storage.download_file(key, fpath)
         except Exception as exc:
@@ -430,13 +459,13 @@ class Openedx2Zim:
         logger.info(f"downloaded {fpath} from cache at {key}")
         return True
 
-    def upload_to_cache(self, key, fpath, meta_key, meta_val):
+    def upload_to_cache(self, key, fpath, meta):
         """ whether it uploaded to S3 cache """
 
         filetype = "jpeg" if fpath.suffix in [".jpeg", ".jpg"] else fpath.suffix[1:]
-        if not meta_key or not meta_val or not filetype:
+        if not meta or not filetype:
             return False
-        meta = {meta_key: meta_val, "optimizer_version": OPTIMIZER_VERSIONS[filetype]}
+        meta = {"version": meta, "optimizer_version": OPTIMIZER_VERSIONS[filetype]}
         try:
             self.s3_storage.upload_file(fpath, key, meta=meta)
         except Exception as exc:
@@ -494,8 +523,9 @@ class Openedx2Zim:
     def optimize_image(self, src, dst):
         optimized = False
         if src.suffix in [".jpeg", ".jpg"]:
-            exec_cmd("jpegoptim --strip-all -m50 " + str(src), timeout=10)
-            optimized = True
+            optimized = (
+                exec_cmd("jpegoptim --strip-all -m50 " + str(src), timeout=10) == 0
+            )
         elif src.suffix == ".png":
             exec_cmd(
                 "pngquant --verbose --nofs --force --ext=.png " + str(src), timeout=10
@@ -503,8 +533,7 @@ class Openedx2Zim:
             exec_cmd("advdef -q -z -4 -i 5  " + str(src), timeout=50)
             optimized = True
         elif src.suffix == ".gif":
-            exec_cmd("gifsicle --batch -O3 -i " + str(src), timeout=10)
-            optimized = True
+            optimized = exec_cmd("gifsicle --batch -O3 -i " + str(src), timeout=10) == 0
         if src.resolve() != dst.resolve():
             shutil.move(src, dst)
         return optimized
@@ -529,12 +558,10 @@ class Openedx2Zim:
     def download_file(self, url, fpath):
         is_youtube = "youtube" in url
         downloaded_from_cache = False
-        meta_key, meta_val, filetype = get_meta_from_url(url)
+        meta, filetype = get_meta_from_url(url)
         if self.s3_storage:
             s3_key = self.generate_s3_key(url, fpath)
-            downloaded_from_cache = self.download_from_cache(
-                s3_key, fpath, meta_key, meta_val
-            )
+            downloaded_from_cache = self.download_from_cache(s3_key, fpath, meta)
         if not downloaded_from_cache:
             if is_youtube:
                 downloaded_file = self.download_from_youtube(url, fpath)
@@ -546,7 +573,7 @@ class Openedx2Zim:
             try:
                 optimized = self.optimize_file(downloaded_file, fpath)
                 if self.s3_storage and optimized:
-                    self.upload_to_cache(s3_key, fpath, meta_key, meta_val)
+                    self.upload_to_cache(s3_key, fpath, meta)
             except Exception as exc:
                 logger.error(f"Error while optimizing {fpath}: {exc}")
                 return

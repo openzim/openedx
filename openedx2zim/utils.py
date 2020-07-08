@@ -336,17 +336,15 @@ def get_meta_from_url(url):
         response_headers = get_response_headers(url)
     except Exception as exc:
         logger.error(f"{url} > Problem with head request\n{exc}\n")
-        return None, None, None
+        return None, None
     else:
         content_type = mimetypes.guess_extension(
-            response_headers.get("content-type", None).partition(";")[0].strip()
+            response_headers.get("content-type", None).split(";", 1)[0].strip()
         )[1:]
-        if content_type:
-            content_type = content_type.split("/")[-1]
         if response_headers.get("etag", None) is not None:
-            return "etag", response_headers["etag"], content_type
+            return response_headers["etag"], content_type
         if response_headers.get("last-modified", None) is not None:
-            return "last-modified", response_headers["last-modified"], content_type
+            return response_headers["last-modified"], content_type
         if response_headers.get("content-length", None) is not None:
-            return "content-length", response_headers["content-length"], content_type
-    return None, None, content_type
+            return response_headers["content-length"], content_type
+    return None, content_type

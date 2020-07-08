@@ -23,6 +23,9 @@ IMAGE_FORMATS = ["png", "jpeg", "jpg", "gif"]
 OPTIMIZER_VERSIONS = {
     "mp4": f"v{VideoMp4Low().VERSION}",
     "webm": f"v{VideoWebmLow().VERSION}",
+    "png": "v1",
+    "jpeg": "v1",
+    "gif": "v1",
 }
 
 
@@ -38,36 +41,3 @@ def setDebug(debug):
 def getLogger():
     """ configured logger respecting DEBUG flag """
     return lib_getLogger(NAME, level=logging.DEBUG if Global.debug else logging.INFO)
-
-
-from .xblocks_extractor.Course import Course
-from .xblocks_extractor.Chapter import Chapter
-from .xblocks_extractor.Sequential import Sequential
-from .xblocks_extractor.Vertical import Vertical
-from .xblocks_extractor.Video import Video
-from .xblocks_extractor.Libcast import Libcast
-from .xblocks_extractor.Html import Html
-from .xblocks_extractor.Problem import Problem
-from .xblocks_extractor.Discussion import Discussion
-from .xblocks_extractor.FreeTextResponse import FreeTextResponse
-from .xblocks_extractor.Unavailable import Unavailable
-from .xblocks_extractor.Lti import Lti
-from .xblocks_extractor.DragAndDropV2 import DragAndDropV2
-
-XBLOCK_EXTRACTORS = {
-    "course": Course,
-    "chapter": Chapter,
-    "sequential": Sequential,
-    "vertical": Vertical,
-    "video": Video,
-    "libcast_xblock": Libcast,
-    "html": Html,
-    "problem": Problem,
-    "discussion": Discussion,
-    "qualtricssurvey": Html,
-    "freetextresponse": FreeTextResponse,
-    "grademebutton": Unavailable,
-    "drag-and-drop-v2": DragAndDropV2,
-    "lti": Lti,
-    "unavailable": Unavailable,
-}
