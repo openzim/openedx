@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from slugify import slugify
 
 from .base_xblock import BaseXblock
-from ..utils import jinja, download
+from ..utils import jinja, prepare_url
 
 
 class DragAndDropV2(
@@ -26,18 +26,18 @@ class DragAndDropV2(
         # item
         for item in self.content["items"]:
             name = pathlib.Path(item["expandedImageURL"]).name
-            download(
-                item["expandedImageURL"],
+            self.scraper.download_file(
+                prepare_url(item["expandedImageURL"], self.scraper.instance_url),
                 self.output_path.joinpath(name),
-                self.scraper.instance_url,
             )
             item["expandedImageURL"] = f"{slugify(self.display_name)}/{name}"
         # Grid
         name = pathlib.Path(self.content["target_img_expanded_url"]).name
-        download(
-            self.content["target_img_expanded_url"],
+        self.scraper.download_file(
+            prepare_url(
+                self.content["target_img_expanded_url"], self.scraper.instance_url
+            ),
             self.output_path.joinpath(name),
-            self.scraper.instance_url,
         )
         self.content["target_img_expanded_url"] = f"{slugify(self.display_name)}/{name}"
 

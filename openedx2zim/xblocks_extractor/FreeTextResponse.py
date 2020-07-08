@@ -26,7 +26,7 @@ class FreeTextResponse(BaseXblock):
         save["onclick"] = 'save_freetext("{}")'.format(self.id)
         html_no_answers = '<div class="noanswers"><p data-l10n-id="no_answers_for_freetext" >  <b> Warning : </b> There is not correction for Freetext block. </p> </div>'
         self.html = html_no_answers + dl_dependencies(
-            str(soup), self.output_path, self.folder_name, c
+            str(soup), self.output_path, self.folder_name, c, self.scraper
         )
 
     def render(self):

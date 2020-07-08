@@ -52,7 +52,7 @@ class Problem(BaseXblock):
             span.decompose()
         html_content = str(soup)
         html_content = dl_dependencies(
-            html_content, self.output_path, self.folder_name, c
+            html_content, self.output_path, self.folder_name, c, self.scraper
         )
         self.html_content = str(html_content)
 

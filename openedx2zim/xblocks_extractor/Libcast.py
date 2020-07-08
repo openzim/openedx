@@ -4,8 +4,7 @@ from .base_xblock import BaseXblock
 from ..utils import (
     jinja,
     download_and_convert_subtitles,
-    download,
-    convert_video_to_webm,
+    prepare_url,
 )
 
 
@@ -36,21 +35,21 @@ class Libcast(BaseXblock):
                 for lang in subs_lang
             ]
 
-        if self.scraper.convert_in_webm:
+        if self.scraper.video_format == "webm":
             video_path = self.output_path.joinpath("video.webm")
         else:
             video_path = self.output_path.joinpath("video.mp4")
         if not video_path.exists():
-            download(url, video_path, c)
-            if self.scraper.convert_in_webm:
-                convert_video_to_webm(video_path, video_path)
+            self.scraper.download_file(
+                prepare_url(url, self.scraper.instance_url), video_path
+            )
 
     def render(self):
         return jinja(
             None,
             "video.html",
             False,
-            format="webm" if self.scraper.convert_in_webm else "mp4",
+            format=self.scraper.video_format,
             folder_name=self.folder_name,
             title=self.xblock_json["display_name"],
             subs=self.subs,

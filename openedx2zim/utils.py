@@ -3,7 +3,8 @@ import shlex
 import os
 import pathlib
 import datetime
-import logging
+import mimetypes
+
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from slugify import slugify
@@ -28,6 +29,9 @@ import magic
 import requests
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoWebmLow
+from .constants import getLogger, OPTIMIZER_VERSIONS
+
+logger = getLogger()
 
 renderer = mistune.HTMLRenderer()
 MARKDOWN = mistune.Markdown(renderer)
@@ -41,7 +45,7 @@ def exec_cmd(cmd, timeout=None):
     try:
         return subprocess.call(shlex.split(cmd), timeout=timeout)
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         pass
 
 
@@ -92,16 +96,6 @@ def prepare_url(url, instance_url):
     return urllib.parse.urlunsplit(split_url)
 
 
-def download(url, output, instance_url):
-    url = prepare_url(url, instance_url)
-    try:
-        save_large_file(url, output)
-        return True
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Download failed for {url} - {e}")
-        return False
-
-
 def download_and_convert_subtitles(path, lang_and_url, c):
     real_subtitles = {}
     for lang in lang_and_url:
@@ -119,12 +113,12 @@ def download_and_convert_subtitles(path, lang_and_url, c):
                 real_subtitles[lang] = lang + ".vtt"
             except HTTPError as e:
                 if e.code == 404 or e.code == 403:
-                    logging.error(
+                    logger.error(
                         "Fail to get subtitle from {}".format(lang_and_url[lang])
                     )
                     pass
             except Exception as e:
-                logging.error(
+                logger.error(
                     "Error when converting subtitle {} : {}".format(
                         lang_and_url[lang], e
                     )
@@ -142,26 +136,6 @@ def is_webvtt(path):
     return "WEBVTT" in first_line or "webvtt" in first_line
 
 
-def download_youtube(youtube_url, video_path):
-    parametre = {"outtmpl": video_path, "preferredcodec": "mp4", "format": "mp4"}
-    with youtube_dl.YoutubeDL(parametre) as ydl:
-        ydl.download([youtube_url])
-
-
-def convert_video_to_webm(video_path, video_final_path):
-    logging.info("convert " + video_path + "to webm")
-    try:
-        reencode(
-            pathlib.Path(video_path),
-            pathlib.Path(video_final_path),
-            VideoWebmLow().to_ffmpeg_args(),
-            delete_src=True,
-            failsafe=False,
-        )
-    except Exception as exc:
-        logging.error(f"{video_path} - Error while converting to WebM\n {exc}")
-
-
 def get_filetype(headers, path):
     extensions = ("png", "jpeg", "gif")
     content_type = headers.get("content-type", "").lower().strip()
@@ -175,21 +149,6 @@ def get_filetype(headers, path):
         if ext.upper() in mime:
             return ext
     return "none"
-
-
-def optimize_one(path, type):
-    if type == "jpeg":
-        exec_cmd("jpegoptim --strip-all -m50 " + path, timeout=10)
-    elif type == "png":
-        exec_cmd("pngquant --verbose --nofs --force --ext=.png " + path, timeout=10)
-        exec_cmd("advdef -q -z -4 -i 5  " + path, timeout=10)
-    elif type == "gif":
-        exec_cmd("gifsicle --batch -O3 -i " + path, timeout=10)
-
-
-def resize_one(path, type, nb_pix):
-    if type in ["gif", "png", "jpeg"]:
-        exec_cmd("mogrify -resize " + nb_pix + "x\> " + path, timeout=10)
 
 
 def jinja(output, template, deflate, **context):
@@ -223,17 +182,7 @@ def clean_top(t):
     return "/".join(t.split("/")[:-1])
 
 
-def get_headers(url, instance_url):
-    url = prepare_url(url, instance_url)
-    for attempt in range(5):
-        try:
-            return requests.head(url=url, allow_redirects=True, timeout=30).headers
-        except requests.exceptions.Timeout:
-            print(f"{url} > HEAD request timed out ({attempt})")
-    raise Exception("Max retries exceeded")
-
-
-def dl_dependencies(content, path, folder_name, c):
+def dl_dependencies(content, path, folder_name, c, scraper):
     body = string2html(str(content))
     imgs = body.xpath("//img")
     for img in imgs:
@@ -245,12 +194,11 @@ def dl_dependencies(content, path, folder_name, c):
             # download the image only if it's not already downloaded
             if not os.path.exists(out):
                 try:
-                    headers = get_headers(src, c.conf["instance_url"])
-                    download(src, out, c.conf["instance_url"])
-                    type_of_file = get_filetype(headers, out)
-                    optimize_one(out, type_of_file)
+                    scraper.download_file(
+                        prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                    )
                 except Exception as e:
-                    logging.warning(str(e) + " : error with " + src)
+                    logger.warning(str(e) + " : error with " + src)
                     pass
             src = os.path.join(folder_name, filename)
             img.attrib["src"] = src
@@ -290,7 +238,10 @@ def dl_dependencies(content, path, folder_name, c):
                 not is_absolute(src) and not "wiki" in src
             ):  # Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
                 if not os.path.exists(out):
-                    download(unquote(src), out, c.conf["instance_url"])
+                    scraper.download_file(
+                        prepare_url(unquote(src), c.conf["instance_url"]),
+                        pathlib.Path(out),
+                    )
                 src = os.path.join(folder_name, filename)
                 a.attrib["href"] = src
     csss = body.xpath("//link")
@@ -301,7 +252,9 @@ def dl_dependencies(content, path, folder_name, c):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                download(src, out, c.conf["instance_url"])
+                scraper.download_file(
+                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                )
             src = os.path.join(folder_name, filename)
             css.attrib["href"] = src
     jss = body.xpath("//script")
@@ -312,7 +265,9 @@ def dl_dependencies(content, path, folder_name, c):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                download(src, out, c.conf["instance_url"])
+                scraper.download_file(
+                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                )
             src = os.path.join(folder_name, filename)
             js.attrib["src"] = src
     sources = body.xpath("//source")
@@ -323,7 +278,9 @@ def dl_dependencies(content, path, folder_name, c):
             filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
             out = os.path.join(path, filename)
             if not os.path.exists(out):
-                download(src, out, c.conf["instance_url"])
+                scraper.download_file(
+                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                )
             src = os.path.join(folder_name, filename)
             source.attrib["src"] = src
     iframes = body.xpath("//iframe")
@@ -333,13 +290,13 @@ def dl_dependencies(content, path, folder_name, c):
             if "youtube" in src:
                 name = src.split("/")[-1]
                 out_dir = os.path.join(path, name)
-                make_dir(out_dir)
+                pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
                 out = os.path.join(out_dir, "video.mp4")
                 if not os.path.exists(out):
                     try:
-                        download_youtube(src, out)
+                        scraper.download_file(src, pathlib.Path(out))
                     except Exception as e:
-                        logging.warning(str(e) + " : error with " + src)
+                        logger.warning(str(e) + " : error with " + src)
                         pass
                 x = jinja(
                     None, "video.html", False, format="mp4", folder_name=name, subs=[]
@@ -351,7 +308,10 @@ def dl_dependencies(content, path, folder_name, c):
                 filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
                 out = os.path.join(path, filename)
                 if not os.path.exists(out):
-                    download(unquote(src), out, c.conf["instance_url"])
+                    scraper.download_file(
+                        prepare_url(unquote(src), c.conf["instance_url"]),
+                        pathlib.Path(out),
+                    )
                 src = os.path.join(folder_name, filename)
                 iframe.attrib["src"] = src
     if imgs or docs or csss or jss or sources or iframes:
@@ -359,10 +319,32 @@ def dl_dependencies(content, path, folder_name, c):
     return content
 
 
-def make_dir(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-
 def first_word(text):
     return " ".join(text.split(" ")[0:5])
+
+
+def get_meta_from_url(url):
+    def get_response_headers(url):
+        for attempt in range(5):
+            try:
+                return requests.head(url=url, allow_redirects=True, timeout=30).headers
+            except requests.exceptions.Timeout:
+                logger.error(f"{url} > HEAD request timed out ({attempt})")
+        raise Exception("Max retries exceeded")
+
+    try:
+        response_headers = get_response_headers(url)
+    except Exception as exc:
+        logger.error(f"{url} > Problem with head request\n{exc}\n")
+        return None, None
+    else:
+        content_type = mimetypes.guess_extension(
+            response_headers.get("content-type", None).split(";", 1)[0].strip()
+        )[1:]
+        if response_headers.get("etag", None) is not None:
+            return response_headers["etag"], content_type
+        if response_headers.get("last-modified", None) is not None:
+            return response_headers["last-modified"], content_type
+        if response_headers.get("content-length", None) is not None:
+            return response_headers["content-length"], content_type
+    return None, content_type

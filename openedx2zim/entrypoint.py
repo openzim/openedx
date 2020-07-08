@@ -28,6 +28,21 @@ def main():
     )
 
     parser.add_argument(
+        "--format",
+        help="Format to download/transcode video to. webm is smaller",
+        choices=["mp4", "webm"],
+        default="webm",
+        dest="video_format",
+    )
+
+    parser.add_argument(
+        "--low-quality",
+        help="Re-encode video using stronger compression",
+        action="store_true",
+        default=False,
+    )
+
+    parser.add_argument(
         "--name",
         help="ZIM name. Used as identifier and filename (date will be appended)",
         required=True,
@@ -54,13 +69,6 @@ def main():
     )
 
     parser.add_argument(
-        "--convert-in-webm",
-        help="Re-encode videos to WebM",
-        action="store_true",
-        default=False,
-    )
-
-    parser.add_argument(
         "--ignore-missing-xblocks",
         help="Ignore unsupported content (xblock)",
         action="store_true",
@@ -84,6 +92,19 @@ def main():
         help="Add forum (if available) to the ZIM",
         action="store_true",
         default=False,
+    )
+
+    parser.add_argument(
+        "--optimization-cache",
+        help="URL with credentials and bucket name to S3 Optimization Cache",
+        dest="s3_url_with_credentials",
+    )
+
+    parser.add_argument(
+        "--use-any-optimized-version",
+        help="Use files on S3 cache if present, whatever the version",
+        default=False,
+        action="store_true",
     )
 
     parser.add_argument(
