@@ -15,8 +15,7 @@ def get_instance_config(instance_netloc):
         return INSTANCE_CONFIGS["default"].update(
             {"instance_url": f"https://{instance_netloc}"}
         )
-    else:
-        return INSTANCE_CONFIGS[instance_netloc]
+    return INSTANCE_CONFIGS[instance_netloc]
 
 
 def get_response(url, post_data, headers, max_attempts=2):
@@ -75,11 +74,12 @@ class InstanceConnection:
         )
         if not self.instance_connection.get("success", False):
             raise SystemExit("Provided e-mail or password is incorrect")
-        else:
-            logger.info("Successfully logged in")
+        logger.info("Successfully logged in")
         for cookie in self.cookie_jar:
             if cookie.name == "edx-user-info" or cookie.name == "prod-edx-user-info":
-                self.user = json.loads(cookie.value.replace(r"\054", ","))["username"]
+                self.user = json.loads(
+                    cookie.value.replace(r"\054", ",").replace("\\", "")[1:-1]
+                )["username"]
 
     def get_api_json(self, page, post_data=None, referer=None):
         if "hint" in page:  # see with xblocks_extractor/Problem.py

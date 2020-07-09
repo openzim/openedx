@@ -195,7 +195,9 @@ def dl_dependencies(content, path, folder_name, instance_connection, scraper):
             if not os.path.exists(out):
                 try:
                     scraper.download_file(
-                        prepare_url(src, instance_connection.conf["instance_url"]),
+                        prepare_url(
+                            src, instance_connection.instance_config["instance_url"]
+                        ),
                         pathlib.Path(out),
                     )
                 except Exception as e:
@@ -241,7 +243,8 @@ def dl_dependencies(content, path, folder_name, instance_connection, scraper):
                 if not os.path.exists(out):
                     scraper.download_file(
                         prepare_url(
-                            unquote(src), instance_connection.conf["instance_url"]
+                            unquote(src),
+                            instance_connection.instance_config["instance_url"],
                         ),
                         pathlib.Path(out),
                     )
@@ -256,7 +259,9 @@ def dl_dependencies(content, path, folder_name, instance_connection, scraper):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 scraper.download_file(
-                    prepare_url(src, instance_connection.conf["instance_url"]),
+                    prepare_url(
+                        src, instance_connection.instance_config["instance_url"]
+                    ),
                     pathlib.Path(out),
                 )
             src = os.path.join(folder_name, filename)
@@ -270,7 +275,9 @@ def dl_dependencies(content, path, folder_name, instance_connection, scraper):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 scraper.download_file(
-                    prepare_url(src, instance_connection.conf["instance_url"]),
+                    prepare_url(
+                        src, instance_connection.instance_config["instance_url"]
+                    ),
                     pathlib.Path(out),
                 )
             src = os.path.join(folder_name, filename)
@@ -284,7 +291,9 @@ def dl_dependencies(content, path, folder_name, instance_connection, scraper):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 scraper.download_file(
-                    prepare_url(src, instance_connection.conf["instance_url"]),
+                    prepare_url(
+                        src, instance_connection.instance_config["instance_url"]
+                    ),
                     pathlib.Path(out),
                 )
             src = os.path.join(folder_name, filename)
@@ -316,7 +325,8 @@ def dl_dependencies(content, path, folder_name, instance_connection, scraper):
                 if not os.path.exists(out):
                     scraper.download_file(
                         prepare_url(
-                            unquote(src), instance_connection.conf["instance_url"]
+                            unquote(src),
+                            instance_connection.instance_config["instance_url"],
                         ),
                         pathlib.Path(out),
                     )
