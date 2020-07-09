@@ -139,12 +139,11 @@ def jinja(output, template, deflate, **context):
     page = template.render(**context, output_path=str(output))
     if output is None:
         return page
-    else:
-        with open(output, "w") as f:
-            if deflate:
-                f.write(zlib.compress(page.encode("utf-8")))
-            else:
-                f.write(page)
+    with open(output, "w") as f:
+        if deflate:
+            f.write(zlib.compress(page.encode("utf-8")))
+        else:
+            f.write(page)
 
 
 def jinja_init():

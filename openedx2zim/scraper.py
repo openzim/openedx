@@ -381,7 +381,6 @@ class Openedx2Zim:
                         )
                     except Exception as e:
                         logger.warning(str(e) + " : error with " + src)
-                        pass
                 src = os.path.join(folder_name, filename)
                 img.attrib["src"] = src
                 if "style" in img.attrib:
@@ -491,7 +490,6 @@ class Openedx2Zim:
                             self.download_file(src, pathlib.Path(out))
                         except Exception as e:
                             logger.warning(str(e) + " : error with " + src)
-                            pass
                     x = jinja(
                         None,
                         "video.html",
