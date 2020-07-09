@@ -28,6 +28,30 @@ OPTIMIZER_VERSIONS = {
     "gif": "v1",
 }
 
+INSTANCE_CONFIGS = {
+    "courses.edx.org": {
+        "login_page": "/login_ajax",
+        "account_page": "/account/settings",
+        "course_page_name": "/course",
+        "course_prefix": "/courses/",
+        "instance_url": "https://courses.edx.org",
+    },
+    "courses.edraak.org": {
+        "login_page": "/login_ajax",
+        "account_page": "/account/settings",
+        "course_page_name": "/",
+        "course_prefix": "/courses/",
+        "instance_url": "https://courses.edraak.org",
+    },
+    "default": {
+        "login_page": "/login_ajax",
+        "account_page": "/account/settings",
+        "course_page_name": "/info",
+        "course_prefix": "/courses/",
+        "instance_url": "",
+    },
+}
+
 
 class Global:
     debug = False

@@ -31,7 +31,7 @@ from .utils import (
     get_meta_from_url,
     exec_cmd,
 )
-from .connection import Connection
+from .instance_connection import InstanceConnection
 from .constants import (
     ROOT_DIR,
     SCRAPER,
@@ -190,25 +190,28 @@ class Openedx2Zim:
         else:
             return urllib.parse.quote_plus(clean_id)
 
-    def prepare_mooc_data(self, connection):
-        self.instance_url = connection.conf["instance_url"]
+    def prepare_mooc_data(self, instance_connection):
+        self.instance_url = instance_connection.conf["instance_url"]
         self.course_id = self.get_course_id(
             self.course_url,
-            connection.conf["course_page_name"],
-            connection.conf["course_prefix"],
+            instance_connection.conf["course_page_name"],
+            instance_connection.conf["course_prefix"],
             self.instance_url,
         )
         logger.info("Getting course info ...")
-        self.course_info = connection.get_api_json(
-            "/api/courses/v1/courses/" + self.course_id + "?username=" + connection.user
+        self.course_info = instance_connection.get_api_json(
+            "/api/courses/v1/courses/"
+            + self.course_id
+            + "?username="
+            + instance_connection.user
         )
         self.course_name_slug = slugify(self.course_info["name"])
         logger.info("Getting course xblocks ...")
-        xblocks_data = connection.get_api_json(
+        xblocks_data = instance_connection.get_api_json(
             "/api/courses/v1/blocks/?course_id="
             + self.course_id
             + "&username="
-            + connection.user
+            + instance_connection.user
             + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
         )
         self.course_xblocks = xblocks_data["blocks"]
@@ -270,9 +273,9 @@ class Openedx2Zim:
         logger.info("Parsing xblocks and preparing extractor objects")
         make_objects(pathlib.Path("course"), self.root_xblock_id, "../")
 
-    def annex(self, connection):
+    def annex(self, instance_connection):
         logger.info("Getting course tabs ...")
-        content = connection.get_page(self.course_url)
+        content = instance_connection.get_page(self.course_url)
         soup = BeautifulSoup(content, "lxml")
         course_tabs = (
             soup.find("ol", attrs={"class": "course-material"})
@@ -304,25 +307,33 @@ class Openedx2Zim:
                 ):
                     continue
                 if "wiki" in tab_path and self.add_wiki:
-                    self.wiki, self.wiki_name, tab_path = wiki(connection, self)
+                    self.wiki, self.wiki_name, tab_path = wiki(
+                        instance_connection, self
+                    )
                 elif "forum" in tab_path and self.add_forum:
                     tab_path = "forum/"
                     (
                         self.forum_thread,
                         self.forum_category,
                         self.staff_user_forum,
-                    ) = forum(connection, self)
+                    ) = forum(instance_connection, self)
                 elif ("wiki" not in tab_path) and ("forum" not in tab_path):
                     output_path = self.build_dir.joinpath(tab_path)
                     output_path.mkdir(parents=True, exist_ok=True)
-                    page_content = connection.get_page(self.instance_url + tab["href"])
+                    page_content = instance_connection.get_page(
+                        self.instance_url + tab["href"]
+                    )
                     soup_page = BeautifulSoup(page_content, "lxml")
                     just_content = soup_page.find(
                         "section", attrs={"class": "container"}
                     )
                     if just_content is not None:
                         html_content = dl_dependencies(
-                            str(just_content), output_path, "", connection, self
+                            str(just_content),
+                            output_path,
+                            "",
+                            instance_connection,
+                            self,
                         )
                         self.annexed_pages.append(
                             {
@@ -351,7 +362,7 @@ class Openedx2Zim:
                             continue
                 self.course_tabs[tab.get_text()] = tab_path + "/index.html"
 
-    def get_content(self, connection):
+    def get_content(self, instance_connection):
         # download favicon
         self.download_file(
             "https://www.google.com/s2/favicons?domain=" + self.instance_url,
@@ -359,7 +370,7 @@ class Openedx2Zim:
         )
 
         logger.info("Getting homepage ...")
-        content = connection.get_page(self.course_url)
+        content = instance_connection.get_page(self.course_url)
         self.build_dir.joinpath("home").mkdir(parents=True, exist_ok=True)
         self.html_homepage = []
         soup = BeautifulSoup(content, "lxml")
@@ -393,7 +404,7 @@ class Openedx2Zim:
                             article.prettify(),
                             self.build_dir.joinpath("home"),
                             "home",
-                            connection,
+                            instance_connection,
                             self,
                         )
                     )
@@ -415,13 +426,13 @@ class Openedx2Zim:
                     html_content.prettify(),
                     self.build_dir.joinpath("home"),
                     "home",
-                    connection,
+                    instance_connection,
                     self,
                 )
             )
         logger.info("Getting content for supported xblocks ...")
         for obj in self.xblock_extractor_objects:
-            obj.download(connection)
+            obj.download(instance_connection)
 
     def s3_credentials_ok(self):
         logger.info("Testing S3 Optimization Cache credentials ...")
@@ -429,7 +440,7 @@ class Openedx2Zim:
         if not self.s3_storage.check_credentials(
             list_buckets=True, bucket=True, write=True, read=True, failsafe=True
         ):
-            logger.error("S3 cache connection error testing permissions.")
+            logger.error("S3 cache instance_connection error testing permissions.")
             logger.error(f"  Server: {self.s3_storage.url.netloc}")
             logger.error(f"  Bucket: {self.s3_storage.bucket_name}")
             logger.error(f"  Key ID: {self.s3_storage.params.get('keyid')}")
@@ -652,12 +663,15 @@ class Openedx2Zim:
                 f"Using cache: {self.s3_storage.url.netloc} with bucket: {self.s3_storage.bucket_name}"
             )
         logger.info("Testing openedx instance credentials ...")
-        connection = Connection(self.password, self.course_url, self.email)
+        instance_connection = InstanceConnection(
+            self.password, self.course_url, self.email
+        )
+        instance_connection.establish_connection()
         jinja_init()
-        self.prepare_mooc_data(connection)
+        self.prepare_mooc_data(instance_connection)
         self.parse_course_xblocks()
-        self.annex(connection)
-        self.get_content(connection)
+        self.annex(instance_connection)
+        self.get_content(instance_connection)
         self.render()
         if not self.no_zim:
             self.fname = (

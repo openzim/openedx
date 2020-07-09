@@ -15,8 +15,8 @@ class Libcast(BaseXblock):
         # extra vars
         self.subs = []
 
-    def download(self, c):
-        content = c.get_page(self.xblock_json["student_view_url"])
+    def download(self, instance_connection):
+        content = instance_connection.get_page(self.xblock_json["student_view_url"])
         soup = BeautifulSoup(content, "lxml")
         url = str(soup.find("video").find("source")["src"])
         subs = soup.find("video").find_all("track")
@@ -29,7 +29,9 @@ class Libcast(BaseXblock):
                     subs_lang[track["srclang"]] = (
                         self.scraper.instance_url + track["src"]
                     )
-            download_and_convert_subtitles(self.output_path, subs_lang, c)
+            download_and_convert_subtitles(
+                self.output_path, subs_lang, instance_connection
+            )
             self.subs = [
                 {"file": f"{self.folder_name}/{lang}.vtt", "code": lang}
                 for lang in subs_lang

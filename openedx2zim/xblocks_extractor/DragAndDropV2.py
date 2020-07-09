@@ -17,8 +17,8 @@ class DragAndDropV2(
         # extra vars
         self.content = None
 
-    def download(self, c):
-        content = c.get_page(self.xblock_json["student_view_url"])
+    def download(self, instance_connection):
+        content = instance_connection.get_page(self.xblock_json["student_view_url"])
         soup = BeautifulSoup(content, "lxml")
         self.content = json.loads(
             soup.find("script", attrs={"class": "xblock-json-init-args"}).get_text()

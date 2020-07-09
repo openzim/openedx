@@ -11,14 +11,18 @@ class Html(BaseXblock):
         self.is_video = False  # check this
         self.html = ""
 
-    def download(self, c):
-        content = c.get_page(self.xblock_json["student_view_url"])
+    def download(self, instance_connection):
+        content = instance_connection.get_page(self.xblock_json["student_view_url"])
         soup = BeautifulSoup(content, "lxml")
         html_content = soup.find("div", attrs={"class": "edx-notes-wrapper"})
         if not html_content:
             html_content = str(soup.find("div", attrs={"class": "course-wrapper"}))
         self.html = dl_dependencies(
-            html_content, self.output_path, self.folder_name, c, self.scraper
+            html_content,
+            self.output_path,
+            self.folder_name,
+            instance_connection,
+            self.scraper,
         )
 
     def render(self):

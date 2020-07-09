@@ -22,8 +22,8 @@ class Problem(BaseXblock):
         self.explanation = []
         self.problem_id = None
 
-    def download(self, c):
-        content = c.get_page(self.xblock_json["student_view_url"])
+    def download(self, instance_connection):
+        content = instance_connection.get_page(self.xblock_json["student_view_url"])
         soup = BeautifulSoup(content, "lxml")
         try:
             html_content_from_div = str(
@@ -34,7 +34,9 @@ class Problem(BaseXblock):
                 soup.find("div", attrs={"class": "problems-wrapper"})["data-url"]
             )
             html_content_from_div = str(
-                c.get_api_json(problem_json_url + "/problem_get")["html"]
+                instance_connection.get_api_json(problem_json_url + "/problem_get")[
+                    "html"
+                ]
             )
         soup = BeautifulSoup(html_content_from_div, "lxml")
         # self.has_hint=soup.find("button", attrs={"class" : "hint-button"}) #Remove comment when  hint ok
@@ -52,7 +54,11 @@ class Problem(BaseXblock):
             span.decompose()
         html_content = str(soup)
         html_content = dl_dependencies(
-            html_content, self.output_path, self.folder_name, c, self.scraper
+            html_content,
+            self.output_path,
+            self.folder_name,
+            instance_connection,
+            self.scraper,
         )
         self.html_content = str(html_content)
 
@@ -63,7 +69,7 @@ class Problem(BaseXblock):
         while (
             "success" in answers_content and retry < 6
         ):  # We use our check to finally get anwers
-            answers_content = c.get_api_json(
+            answers_content = instance_connection.get_api_json(
                 "/courses/"
                 + self.scraper.course_id
                 + "/xblock/"
@@ -72,11 +78,11 @@ class Problem(BaseXblock):
             )
             if "success" in answers_content:
                 """
-                    #IMPROUVEMENT connection , same as hint ?
+                    #IMPROUVEMENT instance_connection , same as hint ?
                     post_data=urlencode({'event_type': "problem_show", "event": { "problem": self.json["id"] }, "page" : self.json["lms_web_url"]}).encode('utf-8')
-                    c.get_api_json("/event", post_data)
+                    instance_connection.get_api_json("/event", post_data)
                     """
-                c.get_api_json(
+                instance_connection.get_api_json(
                     "/courses/"
                     + self.scraper.course_id
                     + "/xblock/"
@@ -118,13 +124,13 @@ class Problem(BaseXblock):
                 referer=self.json["lms_web_url"] + "/?activate_block_id=" + self.json["id"]
                 post_data=urlencode({'hint_index': hint_index, 'input_id': self.json["id"]}).encode('utf-8')
                 url_hint = "/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/hint_button"
-                get_info=c.get_api_json(url_hint, post_data, referer)
+                get_info=instance_connection.get_api_json(url_hint, post_data, referer)
                 if "success" in get_info:
                     self.hint.append(get_info)
                     hint_index+=1
                     while hint_index < get_info["total_possible"]:
                         post_data=urlencode({'hint_index': hint_index,'input_id': self.json["id"]}).encode('utf-8')
-                        get_info=c.get_api_json("/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/hint_button", post_data, referer)
+                        get_info=instance_connection.get_api_json("/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/hint_button", post_data, referer)
                         if "success" in get_info:
                             self.hint.append(get_info)
                         hint_index+=1

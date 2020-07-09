@@ -15,9 +15,9 @@ class Discussion(BaseXblock):
         self.category_title = ""
         self.is_video = False
 
-    def download(self, c):
+    def download(self, instance_connection):
         if self.scraper.forum_thread:
-            content = c.get_page(self.xblock_json["student_view_url"])
+            content = instance_connection.get_page(self.xblock_json["student_view_url"])
             soup = BeautifulSoup(content, "lxml")
             discussion_block = soup.find(
                 re.compile(r".*"), {"data-discussion-id": re.compile(r".*")}

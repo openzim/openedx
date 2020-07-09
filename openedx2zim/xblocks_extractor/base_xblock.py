@@ -16,7 +16,7 @@ class BaseXblock:
         # make xblock output directory
         self.output_path.mkdir(parents=True, exist_ok=True)
 
-    def download(self, c):
+    def download(self, instance_connection):
         return
 
     def render(self):

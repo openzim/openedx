@@ -16,9 +16,9 @@ class Vertical(BaseXblock):
         else:
             self.icon_type = "fa-book"
 
-    def download(self, c):
+    def download(self, instance_connection):
         for x in self.descendants:
-            x.download(c)
+            x.download(instance_connection)
 
     def render(self, pred_vertical, next_vertical, chapter, sequential):
         vertical = []

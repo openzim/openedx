@@ -5,9 +5,9 @@ class Sequential(BaseXblock):
     def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
         super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
 
-    def download(self, c):
+    def download(self, instance_connection):
         for x in self.descendants:
-            x.download(c)
+            x.download(instance_connection)
 
     def render(self, pred_info, next_info, chapter):
         for x in range(0, len(self.descendants)):

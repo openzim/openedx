@@ -96,13 +96,13 @@ def prepare_url(url, instance_url):
     return urllib.parse.urlunsplit(split_url)
 
 
-def download_and_convert_subtitles(path, lang_and_url, c):
+def download_and_convert_subtitles(path, lang_and_url, instance_connection):
     real_subtitles = {}
     for lang in lang_and_url:
         path_lang = os.path.join(path, lang + ".vtt")
         if not os.path.exists(path_lang):
             try:
-                subtitle = c.get_page(lang_and_url[lang])
+                subtitle = instance_connection.get_page(lang_and_url[lang])
                 subtitle = re.sub(r"^0$", "1", str(subtitle), flags=re.M)
                 subtitle = html.unescape(subtitle)
                 with open(path_lang, "w") as f:
@@ -182,7 +182,7 @@ def clean_top(t):
     return "/".join(t.split("/")[:-1])
 
 
-def dl_dependencies(content, path, folder_name, c, scraper):
+def dl_dependencies(content, path, folder_name, instance_connection, scraper):
     body = string2html(str(content))
     imgs = body.xpath("//img")
     for img in imgs:
@@ -195,7 +195,8 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             if not os.path.exists(out):
                 try:
                     scraper.download_file(
-                        prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                        prepare_url(src, instance_connection.conf["instance_url"]),
+                        pathlib.Path(out),
                     )
                 except Exception as e:
                     logger.warning(str(e) + " : error with " + src)
@@ -239,7 +240,9 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             ):  # Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
                 if not os.path.exists(out):
                     scraper.download_file(
-                        prepare_url(unquote(src), c.conf["instance_url"]),
+                        prepare_url(
+                            unquote(src), instance_connection.conf["instance_url"]
+                        ),
                         pathlib.Path(out),
                     )
                 src = os.path.join(folder_name, filename)
@@ -253,7 +256,8 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 scraper.download_file(
-                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                    prepare_url(src, instance_connection.conf["instance_url"]),
+                    pathlib.Path(out),
                 )
             src = os.path.join(folder_name, filename)
             css.attrib["href"] = src
@@ -266,7 +270,8 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 scraper.download_file(
-                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                    prepare_url(src, instance_connection.conf["instance_url"]),
+                    pathlib.Path(out),
                 )
             src = os.path.join(folder_name, filename)
             js.attrib["src"] = src
@@ -279,7 +284,8 @@ def dl_dependencies(content, path, folder_name, c, scraper):
             out = os.path.join(path, filename)
             if not os.path.exists(out):
                 scraper.download_file(
-                    prepare_url(src, c.conf["instance_url"]), pathlib.Path(out)
+                    prepare_url(src, instance_connection.conf["instance_url"]),
+                    pathlib.Path(out),
                 )
             src = os.path.join(folder_name, filename)
             source.attrib["src"] = src
@@ -309,7 +315,9 @@ def dl_dependencies(content, path, folder_name, c, scraper):
                 out = os.path.join(path, filename)
                 if not os.path.exists(out):
                     scraper.download_file(
-                        prepare_url(unquote(src), c.conf["instance_url"]),
+                        prepare_url(
+                            unquote(src), instance_connection.conf["instance_url"]
+                        ),
                         pathlib.Path(out),
                     )
                 src = os.path.join(folder_name, filename)

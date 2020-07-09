@@ -11,8 +11,8 @@ class FreeTextResponse(BaseXblock):
         # extra vars
         self.html = ""
 
-    def download(self, c):
-        content = c.get_page(self.xblock_json["student_view_url"])
+    def download(self, instance_connection):
+        content = instance_connection.get_page(self.xblock_json["student_view_url"])
         soup = BeautifulSoup(content, "lxml")
         html_content = soup.find("div", attrs={"class": "edx-notes-wrapper"})
         if not html_content:
@@ -26,7 +26,11 @@ class FreeTextResponse(BaseXblock):
         save["onclick"] = 'save_freetext("{}")'.format(self.id)
         html_no_answers = '<div class="noanswers"><p data-l10n-id="no_answers_for_freetext" >  <b> Warning : </b> There is not correction for Freetext block. </p> </div>'
         self.html = html_no_answers + dl_dependencies(
-            str(soup), self.output_path, self.folder_name, c, self.scraper
+            str(soup),
+            self.output_path,
+            self.folder_name,
+            instance_connection,
+            self.scraper,
         )
 
     def render(self):
