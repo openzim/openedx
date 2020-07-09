@@ -1,44 +1,27 @@
-import subprocess
-import shlex
-import os
-import pathlib
-import datetime
-import mimetypes
-
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
-from slugify import slugify
-import ssl
 import html
-from urllib.error import HTTPError, URLError
-from urllib.request import urlopen, Request
-import urllib.parse
-from urllib.parse import urlparse
-from urllib.parse import unquote
-from lxml.etree import parse as string2xml
-from lxml.html import fromstring as string2html
-from lxml.html import tostring as html2string
-from zimscraperlib.download import save_large_file
-from hashlib import sha256
-from webvtt import WebVTT
-import youtube_dl
+import mimetypes
+import os
 import re
-from iso639 import languages as iso_languages
-import mistune  # markdown
-import magic
+import shlex
+import subprocess
+import urllib
+import zlib
+import sys
+
 import requests
-from zimscraperlib.video.encoding import reencode
-from zimscraperlib.video.presets import VideoWebmLow
-from .constants import getLogger, OPTIMIZER_VERSIONS
+
+import magic
+import mistune  # markdown
+from jinja2 import Environment, FileSystemLoader
+from slugify import slugify
+from webvtt import WebVTT
+
+from .constants import getLogger
 
 logger = getLogger()
 
 renderer = mistune.HTMLRenderer()
 MARKDOWN = mistune.Markdown(renderer)
-
-
-def is_absolute(url):
-    return bool(urlparse(url).netloc)
 
 
 def exec_cmd(cmd, timeout=None):
@@ -111,7 +94,7 @@ def download_and_convert_subtitles(path, lang_and_url, instance_connection):
                     webvtt = WebVTT().from_srt(path_lang)
                     webvtt.save()
                 real_subtitles[lang] = lang + ".vtt"
-            except HTTPError as e:
+            except urllib.error.HTTPError as e:
                 if e.code == 404 or e.code == 403:
                     logger.error(
                         "Fail to get subtitle from {}".format(lang_and_url[lang])
@@ -154,7 +137,7 @@ def get_filetype(headers, path):
 def jinja(output, template, deflate, **context):
     template = ENV.get_template(template)
     page = template.render(**context, output_path=str(output))
-    if output == None:
+    if output is None:
         return page
     else:
         with open(output, "w") as f:
@@ -180,161 +163,6 @@ def jinja_init():
 
 def clean_top(t):
     return "/".join(t.split("/")[:-1])
-
-
-def dl_dependencies(content, path, folder_name, instance_connection, scraper):
-    body = string2html(str(content))
-    imgs = body.xpath("//img")
-    for img in imgs:
-        if "src" in img.attrib:
-            src = img.attrib["src"]
-            ext = os.path.splitext(src.split("?")[0])[1]
-            filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
-            out = os.path.join(path, filename)
-            # download the image only if it's not already downloaded
-            if not os.path.exists(out):
-                try:
-                    scraper.download_file(
-                        prepare_url(
-                            src, instance_connection.instance_config["instance_url"]
-                        ),
-                        pathlib.Path(out),
-                    )
-                except Exception as e:
-                    logger.warning(str(e) + " : error with " + src)
-                    pass
-            src = os.path.join(folder_name, filename)
-            img.attrib["src"] = src
-            if "style" in img.attrib:
-                img.attrib["style"] += " max-width:100%"
-            else:
-                img.attrib["style"] = " max-width:100%"
-    docs = body.xpath("//a")
-    for a in docs:
-        if "href" in a.attrib:
-            src = a.attrib["href"]
-            ext = os.path.splitext(src.split("?")[0])[1]
-            filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
-            out = os.path.join(path, filename)
-            if ext in [
-                ".doc",
-                ".docx",
-                ".pdf",
-                ".DOC",
-                ".DOCX",
-                ".PDF",
-                ".mp4",
-                ".MP4",
-                ".webm",
-                ".WEBM",
-                ".mp3",
-                ".MP3",
-                ".zip",
-                ".ZIP",
-                ".TXT",
-                ".txt",
-                ".CSV",
-                ".csv",
-                ".R",
-                ".r",
-            ] or (
-                not is_absolute(src) and not "wiki" in src
-            ):  # Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
-                if not os.path.exists(out):
-                    scraper.download_file(
-                        prepare_url(
-                            unquote(src),
-                            instance_connection.instance_config["instance_url"],
-                        ),
-                        pathlib.Path(out),
-                    )
-                src = os.path.join(folder_name, filename)
-                a.attrib["href"] = src
-    csss = body.xpath("//link")
-    for css in csss:
-        if "href" in css.attrib:
-            src = css.attrib["href"]
-            ext = os.path.splitext(src.split("?")[0])[1]
-            filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
-            out = os.path.join(path, filename)
-            if not os.path.exists(out):
-                scraper.download_file(
-                    prepare_url(
-                        src, instance_connection.instance_config["instance_url"]
-                    ),
-                    pathlib.Path(out),
-                )
-            src = os.path.join(folder_name, filename)
-            css.attrib["href"] = src
-    jss = body.xpath("//script")
-    for js in jss:
-        if "src" in js.attrib:
-            src = js.attrib["src"]
-            ext = os.path.splitext(src.split("?")[0])[1]
-            filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
-            out = os.path.join(path, filename)
-            if not os.path.exists(out):
-                scraper.download_file(
-                    prepare_url(
-                        src, instance_connection.instance_config["instance_url"]
-                    ),
-                    pathlib.Path(out),
-                )
-            src = os.path.join(folder_name, filename)
-            js.attrib["src"] = src
-    sources = body.xpath("//source")
-    for source in sources:
-        if "src" in source.attrib:
-            src = source.attrib["src"]
-            ext = os.path.splitext(src.split("?")[0])[1]
-            filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
-            out = os.path.join(path, filename)
-            if not os.path.exists(out):
-                scraper.download_file(
-                    prepare_url(
-                        src, instance_connection.instance_config["instance_url"]
-                    ),
-                    pathlib.Path(out),
-                )
-            src = os.path.join(folder_name, filename)
-            source.attrib["src"] = src
-    iframes = body.xpath("//iframe")
-    for iframe in iframes:
-        if "src" in iframe.attrib:
-            src = iframe.attrib["src"]
-            if "youtube" in src:
-                name = src.split("/")[-1]
-                out_dir = os.path.join(path, name)
-                pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
-                out = os.path.join(out_dir, "video.mp4")
-                if not os.path.exists(out):
-                    try:
-                        scraper.download_file(src, pathlib.Path(out))
-                    except Exception as e:
-                        logger.warning(str(e) + " : error with " + src)
-                        pass
-                x = jinja(
-                    None, "video.html", False, format="mp4", folder_name=name, subs=[]
-                )
-                iframe.getparent().replace(iframe, string2html(x))
-            elif ".pdf" in src:
-                filename_src = src.split("/")[-1]
-                ext = os.path.splitext(filename_src.split("?")[0])[1]
-                filename = sha256(str(src).encode("utf-8")).hexdigest() + ext
-                out = os.path.join(path, filename)
-                if not os.path.exists(out):
-                    scraper.download_file(
-                        prepare_url(
-                            unquote(src),
-                            instance_connection.instance_config["instance_url"],
-                        ),
-                        pathlib.Path(out),
-                    )
-                src = os.path.join(folder_name, filename)
-                iframe.attrib["src"] = src
-    if imgs or docs or csss or jss or sources or iframes:
-        content = html2string(body, encoding="unicode")
-    return content
 
 
 def first_word(text):

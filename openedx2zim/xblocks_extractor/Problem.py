@@ -4,7 +4,7 @@ import uuid
 from bs4 import BeautifulSoup
 
 from .base_xblock import BaseXblock
-from ..utils import jinja, dl_dependencies
+from ..utils import jinja
 from ..constants import getLogger
 
 
@@ -53,7 +53,7 @@ class Problem(BaseXblock):
         for span in soup.find_all("span", attrs={"class": "sr"}):
             span.decompose()
         html_content = str(soup)
-        html_content = dl_dependencies(
+        html_content = self.scraper.dl_dependencies(
             html_content,
             self.output_path,
             self.folder_name,
