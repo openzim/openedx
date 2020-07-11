@@ -42,9 +42,9 @@ def check_missing_binary(no_zim):
     if not no_zim and not bin_is_present("zimwriterfs"):
         logger.error("zimwriterfs is not available, please install it")
         raise SystemExit
-    for bin in ["jpegoptim", "pngquant", "advdef", "gifsicle", "ffmpeg"]:
-        if not bin_is_present(bin):
-            logger.error(bin + " is not available, please install it")
+    for binary in ["jpegoptim", "pngquant", "advdef", "gifsicle", "ffmpeg"]:
+        if not bin_is_present(binary):
+            logger.error(binary + " is not available, please install it")
             raise SystemExit
 
 
@@ -103,7 +103,8 @@ def is_webvtt(subtitle_file):
 def jinja_init():
     global ENV
     templates = ROOT_DIR.joinpath("templates")
-    ENV = jinja2.Environment(loader=jinja2.FileSystemLoader((templates,)))
+    template_loader = jinja2.FileSystemLoader(searchpath=templates)
+    ENV = jinja2.Environment(loader=template_loader, autoescape=True)
     filters = dict(
         slugify=slugify,
         markdown=markdown,
