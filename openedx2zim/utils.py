@@ -1,155 +1,109 @@
 import html
 import mimetypes
-import os
+import pathlib
 import re
 import shlex
 import subprocess
 import urllib
 import zlib
-import sys
 
 import requests
 
-import magic
-import mistune  # markdown
-from jinja2 import Environment, FileSystemLoader
+import jinja2
+import mistune
 from slugify import slugify
 from webvtt import WebVTT
 
-from .constants import getLogger
+from .constants import ROOT_DIR, getLogger
 
 logger = getLogger()
-
-renderer = mistune.HTMLRenderer()
-MARKDOWN = mistune.Markdown(renderer)
 
 
 def exec_cmd(cmd, timeout=None):
     try:
-        return subprocess.call(shlex.split(cmd), timeout=timeout)
-    except Exception as e:
-        logger.error(e)
-        pass
-
-
-def bin_is_present(binary):
-    try:
-        subprocess.Popen(
-            binary,
-            universal_newlines=True,
-            shell=False,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            bufsize=0,
-        )
-    except OSError:
-        return False
-    else:
-        return True
+        return subprocess.run(shlex.split(cmd), timeout=timeout)
+    except Exception as exc:
+        logger.error(exc)
 
 
 def check_missing_binary(no_zim):
+    """ check whether the required binaries are present on the system """
+
+    def bin_is_present(binary):
+        """ checks whether a given binary is present by running it """
+        try:
+            subprocess.run(
+                binary, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+        except OSError:
+            return False
+        return True
+
     if not no_zim and not bin_is_present("zimwriterfs"):
-        sys.exit("zimwriterfs is not available, please install it.")
-    for bin in ["jpegoptim", "pngquant", "advdef", "gifsicle", "mogrify"]:
+        logger.error("zimwriterfs is not available, please install it")
+        raise SystemExit
+    for bin in ["jpegoptim", "pngquant", "advdef", "gifsicle", "ffmpeg"]:
         if not bin_is_present(bin):
-            sys.exit(bin + " is not available, please install it.")
-    if not (bin_is_present("ffmpeg") or bin_is_present("avconv")):
-        sys.exit("You should install ffmpeg or avconv")
+            logger.error(bin + " is not available, please install it")
+            raise SystemExit
 
 
 def markdown(text):
-    return MARKDOWN(text)[3:-5].replace("\n", "<br>")
+    renderer = mistune.HTMLRenderer()
+    markdown = mistune.Markdown(renderer)
+    return markdown(text)[3:-5].replace("\n", "<br>")
 
 
 def remove_newline(text):
     return text.replace("\n", "")
 
 
-def prepare_url(url, instance_url):
-    if url[0:2] == "//":
-        url = "http:" + url
-    elif url[0] == "/":
-        url = instance_url + url
-
-    # for IRI
-    split_url = list(urllib.parse.urlsplit(url))
-    # split_url[2] = urllib.parse.quote(split_url[2])    # the third component is the path of the URL/IRI
-    return urllib.parse.urlunsplit(split_url)
+def clean_top(t):
+    return "/".join(t.split("/")[:-1])
 
 
-def download_and_convert_subtitles(path, lang_and_url, instance_connection):
-    real_subtitles = {}
-    for lang in lang_and_url:
-        path_lang = os.path.join(path, lang + ".vtt")
-        if not os.path.exists(path_lang):
+def first_word(text):
+    return " ".join(text.split(" ")[0:5])
+
+
+def download_and_convert_subtitles(output_path, subtitles, instance_connection):
+    processed_subtitles = {}
+    for lang in subtitles:
+        subtitle_file = pathlib.Path(output_path).joinpath(f"{lang}.vtt")
+        if not subtitle_file.exists():
             try:
-                subtitle = instance_connection.get_page(lang_and_url[lang])
-                subtitle = re.sub(r"^0$", "1", str(subtitle), flags=re.M)
-                subtitle = html.unescape(subtitle)
-                with open(path_lang, "w") as f:
-                    f.write(subtitle)
-                if not is_webvtt(path_lang):
-                    webvtt = WebVTT().from_srt(path_lang)
-                    webvtt.save()
-                real_subtitles[lang] = lang + ".vtt"
-            except urllib.error.HTTPError as e:
-                if e.code == 404 or e.code == 403:
-                    logger.error(
-                        "Fail to get subtitle from {}".format(lang_and_url[lang])
-                    )
-                    pass
-            except Exception as e:
-                logger.error(
-                    "Error when converting subtitle {} : {}".format(
-                        lang_and_url[lang], e
-                    )
+                raw_subtitle = instance_connection.get_page(subtitles[lang])
+                subtitle = html.unescape(
+                    re.sub(r"^0$", "1", str(raw_subtitle), flags=re.M)
                 )
-                pass
+                with open(subtitle_file, "w") as sub_file:
+                    sub_file.write(subtitle)
+                if not is_webvtt(subtitle_file):
+                    webvtt = WebVTT().from_srt(subtitle_file)
+                    webvtt.save()
+                processed_subtitles[lang] = f"{lang}.vtt"
+            except urllib.error.HTTPError as exc:
+                if exc.code == 404 or exc.code == 403:
+                    logger.error(f"Failed to get subtitle from {subtitles[lang]}")
+            except Exception as exc:
+                logger.error(
+                    f"Error while converting subtitle {subtitles[lang]} : {exc}"
+                )
         else:
-            real_subtitles[lang] = lang + ".vtt"
-    return real_subtitles
+            processed_subtitles[lang] = f"{lang}.vtt"
+    return processed_subtitles
 
 
-def is_webvtt(path):
-    f = open(path, "r")
-    first_line = f.readline()
-    f.close()
-    return "WEBVTT" in first_line or "webvtt" in first_line
-
-
-def get_filetype(headers, path):
-    extensions = ("png", "jpeg", "gif")
-    content_type = headers.get("content-type", "").lower().strip()
-    for ext in extensions:
-        if ext in content_type:
-            return ext
-    if "jpg" in content_type:
-        return "jpeg"
-    mime = magic.from_file(path)
-    for ext in extensions:
-        if ext.upper() in mime:
-            return ext
-    return "none"
-
-
-def jinja(output, template, deflate, **context):
-    template = ENV.get_template(template)
-    page = template.render(**context, output_path=str(output))
-    if output is None:
-        return page
-    with open(output, "w") as f:
-        if deflate:
-            f.write(zlib.compress(page.encode("utf-8")))
-        else:
-            f.write(page)
+def is_webvtt(subtitle_file):
+    with open(subtitle_file, "r") as sub_file:
+        first_line = sub_file.readline()
+    return "webvtt" in first_line.lower()
 
 
 def jinja_init():
     global ENV
-    templates = os.path.join(os.path.abspath(os.path.dirname(__file__)), "templates/")
-    ENV = Environment(loader=FileSystemLoader((templates,)))
+    templates = ROOT_DIR.joinpath("templates")
+    ENV = jinja2.Environment(loader=jinja2.FileSystemLoader((templates,)))
     filters = dict(
         slugify=slugify,
         markdown=markdown,
@@ -160,12 +114,16 @@ def jinja_init():
     ENV.filters.update(filters)
 
 
-def clean_top(t):
-    return "/".join(t.split("/")[:-1])
-
-
-def first_word(text):
-    return " ".join(text.split(" ")[0:5])
+def jinja(output, template, deflate, **context):
+    template = ENV.get_template(template)
+    page = template.render(**context, output_path=str(output))
+    if not output:
+        return page
+    with open(output, "w") as html_page:
+        if deflate:
+            html_page.write(zlib.compress(page.encode("utf-8")))
+        else:
+            html_page.write(page)
 
 
 def get_meta_from_url(url):
