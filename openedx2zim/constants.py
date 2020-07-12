@@ -52,6 +52,10 @@ INSTANCE_CONFIGS = {
     },
 }
 
+UNSUPPORTED_XBLOCKS = {
+    "grademebutton": "Grade Me (Unavialable Offline)"
+}
+
 
 class Global:
     debug = False

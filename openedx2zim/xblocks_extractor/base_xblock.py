@@ -20,4 +20,4 @@ class BaseXblock:
         return
 
     def render(self):
-        return '<div class="not_available">  <p data-l10n-id="not_available" >  <b> Info : </b> Not available offline. </p></div>'
+        return

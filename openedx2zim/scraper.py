@@ -2,61 +2,49 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
-import os
-import re
-import sys
-import uuid
-import shutil
-import urllib
-import pathlib
 import datetime
-import tempfile
 import hashlib
-import lxml
+import os
+import pathlib
+import re
+import shutil
+import sys
+import tempfile
+import urllib
+import uuid
 
+import lxml
 import youtube_dl
 from bs4 import BeautifulSoup
-from slugify import slugify
-from pif import get_public_ip
 from kiwixstorage import KiwixStorage
-from zimscraperlib.zim import ZimInfo, make_zim_file
-from zimscraperlib.video.encoding import reencode
+from pif import get_public_ip
+from slugify import slugify
 from zimscraperlib.download import save_large_file
 from zimscraperlib.imaging import resize_image
-from zimscraperlib.video.presets import VideoWebmLow, VideoMp4Low
+from zimscraperlib.video.encoding import reencode
+from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
+from zimscraperlib.zim import ZimInfo, make_zim_file
 
-from .utils import (
-    check_missing_binary,
-    jinja_init,
-    prepare_url,
-    jinja,
-    get_meta_from_url,
-    exec_cmd,
-)
+from .annex import (booknav, forum, render_booknav, render_forum, render_wiki,
+                    wiki)
+from .constants import (IMAGE_FORMATS, OPTIMIZER_VERSIONS, ROOT_DIR, SCRAPER,
+                        VIDEO_FORMATS, getLogger)
 from .instance_connection import InstanceConnection
-from .constants import (
-    ROOT_DIR,
-    SCRAPER,
-    VIDEO_FORMATS,
-    IMAGE_FORMATS,
-    OPTIMIZER_VERSIONS,
-    getLogger,
-)
-from .annex import wiki, forum, booknav, render_wiki, render_forum, render_booknav
-from .xblocks_extractor.Course import Course
-from .xblocks_extractor.Chapter import Chapter
-from .xblocks_extractor.Sequential import Sequential
-from .xblocks_extractor.Vertical import Vertical
-from .xblocks_extractor.Video import Video
-from .xblocks_extractor.Libcast import Libcast
-from .xblocks_extractor.Html import Html
-from .xblocks_extractor.Problem import Problem
-from .xblocks_extractor.Discussion import Discussion
-from .xblocks_extractor.FreeTextResponse import FreeTextResponse
-from .xblocks_extractor.Unavailable import Unavailable
-from .xblocks_extractor.Lti import Lti
-from .xblocks_extractor.DragAndDropV2 import DragAndDropV2
-
+from .utils import (check_missing_binary, exec_cmd, get_meta_from_url, jinja,
+                    jinja_init)
+from .xblocks_extractor.chapter import Chapter
+from .xblocks_extractor.course import Course
+from .xblocks_extractor.discussion import Discussion
+from .xblocks_extractor.drag_and_drop_v2 import DragAndDropV2
+from .xblocks_extractor.free_text_response import FreeTextResponse
+from .xblocks_extractor.html import Html
+from .xblocks_extractor.libcast import Libcast
+from .xblocks_extractor.lti import Lti
+from .xblocks_extractor.problem import Problem
+from .xblocks_extractor.sequential import Sequential
+from .xblocks_extractor.unavailable import Unavailable
+from .xblocks_extractor.vertical import Vertical
+from .xblocks_extractor.video import Video
 
 XBLOCK_EXTRACTORS = {
     "course": Course,
@@ -70,7 +58,6 @@ XBLOCK_EXTRACTORS = {
     "discussion": Discussion,
     "qualtricssurvey": Html,
     "freetextresponse": FreeTextResponse,
-    "grademebutton": Unavailable,
     "drag-and-drop-v2": DragAndDropV2,
     "lti": Lti,
     "unavailable": Unavailable,
