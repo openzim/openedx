@@ -10,7 +10,7 @@ import collections
 from bs4 import BeautifulSoup
 
 from .constants import getLogger
-from .utils import dl_dependencies, jinja, markdown, prepare_url
+from .utils import jinja, markdown, prepare_url
 
 logger = getLogger()
 
@@ -164,7 +164,7 @@ def forum(instance_connection, scraper):
             thread["data_thread"]["content"]["children"] += thread["data_thread"][
                 "content"
             ]["non_endorsed_responses"]
-        thread["data_thread"]["content"]["body"] = dl_dependencies(
+        thread["data_thread"]["content"]["body"] = scraper.dl_dependencies(
             markdown(thread["data_thread"]["content"]["body"]),
             forum_output.joinpath(thread["id"]),
             "",
@@ -172,7 +172,7 @@ def forum(instance_connection, scraper):
             scraper,
         )
         for children in thread["data_thread"]["content"]["children"]:
-            children["body"] = dl_dependencies(
+            children["body"] = scraper.dl_dependencies(
                 markdown(children["body"]),
                 forum_output.joinpath(thread["id"]),
                 "",
@@ -181,7 +181,7 @@ def forum(instance_connection, scraper):
             )
             if "children" in children:
                 for children_children in children["children"]:
-                    children_children["body"] = dl_dependencies(
+                    children_children["body"] = scraper.dl_dependencies(
                         markdown(children_children["body"]),
                         forum_output.joinpath(thread["id"]),
                         "",
@@ -286,7 +286,7 @@ def wiki(instance_connection, scraper):
                             + "/index.html"
                         )
 
-            wiki_data[url]["text"] = dl_dependencies(
+            wiki_data[url]["text"] = scraper.dl_dependencies(
                 str(text), path, "", instance_connection, scraper
             )
             wiki_data[url]["title"] = soup.find("title").text

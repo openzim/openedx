@@ -3,8 +3,12 @@ from ..constants import UNSUPPORTED_XBLOCKS
 
 
 class Unavailable(BaseXblock):
-    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
-        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+    def __init__(
+        self, xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+    ):
+        super().__init__(
+            xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+        )
 
     def render(self):
         error_message = UNSUPPORTED_XBLOCKS.get(

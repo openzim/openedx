@@ -3,8 +3,12 @@ from ..utils import jinja
 
 
 class Vertical(BaseXblock):
-    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
-        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+    def __init__(
+        self, xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+    ):
+        super().__init__(
+            xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+        )
 
         # set icon
         if self.xblock_json["block_counts"]["video"] != 0:
@@ -20,7 +24,7 @@ class Vertical(BaseXblock):
         for x in self.descendants:
             x.download(instance_connection)
 
-    def render(self, pred_vertical, next_vertical, chapter, sequential):
+    def render(self, prev_vertical, next_vertical, chapter, sequential):
         vertical = []
         for x in self.descendants:
             vertical.append(x.render())
@@ -35,7 +39,7 @@ class Vertical(BaseXblock):
             vertical=self,
             extracted_id=self.xblock_json["id"].split("@")[-1],
             vertical_content=vertical,
-            pred_vertical=pred_vertical,
+            prev_vertical=prev_vertical,
             next_vertical=next_vertical,
             side_menu=True,
         )

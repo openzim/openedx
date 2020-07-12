@@ -12,8 +12,12 @@ logger = getLogger()
 
 
 class Problem(BaseXblock):
-    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
-        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+    def __init__(
+        self, xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+    ):
+        super().__init__(
+            xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+        )
 
         # extra vars
         self.is_video = False
@@ -54,11 +58,9 @@ class Problem(BaseXblock):
             span.decompose()
         html_content = str(soup)
         html_content = self.scraper.dl_dependencies(
-            html_content,
-            self.output_path,
-            self.folder_name,
-            instance_connection,
-            self.scraper,
+            content=html_content,
+            output_path=self.output_path,
+            path_from_html=self.folder_name,
         )
         self.html_content = str(html_content)
 

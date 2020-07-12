@@ -6,8 +6,12 @@ from ..utils import prepare_url
 
 
 class Lti(BaseXblock):
-    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
-        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+    def __init__(
+        self, xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+    ):
+        super().__init__(
+            xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+        )
 
     def download(self, instance_connection):
         # IMPROUVEMENT LTI can be lot of content type ? Here pdf

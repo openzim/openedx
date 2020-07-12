@@ -13,7 +13,7 @@ import tempfile
 import urllib
 import uuid
 
-import lxml
+import lxml.html
 import youtube_dl
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
@@ -27,12 +27,12 @@ from zimscraperlib.zim import ZimInfo, make_zim_file
 
 from .annex import booknav, forum, render_booknav, render_forum, render_wiki, wiki
 from .constants import (
+    DOWNLOADABLE_CONTENT,
     IMAGE_FORMATS,
     OPTIMIZER_VERSIONS,
     ROOT_DIR,
     SCRAPER,
     VIDEO_FORMATS,
-    DOWNLOADABLE_CONTENT,
     getLogger,
 )
 from .instance_connection import InstanceConnection
@@ -241,7 +241,12 @@ class Openedx2Zim:
             # create objects of respective xblock_extractor if available
             if current_xblock["type"] in XBLOCK_EXTRACTORS:
                 obj = XBLOCK_EXTRACTORS[current_xblock["type"]](
-                    current_xblock, xblock_path, root_url, random_id, descendants, self,
+                    xblock_json=current_xblock,
+                    relative_path=xblock_path,
+                    root_url=root_url,
+                    xblock_id=random_id,
+                    descendants=descendants,
+                    scraper=self,
                 )
             else:
                 if not self.ignore_missing_xblocks:
@@ -257,12 +262,12 @@ class Openedx2Zim:
                     )
                     # make an object of unavailable type
                     obj = XBLOCK_EXTRACTORS["unavailable"](
-                        current_xblock,
-                        xblock_path,
-                        root_url,
-                        random_id,
-                        descendants,
-                        self,
+                        xblock_json=current_xblock,
+                        relative_path=xblock_path,
+                        root_url=root_url,
+                        xblock_id=random_id,
+                        descendants=descendants,
+                        scraper=self,
                     )
 
             if current_xblock["type"] == "course":
@@ -271,7 +276,11 @@ class Openedx2Zim:
             return obj
 
         logger.info("Parsing xblocks and preparing extractor objects")
-        make_objects(pathlib.Path("course"), self.root_xblock_id, "../")
+        make_objects(
+            current_path=pathlib.Path("course"),
+            current_id=self.root_xblock_id,
+            root_url="../",
+        )
 
     def annex(self):
         logger.info("Getting course tabs ...")

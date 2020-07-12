@@ -13,8 +13,12 @@ logger = getLogger()
 
 
 class Video(BaseXblock):
-    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
-        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+    def __init__(
+        self, xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+    ):
+        super().__init__(
+            xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+        )
 
         # extra vars
         self.subs = []
