@@ -7,5 +7,7 @@ class Unavailable(BaseXblock):
         super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
 
     def render(self):
-        error_message = UNSUPPORTED_XBLOCKS.get(self.xblock_json["type"], "Not available offline")
+        error_message = UNSUPPORTED_XBLOCKS.get(
+            self.xblock_json["type"], "Not available offline"
+        )
         return f'<div class="not_available">  <p data-l10n-id="not_available" >  <b> Info : </b> {error_message} </p></div>'

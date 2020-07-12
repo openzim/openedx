@@ -28,6 +28,29 @@ OPTIMIZER_VERSIONS = {
     "gif": "v1",
 }
 
+DOWNLOADABLE_CONTENT = [
+    ".doc",
+    ".docx",
+    ".pdf",
+    ".DOC",
+    ".DOCX",
+    ".PDF",
+    ".mp4",
+    ".MP4",
+    ".webm",
+    ".WEBM",
+    ".mp3",
+    ".MP3",
+    ".zip",
+    ".ZIP",
+    ".TXT",
+    ".txt",
+    ".CSV",
+    ".csv",
+    ".R",
+    ".r",
+]
+
 INSTANCE_CONFIGS = {
     "courses.edx.org": {
         "login_page": "/login_ajax",
@@ -52,9 +75,7 @@ INSTANCE_CONFIGS = {
     },
 }
 
-UNSUPPORTED_XBLOCKS = {
-    "grademebutton": "Grade Me (Unavialable Offline)"
-}
+UNSUPPORTED_XBLOCKS = {"grademebutton": "Grade Me (Unavialable Offline)"}
 
 
 class Global:

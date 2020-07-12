@@ -25,13 +25,17 @@ from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
 from zimscraperlib.zim import ZimInfo, make_zim_file
 
-from .annex import (booknav, forum, render_booknav, render_forum, render_wiki,
-                    wiki)
-from .constants import (IMAGE_FORMATS, OPTIMIZER_VERSIONS, ROOT_DIR, SCRAPER,
-                        VIDEO_FORMATS, getLogger)
+from .annex import booknav, forum, render_booknav, render_forum, render_wiki, wiki
+from .constants import (
+    IMAGE_FORMATS,
+    OPTIMIZER_VERSIONS,
+    ROOT_DIR,
+    SCRAPER,
+    VIDEO_FORMATS,
+    getLogger,
+)
 from .instance_connection import InstanceConnection
-from .utils import (check_missing_binary, exec_cmd, get_meta_from_url, jinja,
-                    jinja_init)
+from .utils import check_missing_binary, exec_cmd, get_meta_from_url, jinja, jinja_init
 from .xblocks_extractor.chapter import Chapter
 from .xblocks_extractor.course import Course
 from .xblocks_extractor.discussion import Discussion
@@ -156,6 +160,7 @@ class Openedx2Zim:
         # scraper data
         self.xblock_extractor_objects = []
         self.head_course_xblock = None
+        self.homepage_html = []
         self.annexed_pages = []
         self.book_lists = []
         self.course_tabs = {}
@@ -315,11 +320,9 @@ class Openedx2Zim:
                     )
                     if just_content is not None:
                         html_content = self.dl_dependencies(
-                            str(just_content),
-                            output_path,
-                            "",
-                            instance_connection,
-                            self,
+                            content=str(just_content),
+                            path=output_path,
+                            folder_name="",
                         )
                         self.annexed_pages.append(
                             {
@@ -348,61 +351,40 @@ class Openedx2Zim:
                             continue
                 self.course_tabs[tab.get_text()] = tab_path + "/index.html"
 
-    def dl_dependencies(self, content, path, folder_name, instance_connection):
-        body = lxml.html.fromstring(str(content))
+    def download_images_from_html(self, body, folder_name):
         imgs = body.xpath("//img")
         for img in imgs:
             if "src" in img.attrib:
                 src = img.attrib["src"]
                 ext = os.path.splitext(src.split("?")[0])[1]
                 filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-                out = os.path.join(path, filename)
+                output_file = path.joinpath(filename)
                 # download the image only if it's not already downloaded
-                if not os.path.exists(out):
+                if not output_file.exists():
                     try:
                         self.download_file(
                             prepare_url(
                                 src, instance_connection.instance_config["instance_url"]
                             ),
-                            pathlib.Path(out),
+                            pathlib.Path(output_file),
                         )
                     except Exception as e:
                         logger.warning(str(e) + " : error with " + src)
-                src = os.path.join(folder_name, filename)
-                img.attrib["src"] = src
+                img.attrib["src"] = str(pathlib.Path(folder_name).joinpath(filename))
                 if "style" in img.attrib:
                     img.attrib["style"] += " max-width:100%"
                 else:
                     img.attrib["style"] = " max-width:100%"
-        docs = body.xpath("//a")
-        for a in docs:
-            if "href" in a.attrib:
-                src = a.attrib["href"]
+
+    def download_documents_from_html(self, body, folder_name):
+        anchors = body.xpath("//a")
+        for anchor in anchors:
+            if "href" in anchor.attrib:
+                src = anchor.attrib["href"]
                 ext = os.path.splitext(src.split("?")[0])[1]
                 filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
                 out = os.path.join(path, filename)
-                if ext in [
-                    ".doc",
-                    ".docx",
-                    ".pdf",
-                    ".DOC",
-                    ".DOCX",
-                    ".PDF",
-                    ".mp4",
-                    ".MP4",
-                    ".webm",
-                    ".WEBM",
-                    ".mp3",
-                    ".MP3",
-                    ".zip",
-                    ".ZIP",
-                    ".TXT",
-                    ".txt",
-                    ".CSV",
-                    ".csv",
-                    ".R",
-                    ".r",
-                ] or (
+                if ext.lower() in DOWNLOADABLE_CONTENT or (
                     not urllib.parse.urlparse(src).netloc and not "wiki" in src
                 ):  # Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
                     if not os.path.exists(out):
@@ -414,7 +396,9 @@ class Openedx2Zim:
                             pathlib.Path(out),
                         )
                     src = os.path.join(folder_name, filename)
-                    a.attrib["href"] = src
+                    anchor.attrib["href"] = src
+
+    def download_css_from_html():
         csss = body.xpath("//link")
         for css in csss:
             if "href" in css.attrib:
@@ -431,6 +415,8 @@ class Openedx2Zim:
                     )
                 src = os.path.join(folder_name, filename)
                 css.attrib["href"] = src
+
+    def download_js_from_html():
         jss = body.xpath("//script")
         for js in jss:
             if "src" in js.attrib:
@@ -447,6 +433,8 @@ class Openedx2Zim:
                     )
                 src = os.path.join(folder_name, filename)
                 js.attrib["src"] = src
+
+    def download_sources_from_html():
         sources = body.xpath("//source")
         for source in sources:
             if "src" in source.attrib:
@@ -463,6 +451,8 @@ class Openedx2Zim:
                     )
                 src = os.path.join(folder_name, filename)
                 source.attrib["src"] = src
+
+    def download_iframes_from_html():
         iframes = body.xpath("//iframe")
         for iframe in iframes:
             if "src" in iframe.attrib:
@@ -503,78 +493,79 @@ class Openedx2Zim:
                         )
                     src = os.path.join(folder_name, filename)
                     iframe.attrib["src"] = src
+
+    def dl_dependencies(self, content, path, folder_name):
+        body = lxml.html.fromstring(str(content))
+        self.download_images_from_html(self, body, folder_name)
+        self.download_documents_from_html(self, body, folder_name)
+        self.download_css_from_html(self, body, folder_name)
+        self.download_js_from_html(self, body, folder_name)
+        self.download_sources_from_html(self, body, folder_name)
+        self.download_iframes_from_html(self, body, folder_name)
         if imgs or docs or csss or jss or sources or iframes:
             content = lxml.html.tostring(body, encoding="unicode")
         return content
 
     def get_content(self, instance_connection):
+        """ download the content for the course """
+
+        def clean_content(html_article):
+            """ removes unwanted elements from homepage html """
+
+            unwanted_elements = {
+                "div": {"class": "dismiss-message"},
+                "a": {"class": "action-show-bookmarks"},
+                "button": {"class": "toggle-visibility-button"},
+            }
+            for element_type, attribute in unwanted_elements:
+                element = html_article.find(element_type, attrs=attribute)
+                if element:
+                    element.decompose()
+
         # download favicon
         self.download_file(
             "https://www.google.com/s2/favicons?domain=" + self.instance_url,
             self.build_dir.joinpath("favicon.png"),
         )
 
+        # get the course url and generate homepage
         logger.info("Getting homepage ...")
         content = instance_connection.get_page(self.course_url)
         self.build_dir.joinpath("home").mkdir(parents=True, exist_ok=True)
-        self.html_homepage = []
         soup = BeautifulSoup(content, "lxml")
-        html_content = soup.find("div", attrs={"class": "welcome-message"})
-        if html_content is None:
-            html_content = soup.find_all(
+        welcome_message = soup.find("div", attrs={"class": "welcome-message"})
+
+        # there are multiple welcome messages
+        if not welcome_message:
+            info_articles = soup.find_all(
                 "div", attrs={"class": re.compile("info-wrapper")}
             )
-            if html_content == []:
+            if info_articles == []:
                 self.has_homepage = False
             else:
-                for x in range(0, len(html_content)):
-                    article = html_content[x]
-                    dismiss = article.find("div", attrs={"class": "dismiss-message"})
-                    if dismiss is not None:
-                        dismiss.decompose()
-                    bookmark = article.find(
-                        "a", attrs={"class": "action-show-bookmarks"}
-                    )
-                    if bookmark is not None:
-                        bookmark.decompose()
-                    buttons = article.find_all(
-                        "button", attrs={"class": "toggle-visibility-button"}
-                    )
-                    if buttons is not None:
-                        for button in buttons:
-                            button.decompose()
+                for article in info_articles:
+                    clean_content(article)
                     article["class"] = "toggle-visibility-element article-content"
-                    self.html_homepage.append(
+                    self.homepage_html.append(
                         self.dl_dependencies(
-                            article.prettify(),
-                            self.build_dir.joinpath("home"),
-                            "home",
-                            instance_connection,
-                            self,
+                            content=article.prettify(),
+                            path=self.build_dir.joinpath("home"),
+                            folder_name="home",
                         )
                     )
+
+        # there is a single welcome message
         else:
-            dismiss = html_content.find("div", attrs={"class": "dismiss-message"})
-            if dismiss is not None:
-                dismiss.decompose()
-            bookmark = html_content.find("a", attrs={"class": "action-show-bookmarks"})
-            if bookmark is not None:
-                bookmark.decompose()
-            buttons = html_content.find_all(
-                "button", attrs={"class": "toggle-visibility-button"}
-            )
-            if buttons is not None:
-                for button in buttons:
-                    button.decompose()
-            self.html_homepage.append(
+            clean_content(welcome_message)
+            self.homepage_html.append(
                 self.dl_dependencies(
-                    html_content.prettify(),
-                    self.build_dir.joinpath("home"),
-                    "home",
-                    instance_connection,
-                    self,
+                    content=welcome_message.prettify(),
+                    path=self.build_dir.joinpath("home"),
+                    folder_name="home",
                 )
             )
+
+        # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
         for obj in self.xblock_extractor_objects:
             obj.download(instance_connection)
@@ -770,7 +761,7 @@ class Openedx2Zim:
                 self.build_dir.joinpath("index.html"),
                 "home.html",
                 False,
-                messages=self.html_homepage,
+                messages=self.homepage_html,
                 mooc=self,
                 render_homepage=True,
             )
