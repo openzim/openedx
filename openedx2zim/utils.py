@@ -19,6 +19,14 @@ from .constants import ROOT_DIR, getLogger
 logger = getLogger()
 
 
+def prepare_url(url, instance_url):
+    if url.startswith("//"):
+        url = f"http:{url}"
+    elif url.startswith("/"):
+        url = f"{instance_url}{url}"
+    return url
+
+
 def exec_cmd(cmd, timeout=None):
     try:
         return subprocess.run(shlex.split(cmd), timeout=timeout)

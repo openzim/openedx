@@ -32,10 +32,18 @@ from .constants import (
     ROOT_DIR,
     SCRAPER,
     VIDEO_FORMATS,
+    DOWNLOADABLE_CONTENT,
     getLogger,
 )
 from .instance_connection import InstanceConnection
-from .utils import check_missing_binary, exec_cmd, get_meta_from_url, jinja, jinja_init
+from .utils import (
+    check_missing_binary,
+    exec_cmd,
+    get_meta_from_url,
+    jinja,
+    jinja_init,
+    prepare_url,
+)
 from .xblocks_extractor.chapter import Chapter
 from .xblocks_extractor.course import Course
 from .xblocks_extractor.discussion import Discussion
@@ -158,6 +166,7 @@ class Openedx2Zim:
         self.has_homepage = True
 
         # scraper data
+        self.instance_connection = None
         self.xblock_extractor_objects = []
         self.head_course_xblock = None
         self.homepage_html = []
@@ -184,28 +193,28 @@ class Openedx2Zim:
         else:
             return urllib.parse.quote_plus(clean_id)
 
-    def prepare_mooc_data(self, instance_connection):
-        self.instance_url = instance_connection.instance_config["instance_url"]
+    def prepare_mooc_data(self):
+        self.instance_url = self.instance_connection.instance_config["instance_url"]
         self.course_id = self.get_course_id(
             self.course_url,
-            instance_connection.instance_config["course_page_name"],
-            instance_connection.instance_config["course_prefix"],
+            self.instance_connection.instance_config["course_page_name"],
+            self.instance_connection.instance_config["course_prefix"],
             self.instance_url,
         )
         logger.info("Getting course info ...")
-        self.course_info = instance_connection.get_api_json(
+        self.course_info = self.instance_connection.get_api_json(
             "/api/courses/v1/courses/"
             + self.course_id
             + "?username="
-            + instance_connection.user
+            + self.instance_connection.user
         )
         self.course_name_slug = slugify(self.course_info["name"])
         logger.info("Getting course xblocks ...")
-        xblocks_data = instance_connection.get_api_json(
+        xblocks_data = self.instance_connection.get_api_json(
             "/api/courses/v1/blocks/?course_id="
             + self.course_id
             + "&username="
-            + instance_connection.user
+            + self.instance_connection.user
             + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
         )
         self.course_xblocks = xblocks_data["blocks"]
@@ -264,9 +273,9 @@ class Openedx2Zim:
         logger.info("Parsing xblocks and preparing extractor objects")
         make_objects(pathlib.Path("course"), self.root_xblock_id, "../")
 
-    def annex(self, instance_connection):
+    def annex(self):
         logger.info("Getting course tabs ...")
-        content = instance_connection.get_page(self.course_url)
+        content = self.instance_connection.get_page(self.course_url)
         soup = BeautifulSoup(content, "lxml")
         course_tabs = (
             soup.find("ol", attrs={"class": "course-material"})
@@ -299,7 +308,7 @@ class Openedx2Zim:
                     continue
                 if "wiki" in tab_path and self.add_wiki:
                     self.wiki, self.wiki_name, tab_path = wiki(
-                        instance_connection, self
+                        self.instance_connection, self
                     )
                 elif "forum" in tab_path and self.add_forum:
                     tab_path = "forum/"
@@ -307,11 +316,11 @@ class Openedx2Zim:
                         self.forum_thread,
                         self.forum_category,
                         self.staff_user_forum,
-                    ) = forum(instance_connection, self)
+                    ) = forum(self.instance_connection, self)
                 elif ("wiki" not in tab_path) and ("forum" not in tab_path):
                     output_path = self.build_dir.joinpath(tab_path)
                     output_path.mkdir(parents=True, exist_ok=True)
-                    page_content = instance_connection.get_page(
+                    page_content = self.instance_connection.get_page(
                         self.instance_url + tab["href"]
                     )
                     soup_page = BeautifulSoup(page_content, "lxml")
@@ -321,8 +330,8 @@ class Openedx2Zim:
                     if just_content is not None:
                         html_content = self.dl_dependencies(
                             content=str(just_content),
-                            path=output_path,
-                            folder_name="",
+                            output_path=output_path,
+                            path_from_html="",
                         )
                         self.annexed_pages.append(
                             {
@@ -351,162 +360,130 @@ class Openedx2Zim:
                             continue
                 self.course_tabs[tab.get_text()] = tab_path + "/index.html"
 
-    def download_images_from_html(self, body, folder_name):
-        imgs = body.xpath("//img")
+    def download_and_get_filename(
+        self, src, output_path, with_ext=None, filter_ext=None
+    ):
+        if with_ext:
+            ext = with_ext
+        else:
+            ext = os.path.splitext(src.split("?")[0])[1]
+        filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
+        output_file = output_path.joinpath(filename)
+        if filter_ext and ext not in filter_ext:
+            return
+        if not output_file.exists():
+            self.download_file(
+                prepare_url(src, self.instance_url), output_file,
+            )
+        return filename
+
+    def download_images_from_html(self, html_body, output_path, path_from_html):
+        imgs = html_body.xpath("//img")
         for img in imgs:
             if "src" in img.attrib:
-                src = img.attrib["src"]
-                ext = os.path.splitext(src.split("?")[0])[1]
-                filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-                output_file = path.joinpath(filename)
-                # download the image only if it's not already downloaded
-                if not output_file.exists():
-                    try:
-                        self.download_file(
-                            prepare_url(
-                                src, instance_connection.instance_config["instance_url"]
-                            ),
-                            pathlib.Path(output_file),
-                        )
-                    except Exception as e:
-                        logger.warning(str(e) + " : error with " + src)
-                img.attrib["src"] = str(pathlib.Path(folder_name).joinpath(filename))
-                if "style" in img.attrib:
-                    img.attrib["style"] += " max-width:100%"
-                else:
-                    img.attrib["style"] = " max-width:100%"
+                filename = self.download_and_get_filename(
+                    src=img.attrib["src"], output_path=output_path
+                )
+                if filename:
+                    img.attrib["src"] = f"{path_from_html}/{filename}"
+                    if "style" in img.attrib:
+                        img.attrib["style"] += " max-width:100%"
+                    else:
+                        img.attrib["style"] = " max-width:100%"
+        return bool(imgs)
 
-    def download_documents_from_html(self, body, folder_name):
-        anchors = body.xpath("//a")
+    def download_documents_from_html(self, html_body, output_path, path_from_html):
+        anchors = html_body.xpath("//a")
         for anchor in anchors:
             if "href" in anchor.attrib:
-                src = anchor.attrib["href"]
-                ext = os.path.splitext(src.split("?")[0])[1]
-                filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-                out = os.path.join(path, filename)
-                if ext.lower() in DOWNLOADABLE_CONTENT or (
-                    not urllib.parse.urlparse(src).netloc and not "wiki" in src
-                ):  # Download when ext match, or when link is relatif (but not in wiki, because links in wiki are relatif)
-                    if not os.path.exists(out):
-                        self.download_file(
-                            prepare_url(
-                                urllib.parse.unquote(src),
-                                instance_connection.instance_config["instance_url"],
-                            ),
-                            pathlib.Path(out),
-                        )
-                    src = os.path.join(folder_name, filename)
-                    anchor.attrib["href"] = src
+                filename = self.download_and_get_filename(
+                    src=anchor.attrib["href"],
+                    output_path=output_path,
+                    filter_ext=DOWNLOADABLE_CONTENT,
+                )
+                if filename:
+                    anchor.attrib["href"] = f"{path_from_html}/{filename}"
+        return bool(anchors)
 
-    def download_css_from_html():
-        csss = body.xpath("//link")
-        for css in csss:
+    def download_css_from_html(self, html_body, output_path, path_from_html):
+        css_files = html_body.xpath("//link")
+        for css in css_files:
             if "href" in css.attrib:
-                src = css.attrib["href"]
-                ext = os.path.splitext(src.split("?")[0])[1]
-                filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-                out = os.path.join(path, filename)
-                if not os.path.exists(out):
-                    self.download_file(
-                        prepare_url(
-                            src, instance_connection.instance_config["instance_url"]
-                        ),
-                        pathlib.Path(out),
-                    )
-                src = os.path.join(folder_name, filename)
-                css.attrib["href"] = src
+                filename = self.download_and_get_filename(
+                    src=css.attrib["href"], output_path=output_path
+                )
+                if filename:
+                    css.attrib["href"] = f"{path_from_html}/{filename}"
+        return bool(css_files)
 
-    def download_js_from_html():
-        jss = body.xpath("//script")
-        for js in jss:
+    def download_js_from_html(self, html_body, output_path, path_from_html):
+        js_files = html_body.xpath("//script")
+        for js in js_files:
             if "src" in js.attrib:
-                src = js.attrib["src"]
-                ext = os.path.splitext(src.split("?")[0])[1]
-                filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-                out = os.path.join(path, filename)
-                if not os.path.exists(out):
-                    self.download_file(
-                        prepare_url(
-                            src, instance_connection.instance_config["instance_url"]
-                        ),
-                        pathlib.Path(out),
-                    )
-                src = os.path.join(folder_name, filename)
-                js.attrib["src"] = src
+                filename = self.download_and_get_filename(
+                    src=js.attrib["src"], output_path=output_path
+                )
+                if filename:
+                    js.attrib["src"] = f"{path_from_html}/{filename}"
+        return bool(js_files)
 
-    def download_sources_from_html():
-        sources = body.xpath("//source")
+    def download_sources_from_html(self, html_body, output_path, path_from_html):
+        sources = html_body.xpath("//source")
         for source in sources:
             if "src" in source.attrib:
-                src = source.attrib["src"]
-                ext = os.path.splitext(src.split("?")[0])[1]
-                filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-                out = os.path.join(path, filename)
-                if not os.path.exists(out):
-                    self.download_file(
-                        prepare_url(
-                            src, instance_connection.instance_config["instance_url"]
-                        ),
-                        pathlib.Path(out),
-                    )
-                src = os.path.join(folder_name, filename)
-                source.attrib["src"] = src
+                filename = self.download_and_get_filename(
+                    src=source.attrib["src"], output_path=output_path
+                )
+                if filename:
+                    source.attrib["src"] = f"{path_from_html}/{filename}"
+        return bool(sources)
 
-    def download_iframes_from_html():
-        iframes = body.xpath("//iframe")
+    def download_iframes_from_html(self, html_body, output_path, path_from_html):
+        iframes = html_body.xpath("//iframe")
         for iframe in iframes:
             if "src" in iframe.attrib:
                 src = iframe.attrib["src"]
                 if "youtube" in src:
-                    name = src.split("/")[-1]
-                    out_dir = os.path.join(path, name)
-                    pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
-                    out = os.path.join(out_dir, "video.mp4")
-                    if not os.path.exists(out):
-                        try:
-                            self.download_file(src, pathlib.Path(out))
-                        except Exception as e:
-                            logger.warning(str(e) + " : error with " + src)
-                    x = jinja(
-                        None,
-                        "video.html",
-                        False,
-                        format="mp4",
-                        folder_name=name,
-                        subs=[],
+                    filename = self.download_and_get_filename(
+                        src=src,
+                        output_path=output_path,
+                        with_ext=f".{self.video_format}",
                     )
-                    iframe.getparent().replace(iframe, lxml.html.fromstring(x))
-                elif ".pdf" in src:
-                    filename_src = src.split("/")[-1]
-                    ext = os.path.splitext(filename_src.split("?")[0])[1]
-                    filename = (
-                        hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-                    )
-                    out = os.path.join(path, filename)
-                    if not os.path.exists(out):
-                        self.download_file(
-                            prepare_url(
-                                urllib.parse.unquote(src),
-                                instance_connection.instance_config["instance_url"],
-                            ),
-                            pathlib.Path(out),
+                    if filename:
+                        x = jinja(
+                            None,
+                            "video.html",
+                            False,
+                            format=self.video_format,
+                            folder_name="",
+                            subs=[],
                         )
-                    src = os.path.join(folder_name, filename)
-                    iframe.attrib["src"] = src
+                        iframe.getparent().replace(iframe, lxml.html.fromstring(x))
+                elif ".pdf" in src:
+                    filename = self.download_and_get_filename(
+                        src=src, output_path=output_path
+                    )
+                    if filename:
+                        iframe.attrib["src"] = f"{path_from_html}/{filename}"
+        return bool(iframes)
 
-    def dl_dependencies(self, content, path, folder_name):
-        body = lxml.html.fromstring(str(content))
-        self.download_images_from_html(self, body, folder_name)
-        self.download_documents_from_html(self, body, folder_name)
-        self.download_css_from_html(self, body, folder_name)
-        self.download_js_from_html(self, body, folder_name)
-        self.download_sources_from_html(self, body, folder_name)
-        self.download_iframes_from_html(self, body, folder_name)
-        if imgs or docs or csss or jss or sources or iframes:
-            content = lxml.html.tostring(body, encoding="unicode")
+    def dl_dependencies(self, content, output_path, path_from_html):
+        html_body = lxml.html.fromstring(str(content))
+        imgs = self.download_images_from_html(html_body, output_path, path_from_html)
+        docs = self.download_documents_from_html(html_body, output_path, path_from_html)
+        css_files = self.download_css_from_html(html_body, output_path, path_from_html)
+        js_files = self.download_js_from_html(html_body, output_path, path_from_html)
+        sources = self.download_sources_from_html(
+            html_body, output_path, path_from_html
+        )
+        iframes = self.download_iframes_from_html(
+            html_body, output_path, path_from_html
+        )
+        if imgs or docs or css_files or js_files or sources or iframes:
+            content = lxml.html.tostring(html_body, encoding="unicode")
         return content
 
-    def get_content(self, instance_connection):
+    def get_content(self):
         """ download the content for the course """
 
         def clean_content(html_article):
@@ -530,7 +507,7 @@ class Openedx2Zim:
 
         # get the course url and generate homepage
         logger.info("Getting homepage ...")
-        content = instance_connection.get_page(self.course_url)
+        content = self.instance_connection.get_page(self.course_url)
         self.build_dir.joinpath("home").mkdir(parents=True, exist_ok=True)
         soup = BeautifulSoup(content, "lxml")
         welcome_message = soup.find("div", attrs={"class": "welcome-message"})
@@ -549,8 +526,8 @@ class Openedx2Zim:
                     self.homepage_html.append(
                         self.dl_dependencies(
                             content=article.prettify(),
-                            path=self.build_dir.joinpath("home"),
-                            folder_name="home",
+                            output_path=self.build_dir.joinpath("home"),
+                            path_from_html="home",
                         )
                     )
 
@@ -560,15 +537,15 @@ class Openedx2Zim:
             self.homepage_html.append(
                 self.dl_dependencies(
                     content=welcome_message.prettify(),
-                    path=self.build_dir.joinpath("home"),
-                    folder_name="home",
+                    output_path=self.build_dir.joinpath("home"),
+                    path_from_html="home",
                 )
             )
 
         # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
         for obj in self.xblock_extractor_objects:
-            obj.download(instance_connection)
+            obj.download(self.instance_connection)
 
     def s3_credentials_ok(self):
         logger.info("Testing S3 Optimization Cache credentials ...")
@@ -799,15 +776,15 @@ class Openedx2Zim:
                 f"Using cache: {self.s3_storage.url.netloc} with bucket: {self.s3_storage.bucket_name}"
             )
         logger.info("Testing openedx instance credentials ...")
-        instance_connection = InstanceConnection(
+        self.instance_connection = InstanceConnection(
             self.course_url, self.email, self.password
         )
-        instance_connection.establish_connection()
+        self.instance_connection.establish_connection()
         jinja_init()
-        self.prepare_mooc_data(instance_connection)
+        self.prepare_mooc_data()
         self.parse_course_xblocks()
-        self.annex(instance_connection)
-        self.get_content(instance_connection)
+        self.annex()
+        self.get_content()
         self.render()
         if not self.no_zim:
             self.fname = (
