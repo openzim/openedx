@@ -1,7 +1,7 @@
 {% if self.no_video != False %}
 {% if title %} <h2> {{ title }} </h2> {% endif %}
 <video class="video video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" width="480px" height="270px" data-setup='{"autoplay": false, "preload": "true", "playbackRates": [0.5, 0.75, 1, 1.25, 1.5, 2, 4, 8]}' >
-  <source src="{{ folder_name }}/video.{{ format }}" type="video/{{ format }}" />
+  <source src="{{ video_path }}" type="video/{{ format }}" />
   {% for language in subs %}
     <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
   {% endfor %}

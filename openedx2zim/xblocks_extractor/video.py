@@ -131,7 +131,7 @@ class Video(BaseXblock):
             "video.html",
             False,
             format=self.scraper.video_format,
-            folder_name=self.folder_name,
+            video_path=f"{self.folder_name}/video.{self.scraper.video_format}",
             title=self.xblock_json["display_name"],
             subs=self.subs,
         )

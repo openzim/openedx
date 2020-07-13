@@ -464,7 +464,7 @@ class Openedx2Zim:
                             "video.html",
                             False,
                             format=self.video_format,
-                            folder_name="",
+                            video_path=filename,
                             subs=[],
                         )
                         iframe.getparent().replace(iframe, lxml.html.fromstring(x))
@@ -624,7 +624,8 @@ class Openedx2Zim:
             return download_path
         except Exception as exc:
             logger.error(f"Error while running save_large_file(): {exc}")
-            os.unlink(download_path)
+            if download_path.exists() and download_path.is_file():
+                os.unlink(download_path)
             return None
 
     def download_from_youtube(self, url, fpath):
