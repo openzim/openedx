@@ -56,6 +56,13 @@ INSTANCE_CONFIGS = {
         "course_prefix": "/courses/",
         "instance_url": "https://courses.edraak.org",
     },
+    "mooc.phzh.ch": {
+        "login_page": "/login_ajax",
+        "account_page": "/account/settings",
+        "course_page_name": "/course",
+        "course_prefix": "/courses/",
+        "instance_url": "https://mooc.phzh.ch",
+    },
     "default": {
         "login_page": "/login_ajax",
         "account_page": "/account/settings",
