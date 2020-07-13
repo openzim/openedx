@@ -632,8 +632,9 @@ class Openedx2Zim:
         audext, vidext = {"webm": ("webm", "webm"), "mp4": ("m4a", "mp4")}[
             self.video_format
         ]
+        output_file_name = fpath.name.replace(fpath.suffix, "")
         options = {
-            "outtmpl": fpath,
+            "outtmpl": str(fpath.parent.joinpath(f"{output_file_name}.%(ext)s")),
             "preferredcodec": self.video_format,
             "format": f"best[ext={vidext}]/bestvideo[ext={vidext}]+bestaudio[ext={audext}]/best",
             "retries": 20,
@@ -642,7 +643,11 @@ class Openedx2Zim:
         try:
             with youtube_dl.YoutubeDL(options) as ydl:
                 ydl.download([url])
-                return fpath
+                for content in fpath.parent.iterdir():
+                    if content.is_file() and content.name.startswith(
+                        f"{output_file_name}."
+                    ):
+                        return content
         except Exception as exc:
             logger.error(f"Error while running youtube_dl: {exc}")
             return None
