@@ -112,7 +112,7 @@ def jinja_init():
     global ENV
     templates = ROOT_DIR.joinpath("templates")
     template_loader = jinja2.FileSystemLoader(searchpath=templates)
-    ENV = jinja2.Environment(loader=template_loader, autoescape=True)
+    ENV = jinja2.Environment(loader=template_loader, autoescape=False)
     filters = dict(
         slugify=slugify,
         markdown=markdown,

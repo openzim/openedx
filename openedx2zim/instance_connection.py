@@ -12,9 +12,10 @@ logger = getLogger()
 
 def get_instance_config(instance_netloc):
     if instance_netloc not in INSTANCE_CONFIGS:
-        return INSTANCE_CONFIGS["default"].update(
+        INSTANCE_CONFIGS["default"].update(
             {"instance_url": f"https://{instance_netloc}"}
         )
+        return INSTANCE_CONFIGS["default"]
     return INSTANCE_CONFIGS[instance_netloc]
 
 
