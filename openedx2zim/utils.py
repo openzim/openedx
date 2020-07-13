@@ -151,12 +151,13 @@ def get_meta_from_url(url):
         return None, None
     else:
         content_type = mimetypes.guess_extension(
-            response_headers.get("content-type", None).split(";", 1)[0].strip()
-        )[1:]
+            response_headers.get("content-type", "").split(";", 1)[0].strip()
+        )
+        content_ext = content_type[1:] if content_type else None
         if response_headers.get("etag", None) is not None:
-            return response_headers["etag"], content_type
+            return response_headers["etag"], content_ext
         if response_headers.get("last-modified", None) is not None:
-            return response_headers["last-modified"], content_type
+            return response_headers["last-modified"], content_ext
         if response_headers.get("content-length", None) is not None:
-            return response_headers["content-length"], content_type
-    return None, content_type
+            return response_headers["content-length"], content_ext
+    return None, content_ext
