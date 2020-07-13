@@ -503,7 +503,7 @@ class Openedx2Zim:
                 "a": {"class": "action-show-bookmarks"},
                 "button": {"class": "toggle-visibility-button"},
             }
-            for element_type, attribute in unwanted_elements:
+            for element_type, attribute in unwanted_elements.items():
                 element = html_article.find(element_type, attrs=attribute)
                 if element:
                     element.decompose()
