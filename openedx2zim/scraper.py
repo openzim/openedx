@@ -25,7 +25,7 @@ from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
 from zimscraperlib.zim import ZimInfo, make_zim_file
 
-from .annex import booknav, forum, render_booknav, render_forum, render_wiki, wiki
+from .annex import MoocForum, MoocWiki
 from .constants import (
     DOWNLOADABLE_EXTENSIONS,
     IMAGE_FORMATS,
@@ -176,11 +176,6 @@ class Openedx2Zim:
         self.course_xblocks = None
         self.root_xblock_id = None
 
-        # forum related stuff
-        self.forum_thread = None
-        self.forum_category = None
-        self.staff_user_forum = None
-
     def get_course_id(self, url, course_page_name, course_prefix, instance_url):
         clean_url = re.match(
             instance_url + course_prefix + ".*" + course_page_name, url
@@ -282,6 +277,18 @@ class Openedx2Zim:
             root_url="../",
         )
 
+    def get_book_list(self, book, output_path):
+        pdf = book.find_all("a")
+        book_list = []
+        for url in pdf:
+            file_name = pathlib.Path(urllib.parse.urlparse(url["rel"][0]).path).name
+            self.download_file(
+                prepare_url(url["rel"][0], self.instance_url),
+                output_path.joinpath(file_name),
+            )
+            book_list.append({"url": file_name, "name": url.get_text()})
+        return book_list
+
     def annex(self):
         logger.info("Getting course tabs ...")
         content = self.instance_connection.get_page(self.course_url)
@@ -319,16 +326,13 @@ class Openedx2Zim:
                 ):
                     continue
                 if "wiki" in tab_path and self.add_wiki:
-                    self.wiki, self.wiki_name, tab_path = wiki(
-                        self.instance_connection, self
-                    )
+                    self.wiki = MoocWiki(self)
+                    self.wiki.annex_wiki()
+                    tab_path = str(self.wiki.wiki_path)
                 elif "forum" in tab_path and self.add_forum:
+                    self.forum = MoocForum(self)
+                    self.forum.annex_forum()
                     tab_path = "forum/"
-                    (
-                        self.forum_thread,
-                        self.forum_category,
-                        self.staff_user_forum,
-                    ) = forum(self.instance_connection, self)
                 elif ("wiki" not in tab_path) and ("forum" not in tab_path):
                     output_path = self.build_dir.joinpath(tab_path)
                     output_path.mkdir(parents=True, exist_ok=True)
@@ -363,7 +367,7 @@ class Openedx2Zim:
                             self.book_lists.append(
                                 {
                                     "output_path": output_path,
-                                    "book_list": booknav(self, book, output_path),
+                                    "book_list": self.get_book_list(book, output_path),
                                     "dir_path": tab_path,
                                 }
                             )
@@ -730,6 +734,18 @@ class Openedx2Zim:
                 if downloaded_file.resolve() != fpath.resolve() and not fpath.exists():
                     shutil.move(downloaded_file, fpath)
 
+    def render_booknav(self):
+        for book_nav in self.book_lists:
+            jinja(
+                book_nav["output_path"].joinpath("index.html"),
+                "booknav.html",
+                False,
+                book_list=book_nav["book_list"],
+                dir_path=book_nav["dir_path"],
+                mooc=self,
+                rooturl="../../../",
+            )
+
     def render(self):
         # Render course
         self.head_course_xblock.render()
@@ -748,15 +764,15 @@ class Openedx2Zim:
 
         # render wiki if available
         if hasattr(self, "wiki"):
-            render_wiki(self)
+            self.wiki.render_wiki
 
         # render forum if available
-        if self.forum_category:
-            render_forum(self)
+        if hasattr(self, "forum"):
+            self.forum.render_forum()
 
         # render book lists
         if len(self.book_lists) != 0:
-            render_booknav(self)
+            self.render_booknav()
         if self.has_homepage:
             # render homepage
             jinja(

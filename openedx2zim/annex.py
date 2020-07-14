@@ -1,16 +1,14 @@
 import re
-import os
 import html
 import uuid
 import json
-import urllib
 import pathlib
 import collections
 
 from bs4 import BeautifulSoup
 
 from .constants import getLogger
-from .utils import jinja, markdown, prepare_url
+from .utils import jinja, markdown
 
 logger = getLogger()
 
@@ -215,7 +213,7 @@ class MoocForum:
             category=self.categories,
             thread_by_category=thread_by_category,
             staff_user=self.staff_user,
-            scraper=self.scraper,
+            mooc=self.scraper,
             rooturl="../",
             display_on_mobile=True,
         )
@@ -228,173 +226,168 @@ class MoocForum:
                 category=self.categories,
                 thread_by_category=thread_by_category,
                 staff_user=self.staff_user,
-                scraper=self.scraper,
+                mooc=self.scraper,
                 rooturl="../../../",
                 forum_menu=True,
             )
 
 
-def wiki(instance_connection, scraper):
-    # Get redirection to wiki
-    first_page = instance_connection.get_redirection(
-        scraper.instance_url + "/courses/" + scraper.course_id + "/course_wiki"
-    )
-    page_to_visit = [first_page]
-    wiki_data = {}  # Data from page already visit
-    # "[url]" : { "rooturl": , "path": , "text": , "title": , "dir" : , "children": [] }
-    # Extract wiki name
-    wiki_name = first_page.replace(scraper.instance_url + "/wiki/", "")[:-1]
-    wiki_path = os.path.join(
-        "wiki", first_page.replace(scraper.instance_url + "/wiki/", "")
-    )
+class MoocWiki:
+    def __init__(self, scraper):
+        self.scraper = scraper
+        self.wiki_data = {}
+        self.wiki_name = ""
+        self.wiki_path = None
+        self.first_page = None
 
-    while page_to_visit:
-        get_page_error = False
-        url = page_to_visit.pop()
-        try:
-            content = instance_connection.get_page(url)
-        except urllib.error.HTTPError as e:
-            if e.code == 404 or e.code == 403:
-                get_page_error = True
-            else:
-                logger.warning("Fail to get " + url + "Error :" + str(e.code))
-                pass
-
-        wiki_data[url] = {}
-        web_path = os.path.join(
-            "wiki", url.replace(scraper.instance_url + "/wiki/", "")
+    def get_first_page(self):
+        # get redirection to first wiki page
+        first_page = self.scraper.instance_connection.get_redirection(
+            self.scraper.instance_url
+            + "/courses/"
+            + self.scraper.course_id
+            + "/course_wiki"
         )
-        path = scraper.build_dir.joinpath(web_path)
-        path.mkdir(parents=True, exist_ok=True)
-        wiki_data[url]["path"] = path
+        # Data from page already visit
+        # "[url]" : { "rooturl": , "path": , "text": , "title": , "dir" : , "children": [] }
+
+        # Extract wiki name
+        self.wiki_name = first_page.replace(self.scraper.instance_url + "/wiki/", "")[
+            :-1
+        ]
+        self.wiki_path = pathlib.Path("wiki", self.wiki_name)
+
+    def add_to_wiki_data(self, url):
+        self.wiki_data[url] = {}
+        web_path = pathlib.Path("wiki").joinpath(
+            url.replace(self.scraper.instance_url + "/wiki/", "")
+        )
+        output_path = self.scraper.build_dir.joinpath(web_path)
+        output_path.mkdir(parents=True, exist_ok=True)
+        self.wiki_data[url]["path"] = output_path
         rooturl = "../"
-        for x in range(0, len(web_path.split("/"))):
+        for x in range(0, len(web_path.parts)):
             rooturl += "../"
-        wiki_data[url]["rooturl"] = rooturl
-        wiki_data[url]["children"] = []
+        self.wiki_data[url]["rooturl"] = rooturl
+        self.wiki_data[url]["children"] = []
 
-        # Parse content page
-        soup = BeautifulSoup(content, "lxml")
-        text = soup.find("div", attrs={"class": "wiki-article"})
-        if text:  # If it's a page (and not a list of page)
-            # Find new wiki page in page content
-            for link in text.find_all("a"):
-                if link.has_attr("href") and "/wiki/" in link["href"]:
-                    if link not in wiki_data and link not in page_to_visit:
-                        if not link["href"][0:4] == "http":
-                            page_to_visit.append(scraper.instance_url + link["href"])
-                        else:
-                            page_to_visit.append(link["href"])
+    def update_wiki_page(self, soup, text, url, page_to_visit):
+        for link in text.find_all("a"):
+            if link.has_attr("href") and "/wiki/" in link["href"]:
+                if link not in self.wiki_data and link not in page_to_visit:
+                    if not link["href"][0:4] == "http":
+                        page_to_visit.append(self.scraper.instance_url + link["href"])
+                    else:
+                        page_to_visit.append(link["href"])
 
-                    if not link["href"][0:4] == "http":  # Update path in wiki page
-                        link["href"] = (
-                            rooturl[:-1]
-                            + link["href"].replace(scraper.instance_url, "")
-                            + "/index.html"
-                        )
+                if not link["href"][0:4] == "http":  # Update path in wiki page
+                    link["href"] = (
+                        self.wiki_data[url]["rooturl"][:-1]
+                        + link["href"].replace(self.scraper.instance_url, "")
+                        + "/index.html"
+                    )
 
-            wiki_data[url]["text"] = scraper.dl_dependencies(
-                str(text), path, "", instance_connection, scraper
-            )
-            wiki_data[url]["title"] = soup.find("title").text
-            wiki_data[url]["last-modif"] = soup.find(
-                "span", attrs={"class": "date"}
-            ).text
-            wiki_data[url]["children"] = []
-        elif get_page_error:
-            wiki_data[url][
-                "text"
-            ] = """<div><h1 class="page-header">Permission Denied</h1><p class="alert denied">Sorry, you don't have permission to view this page.</p></div>"""
-            wiki_data[url]["title"] = "Permission Denied | Wiki"
-            wiki_data[url]["last-modif"] = "Unknow"
-            wiki_data[url]["children"] = []
+        self.wiki_data[url]["text"] = self.scraper.dl_dependencies(
+            content=str(text),
+            output_path=self.wiki_data[url]["path"],
+            path_from_html="",
+        )
+        self.wiki_data[url]["title"] = soup.find("title").text
+        self.wiki_data[url]["last-modif"] = soup.find(
+            "span", attrs={"class": "date"}
+        ).text
+        self.wiki_data[url]["children"] = []
 
-        # find new url of wiki in the list children page
+    def get_wiki_children(self, soup, url, page_to_visit):
         see_children = soup.find("div", attrs={"class": "see-children"})
         if see_children:
             allpage_url = str(see_children.find("a")["href"])
-            wiki_data[url]["dir"] = allpage_url
-            content = instance_connection.get_page(scraper.instance_url + allpage_url)
+            self.wiki_data[url]["dir"] = allpage_url
+            content = self.scraper.instance_connection.get_page(
+                self.scraper.instance_url + allpage_url
+            )
             soup = BeautifulSoup(content, "lxml")
             table = soup.find("table")
             if table:
                 for link in table.find_all("a"):
-                    if link.has_attr("class") and "list-children" in link["class"]:
-                        pass
-                    else:
+                    if not (
+                        link.has_attr("class") and "list-children" in link["class"]
+                    ):
                         if (
-                            link["href"] not in wiki_data
+                            link["href"] not in self.wiki_data
                             and link["href"] not in page_to_visit
                         ):
-                            page_to_visit.append(scraper.instance_url + link["href"])
-                        wiki_data[url]["children"].append(
-                            scraper.instance_url + link["href"]
+                            page_to_visit.append(
+                                self.scraper.instance_url + link["href"]
+                            )
+                        self.wiki_data[url]["children"].append(
+                            self.scraper.instance_url + link["href"]
                         )
-    return wiki_data, wiki_name, wiki_path
 
+    def annex_wiki(self):
+        self.get_first_page()
+        page_to_visit = [self.first_page]
+        while page_to_visit:
+            get_page_error = False
+            url = page_to_visit.pop()
+            self.add_to_wiki_data(url)
+            content = self.scraper.instance_connection.get_page(url)
+            # Parse content page
+            soup = BeautifulSoup(content, "lxml")
+            text = soup.find("div", attrs={"class": "wiki-article"})
+            if text:  # If it's a page (and not a list of page)
+                self.update_wiki_page(soup, text, url, page_to_visit)
+            elif get_page_error:
+                self.wiki_data[url][
+                    "text"
+                ] = """<div><h1 class="page-header">Permission Denied</h1><p class="alert denied">Sorry, you don't have permission to view this page.</p></div>"""
+                self.wiki_data[url]["title"] = "Permission Denied | Wiki"
+                self.wiki_data[url]["last-modif"] = "Unknow"
+                self.wiki_data[url]["children"] = []
 
-def render_wiki(scraper):
-    wiki_data = scraper.wiki
-    wiki_name = scraper.wiki_name
-    for page in wiki_data:
-        if "text" in wiki_data[page]:  # this is a page
-            jinja(
-                wiki_data[page]["path"].joinpath("index.html"),
-                "wiki_page.html",
-                False,
-                content=wiki_data[page],
-                dir=wiki_data[page]["dir"].replace(scraper.instance_url + "/wiki/", "")
-                + "index.html",
-                mooc=scraper,
-                rooturl=wiki_data[page]["rooturl"],
-            )
+            # find new url of wiki in the list children page
+            self.get_wiki_children(soup, url, page_to_visit)
 
-        wiki_data[page]["path"].joinpath("_dir").mkdir(parents=True, exist_ok=True)
-        if len(wiki_data[page]["children"]) != 0:  # this is a list page
-            page_to_list = []
-            for child_page in wiki_data[page]["children"]:
-                if "title" in wiki_data[child_page]:
-                    page_to_list.append(
-                        {
-                            "url": wiki_data[page]["rooturl"]
-                            + "/.."
-                            + child_page.replace(scraper.instance_url, ""),
-                            "title": wiki_data[child_page]["title"],
-                            "last-modif": wiki_data[child_page]["last-modif"],
-                        }
+    def render_wiki(self):
+        for page in self.wiki_data:
+            if "text" in self.wiki_data[page]:  # this is a page
+                jinja(
+                    self.wiki_data[page]["path"].joinpath("index.html"),
+                    "wiki_page.html",
+                    False,
+                    content=self.wiki_data[page],
+                    dir=self.wiki_data[page]["dir"].replace(
+                        self.scraper.instance_url + "/wiki/", ""
                     )
-            jinja(
-                wiki_data[page]["path"].joinpath("_dir").joinpath("index.html"),
-                "wiki_list.html",
-                False,
-                pages=page_to_list,
-                wiki_name=wiki_name,
-                mooc=scraper,
-                rooturl=wiki_data[page]["rooturl"] + "../",
+                    + "index.html",
+                    mooc=self.scraper,
+                    rooturl=self.wiki_data[page]["rooturl"],
+                )
+
+            self.wiki_data[page]["path"].joinpath("_dir").mkdir(
+                parents=True, exist_ok=True
             )
-
-
-def booknav(scraper, book, output_path):
-    pdf = book.find_all("a")
-    book_list = []
-    for url in pdf:
-        file_name = pathlib.Path(urllib.parse.urlparse(url["rel"][0]).path).name
-        scraper.download_file(
-            prepare_url(url["rel"][0], scraper.instance_url),
-            output_path.joinpath(file_name),
-        )
-        book_list.append({"url": file_name, "name": url.get_text()})
-    return book_list
-
-
-def render_booknav(scraper):
-    for book_nav in scraper.book_lists:
-        jinja(
-            book_nav["output_path"].joinpath("index.html"),
-            "booknav.html",
-            False,
-            book_list=book_nav["book_list"],
-            dir_path=book_nav["dir_path"],
-            mooc=scraper,
-            rooturl="../../../",
-        )
+            if len(self.wiki_data[page]["children"]) != 0:  # this is a list page
+                page_to_list = []
+                for child_page in self.wiki_data[page]["children"]:
+                    if "title" in self.wiki_data[child_page]:
+                        page_to_list.append(
+                            {
+                                "url": self.wiki_data[page]["rooturl"]
+                                + "/.."
+                                + child_page.replace(self.scraper.instance_url, ""),
+                                "title": self.wiki_data[child_page]["title"],
+                                "last-modif": self.wiki_data[child_page]["last-modif"],
+                            }
+                        )
+                jinja(
+                    self.wiki_data[page]["path"]
+                    .joinpath("_dir")
+                    .joinpath("index.html"),
+                    "wiki_list.html",
+                    False,
+                    pages=page_to_list,
+                    wiki_name=self.wiki_name,
+                    mooc=self.scraper,
+                    rooturl=self.wiki_data[page]["rooturl"] + "../",
+                )
