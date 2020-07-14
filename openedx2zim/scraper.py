@@ -285,6 +285,9 @@ class Openedx2Zim:
     def annex(self):
         logger.info("Getting course tabs ...")
         content = self.instance_connection.get_page(self.course_url)
+        if not content:
+            logger.error("Failed to get course tabs")
+            raise SystemExit(1)
         soup = BeautifulSoup(content, "lxml")
         course_tabs = (
             soup.find("ol", attrs={"class": "course-material"})
@@ -332,6 +335,9 @@ class Openedx2Zim:
                     page_content = self.instance_connection.get_page(
                         self.instance_url + tab["href"]
                     )
+                    if not page_content:
+                        logger.error(f"Failed to get page content for tab {tab_path}")
+                        raise SystemExit(1)
                     soup_page = BeautifulSoup(page_content, "lxml")
                     just_content = soup_page.find(
                         "section", attrs={"class": "container"}
@@ -517,6 +523,9 @@ class Openedx2Zim:
         # get the course url and generate homepage
         logger.info("Getting homepage ...")
         content = self.instance_connection.get_page(self.course_url)
+        if not content:
+            logger.error("Error while getting homepage")
+            raise SystemExit(1)
         self.build_dir.joinpath("home").mkdir(parents=True, exist_ok=True)
         soup = BeautifulSoup(content, "lxml")
         welcome_message = soup.find("div", attrs={"class": "welcome-message"})

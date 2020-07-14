@@ -28,6 +28,8 @@ class Video(BaseXblock):
         youtube = False
         if "student_view_data" not in self.xblock_json:
             content = instance_connection.get_page(self.xblock_json["student_view_url"])
+            if not content:
+                return
             soup = BeautifulSoup.BeautifulSoup(content, "lxml")
             url = str(soup.find("video").find("source")["src"])
             subs = soup.find("video").find_all("track")
@@ -74,6 +76,8 @@ class Video(BaseXblock):
                 content = instance_connection.get_page(
                     self.xblock_json["student_view_url"]
                 )
+                if not content:
+                    return
                 soup = BeautifulSoup.BeautifulSoup(content, "lxml")
                 youtube_json = soup.find("div", attrs={"id": re.compile("^video_")})
                 if youtube_json and youtube_json.has_attr("data-metadata"):

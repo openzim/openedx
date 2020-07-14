@@ -28,6 +28,8 @@ class Problem(BaseXblock):
 
     def download(self, instance_connection):
         content = instance_connection.get_page(self.xblock_json["student_view_url"])
+        if not content:
+            return
         soup = BeautifulSoup(content, "lxml")
         try:
             html_content_from_div = str(
