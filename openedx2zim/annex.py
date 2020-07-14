@@ -10,15 +10,15 @@ import collections
 from bs4 import BeautifulSoup
 
 from .constants import getLogger
-from .utils import dl_dependencies, jinja, markdown, prepare_url
+from .utils import jinja, markdown, prepare_url
 
 logger = getLogger()
 
 
-def forum(c, scraper):
+def forum(instance_connection, scraper):
     forum_output = scraper.build_dir.joinpath("forum")
     forum_output.mkdir(parents=True, exist_ok=True)
-    content = c.get_page(
+    content = instance_connection.get_page(
         scraper.instance_url + "/courses/" + scraper.course_id + "/discussion/forum"
     )
     good_content = BeautifulSoup(content, "lxml").find(
@@ -94,7 +94,7 @@ def forum(c, scraper):
             + x
             + "/inline?ajax=1&page=1&sort_key=activity&sort_order=desc"
         )
-        data = c.get_api_json(url)
+        data = instance_connection.get_api_json(url)
         d = data["discussion_data"]
         threads += d
         for i in range(1, data["num_pages"]):
@@ -107,7 +107,7 @@ def forum(c, scraper):
                 + str(i + 1)
                 + "&sort_key=activity&sort_order=desc"
             )
-            data = c.get_api_json(url)
+            data = instance_connection.get_api_json(url)
             d = data["discussion_data"]
             threads += d
 
@@ -123,7 +123,7 @@ def forum(c, scraper):
         )
         forum_output.joinpath(thread["id"]).mkdir(parents=True, exist_ok=True)
         try:
-            thread["data_thread"] = c.get_api_json(
+            thread["data_thread"] = instance_connection.get_api_json(
                 url, referer=scraper.instance_url + url.split("?")[0]
             )
             total_answers = 100
@@ -139,14 +139,14 @@ def forum(c, scraper):
                     + str(total_answers)
                     + "&resp_limit=100"
                 )
-                new_answers = c.get_api_json(
+                new_answers = instance_connection.get_api_json(
                     url, referer=scraper.instance_url + url.split("?")[0]
                 )["content"]["children"]
                 thread["data_thread"]["content"]["children"] += new_answers
                 total_answers += 100
         except Exception:
             try:
-                thread["data_thread"] = c.get_api_json(url)
+                thread["data_thread"] = instance_connection.get_api_json(url)
             except Exception:
                 logger.debug("Can not get " + scraper.instance_url + url + "discussion")
         if (
@@ -164,28 +164,28 @@ def forum(c, scraper):
             thread["data_thread"]["content"]["children"] += thread["data_thread"][
                 "content"
             ]["non_endorsed_responses"]
-        thread["data_thread"]["content"]["body"] = dl_dependencies(
+        thread["data_thread"]["content"]["body"] = scraper.dl_dependencies(
             markdown(thread["data_thread"]["content"]["body"]),
             forum_output.joinpath(thread["id"]),
             "",
-            c,
+            instance_connection,
             scraper,
         )
         for children in thread["data_thread"]["content"]["children"]:
-            children["body"] = dl_dependencies(
+            children["body"] = scraper.dl_dependencies(
                 markdown(children["body"]),
                 forum_output.joinpath(thread["id"]),
                 "",
-                c,
+                instance_connection,
                 scraper,
             )
             if "children" in children:
                 for children_children in children["children"]:
-                    children_children["body"] = dl_dependencies(
+                    children_children["body"] = scraper.dl_dependencies(
                         markdown(children_children["body"]),
                         forum_output.joinpath(thread["id"]),
                         "",
-                        c,
+                        instance_connection,
                         scraper,
                     )
 
@@ -227,9 +227,9 @@ def render_forum(scraper):
         )
 
 
-def wiki(c, scraper):
+def wiki(instance_connection, scraper):
     # Get redirection to wiki
-    first_page = c.get_redirection(
+    first_page = instance_connection.get_redirection(
         scraper.instance_url + "/courses/" + scraper.course_id + "/course_wiki"
     )
     page_to_visit = [first_page]
@@ -245,7 +245,7 @@ def wiki(c, scraper):
         get_page_error = False
         url = page_to_visit.pop()
         try:
-            content = c.get_page(url)
+            content = instance_connection.get_page(url)
         except urllib.error.HTTPError as e:
             if e.code == 404 or e.code == 403:
                 get_page_error = True
@@ -286,7 +286,9 @@ def wiki(c, scraper):
                             + "/index.html"
                         )
 
-            wiki_data[url]["text"] = dl_dependencies(str(text), path, "", c, scraper)
+            wiki_data[url]["text"] = scraper.dl_dependencies(
+                str(text), path, "", instance_connection, scraper
+            )
             wiki_data[url]["title"] = soup.find("title").text
             wiki_data[url]["last-modif"] = soup.find(
                 "span", attrs={"class": "date"}
@@ -305,7 +307,7 @@ def wiki(c, scraper):
         if see_children:
             allpage_url = str(see_children.find("a")["href"])
             wiki_data[url]["dir"] = allpage_url
-            content = c.get_page(scraper.instance_url + allpage_url)
+            content = instance_connection.get_page(scraper.instance_url + allpage_url)
             soup = BeautifulSoup(content, "lxml")
             table = soup.find("table")
             if table:

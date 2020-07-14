@@ -11,17 +11,21 @@ from ..utils import jinja, prepare_url
 class DragAndDropV2(
     BaseXblock
 ):  # IMPROVEMENT We can only see it, not interracting with it
-    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
-        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+    def __init__(
+        self, xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+    ):
+        super().__init__(
+            xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+        )
 
         # extra vars
         self.content = None
 
-    def download(self, c):
-        content = c.get_page(self.xblock_json["student_view_url"])
+    def download(self, instance_connection):
+        content = instance_connection.get_page(self.xblock_json["student_view_url"])
         soup = BeautifulSoup(content, "lxml")
         self.content = json.loads(
-            soup.find("script", attrs={"class": "xblock-json-init-args"}).get_text()
+            soup.find("script", attrs={"class": "xblock-json-init-args"}).string.strip()
         )
         # item
         for item in self.content["items"]:
@@ -30,7 +34,7 @@ class DragAndDropV2(
                 prepare_url(item["expandedImageURL"], self.scraper.instance_url),
                 self.output_path.joinpath(name),
             )
-            item["expandedImageURL"] = f"{slugify(self.display_name)}/{name}"
+            item["expandedImageURL"] = f"{self.folder_name}/{name}"
         # Grid
         name = pathlib.Path(self.content["target_img_expanded_url"]).name
         self.scraper.download_file(
@@ -39,7 +43,7 @@ class DragAndDropV2(
             ),
             self.output_path.joinpath(name),
         )
-        self.content["target_img_expanded_url"] = f"{slugify(self.display_name)}/{name}"
+        self.content["target_img_expanded_url"] = f"{self.folder_name}/{name}"
 
     def render(self):
         return jinja(None, "DragAndDropV2.html", False, dragdrop_content=self.content)

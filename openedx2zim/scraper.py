@@ -2,59 +2,61 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
-import os
-import re
-import sys
-import uuid
-import shutil
-import urllib
-import pathlib
 import datetime
+import hashlib
+import os
+import pathlib
+import re
+import shutil
+import sys
 import tempfile
+import urllib
+import uuid
 
+import lxml.html
 import youtube_dl
 from bs4 import BeautifulSoup
-from slugify import slugify
-from pif import get_public_ip
 from kiwixstorage import KiwixStorage
-from zimscraperlib.zim import ZimInfo, make_zim_file
-from zimscraperlib.video.encoding import reencode
+from pif import get_public_ip
+from slugify import slugify
 from zimscraperlib.download import save_large_file
 from zimscraperlib.imaging import resize_image
-from zimscraperlib.video.presets import VideoWebmLow, VideoMp4Low
+from zimscraperlib.video.encoding import reencode
+from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
+from zimscraperlib.zim import ZimInfo, make_zim_file
 
-from .utils import (
-    check_missing_binary,
-    jinja_init,
-    dl_dependencies,
-    jinja,
-    get_meta_from_url,
-    exec_cmd,
-)
-from .connection import Connection
+from .annex import booknav, forum, render_booknav, render_forum, render_wiki, wiki
 from .constants import (
+    DOWNLOADABLE_EXTENSIONS,
+    IMAGE_FORMATS,
+    OPTIMIZER_VERSIONS,
     ROOT_DIR,
     SCRAPER,
     VIDEO_FORMATS,
-    IMAGE_FORMATS,
-    OPTIMIZER_VERSIONS,
     getLogger,
 )
-from .annex import wiki, forum, booknav, render_wiki, render_forum, render_booknav
-from .xblocks_extractor.Course import Course
-from .xblocks_extractor.Chapter import Chapter
-from .xblocks_extractor.Sequential import Sequential
-from .xblocks_extractor.Vertical import Vertical
-from .xblocks_extractor.Video import Video
-from .xblocks_extractor.Libcast import Libcast
-from .xblocks_extractor.Html import Html
-from .xblocks_extractor.Problem import Problem
-from .xblocks_extractor.Discussion import Discussion
-from .xblocks_extractor.FreeTextResponse import FreeTextResponse
-from .xblocks_extractor.Unavailable import Unavailable
-from .xblocks_extractor.Lti import Lti
-from .xblocks_extractor.DragAndDropV2 import DragAndDropV2
-
+from .instance_connection import InstanceConnection
+from .utils import (
+    check_missing_binary,
+    exec_cmd,
+    get_meta_from_url,
+    jinja,
+    jinja_init,
+    prepare_url,
+)
+from .xblocks_extractor.chapter import Chapter
+from .xblocks_extractor.course import Course
+from .xblocks_extractor.discussion import Discussion
+from .xblocks_extractor.drag_and_drop_v2 import DragAndDropV2
+from .xblocks_extractor.free_text_response import FreeTextResponse
+from .xblocks_extractor.html import Html
+from .xblocks_extractor.libcast import Libcast
+from .xblocks_extractor.lti import Lti
+from .xblocks_extractor.problem import Problem
+from .xblocks_extractor.sequential import Sequential
+from .xblocks_extractor.unavailable import Unavailable
+from .xblocks_extractor.vertical import Vertical
+from .xblocks_extractor.video import Video
 
 XBLOCK_EXTRACTORS = {
     "course": Course,
@@ -68,7 +70,6 @@ XBLOCK_EXTRACTORS = {
     "discussion": Discussion,
     "qualtricssurvey": Html,
     "freetextresponse": FreeTextResponse,
-    "grademebutton": Unavailable,
     "drag-and-drop-v2": DragAndDropV2,
     "lti": Lti,
     "unavailable": Unavailable,
@@ -165,8 +166,10 @@ class Openedx2Zim:
         self.has_homepage = True
 
         # scraper data
+        self.instance_connection = None
         self.xblock_extractor_objects = []
         self.head_course_xblock = None
+        self.homepage_html = []
         self.annexed_pages = []
         self.book_lists = []
         self.course_tabs = {}
@@ -190,32 +193,32 @@ class Openedx2Zim:
         else:
             return urllib.parse.quote_plus(clean_id)
 
-    def prepare_mooc_data(self, connection):
-        self.instance_url = connection.conf["instance_url"]
+    def prepare_mooc_data(self):
+        self.instance_url = self.instance_connection.instance_config["instance_url"]
         self.course_id = self.get_course_id(
             self.course_url,
-            connection.conf["course_page_name"],
-            connection.conf["course_prefix"],
+            self.instance_connection.instance_config["course_page_name"],
+            self.instance_connection.instance_config["course_prefix"],
             self.instance_url,
         )
         logger.info("Getting course info ...")
-        self.course_info = connection.get_api_json(
-            "/api/courses/v1/courses/" + self.course_id + "?username=" + connection.user
+        self.course_info = self.instance_connection.get_api_json(
+            "/api/courses/v1/courses/"
+            + self.course_id
+            + "?username="
+            + self.instance_connection.user
         )
         self.course_name_slug = slugify(self.course_info["name"])
         logger.info("Getting course xblocks ...")
-        xblocks_data = connection.get_api_json(
+        xblocks_data = self.instance_connection.get_api_json(
             "/api/courses/v1/blocks/?course_id="
             + self.course_id
             + "&username="
-            + connection.user
+            + self.instance_connection.user
             + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
         )
         self.course_xblocks = xblocks_data["blocks"]
         self.root_xblock_id = xblocks_data["root"]
-        # self.info == course_info
-        # self.name == name_slug
-        # self.json == blocks_json
 
     def parse_course_xblocks(self):
         def make_objects(current_path, current_id, root_url):
@@ -238,7 +241,12 @@ class Openedx2Zim:
             # create objects of respective xblock_extractor if available
             if current_xblock["type"] in XBLOCK_EXTRACTORS:
                 obj = XBLOCK_EXTRACTORS[current_xblock["type"]](
-                    current_xblock, xblock_path, root_url, random_id, descendants, self,
+                    xblock_json=current_xblock,
+                    relative_path=xblock_path,
+                    root_url=root_url,
+                    xblock_id=random_id,
+                    descendants=descendants,
+                    scraper=self,
                 )
             else:
                 if not self.ignore_missing_xblocks:
@@ -254,12 +262,12 @@ class Openedx2Zim:
                     )
                     # make an object of unavailable type
                     obj = XBLOCK_EXTRACTORS["unavailable"](
-                        current_xblock,
-                        xblock_path,
-                        root_url,
-                        random_id,
-                        descendants,
-                        self,
+                        xblock_json=current_xblock,
+                        relative_path=xblock_path,
+                        root_url=root_url,
+                        xblock_id=random_id,
+                        descendants=descendants,
+                        scraper=self,
                     )
 
             if current_xblock["type"] == "course":
@@ -268,11 +276,15 @@ class Openedx2Zim:
             return obj
 
         logger.info("Parsing xblocks and preparing extractor objects")
-        make_objects(pathlib.Path("course"), self.root_xblock_id, "../")
+        make_objects(
+            current_path=pathlib.Path("course"),
+            current_id=self.root_xblock_id,
+            root_url="../",
+        )
 
-    def annex(self, connection):
+    def annex(self):
         logger.info("Getting course tabs ...")
-        content = connection.get_page(self.course_url)
+        content = self.instance_connection.get_page(self.course_url)
         soup = BeautifulSoup(content, "lxml")
         course_tabs = (
             soup.find("ol", attrs={"class": "course-material"})
@@ -304,25 +316,31 @@ class Openedx2Zim:
                 ):
                     continue
                 if "wiki" in tab_path and self.add_wiki:
-                    self.wiki, self.wiki_name, tab_path = wiki(connection, self)
+                    self.wiki, self.wiki_name, tab_path = wiki(
+                        self.instance_connection, self
+                    )
                 elif "forum" in tab_path and self.add_forum:
                     tab_path = "forum/"
                     (
                         self.forum_thread,
                         self.forum_category,
                         self.staff_user_forum,
-                    ) = forum(connection, self)
+                    ) = forum(self.instance_connection, self)
                 elif ("wiki" not in tab_path) and ("forum" not in tab_path):
                     output_path = self.build_dir.joinpath(tab_path)
                     output_path.mkdir(parents=True, exist_ok=True)
-                    page_content = connection.get_page(self.instance_url + tab["href"])
+                    page_content = self.instance_connection.get_page(
+                        self.instance_url + tab["href"]
+                    )
                     soup_page = BeautifulSoup(page_content, "lxml")
                     just_content = soup_page.find(
                         "section", attrs={"class": "container"}
                     )
                     if just_content is not None:
-                        html_content = dl_dependencies(
-                            str(just_content), output_path, "", connection, self
+                        html_content = self.dl_dependencies(
+                            content=str(just_content),
+                            output_path=output_path,
+                            path_from_html="",
                         )
                         self.annexed_pages.append(
                             {
@@ -351,77 +369,192 @@ class Openedx2Zim:
                             continue
                 self.course_tabs[tab.get_text()] = tab_path + "/index.html"
 
-    def get_content(self, connection):
+    def download_and_get_filename(
+        self, src, output_path, with_ext=None, filter_ext=None
+    ):
+        if with_ext:
+            ext = with_ext
+        else:
+            ext = os.path.splitext(src.split("?")[0])[1]
+        filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
+        output_file = output_path.joinpath(filename)
+        if filter_ext and ext not in filter_ext:
+            return
+        if not output_file.exists():
+            self.download_file(
+                prepare_url(src, self.instance_url), output_file,
+            )
+        return filename
+
+    def download_images_from_html(self, html_body, output_path, path_from_html):
+        imgs = html_body.xpath("//img")
+        for img in imgs:
+            if "src" in img.attrib:
+                filename = self.download_and_get_filename(
+                    src=img.attrib["src"], output_path=output_path
+                )
+                if filename:
+                    img.attrib["src"] = f"{path_from_html}/{filename}"
+                    if "style" in img.attrib:
+                        img.attrib["style"] += " max-width:100%"
+                    else:
+                        img.attrib["style"] = " max-width:100%"
+        return bool(imgs)
+
+    def download_documents_from_html(self, html_body, output_path, path_from_html):
+        anchors = html_body.xpath("//a")
+        for anchor in anchors:
+            if "href" in anchor.attrib:
+                filename = self.download_and_get_filename(
+                    src=anchor.attrib["href"],
+                    output_path=output_path,
+                    filter_ext=DOWNLOADABLE_EXTENSIONS,
+                )
+                if filename:
+                    anchor.attrib["href"] = f"{path_from_html}/{filename}"
+        return bool(anchors)
+
+    def download_css_from_html(self, html_body, output_path, path_from_html):
+        css_files = html_body.xpath("//link")
+        for css in css_files:
+            if "href" in css.attrib:
+                filename = self.download_and_get_filename(
+                    src=css.attrib["href"], output_path=output_path
+                )
+                if filename:
+                    css.attrib["href"] = f"{path_from_html}/{filename}"
+        return bool(css_files)
+
+    def download_js_from_html(self, html_body, output_path, path_from_html):
+        js_files = html_body.xpath("//script")
+        for js in js_files:
+            if "src" in js.attrib:
+                filename = self.download_and_get_filename(
+                    src=js.attrib["src"], output_path=output_path
+                )
+                if filename:
+                    js.attrib["src"] = f"{path_from_html}/{filename}"
+        return bool(js_files)
+
+    def download_sources_from_html(self, html_body, output_path, path_from_html):
+        sources = html_body.xpath("//source")
+        for source in sources:
+            if "src" in source.attrib:
+                filename = self.download_and_get_filename(
+                    src=source.attrib["src"], output_path=output_path
+                )
+                if filename:
+                    source.attrib["src"] = f"{path_from_html}/{filename}"
+        return bool(sources)
+
+    def download_iframes_from_html(self, html_body, output_path, path_from_html):
+        iframes = html_body.xpath("//iframe")
+        for iframe in iframes:
+            if "src" in iframe.attrib:
+                src = iframe.attrib["src"]
+                if "youtube" in src:
+                    filename = self.download_and_get_filename(
+                        src=src,
+                        output_path=output_path,
+                        with_ext=f".{self.video_format}",
+                    )
+                    if filename:
+                        x = jinja(
+                            None,
+                            "video.html",
+                            False,
+                            format=self.video_format,
+                            video_path=filename,
+                            subs=[],
+                        )
+                        iframe.getparent().replace(iframe, lxml.html.fromstring(x))
+                elif ".pdf" in src:
+                    filename = self.download_and_get_filename(
+                        src=src, output_path=output_path
+                    )
+                    if filename:
+                        iframe.attrib["src"] = f"{path_from_html}/{filename}"
+        return bool(iframes)
+
+    def dl_dependencies(self, content, output_path, path_from_html):
+        html_body = lxml.html.fromstring(str(content))
+        imgs = self.download_images_from_html(html_body, output_path, path_from_html)
+        docs = self.download_documents_from_html(html_body, output_path, path_from_html)
+        css_files = self.download_css_from_html(html_body, output_path, path_from_html)
+        js_files = self.download_js_from_html(html_body, output_path, path_from_html)
+        sources = self.download_sources_from_html(
+            html_body, output_path, path_from_html
+        )
+        iframes = self.download_iframes_from_html(
+            html_body, output_path, path_from_html
+        )
+        if imgs or docs or css_files or js_files or sources or iframes:
+            content = lxml.html.tostring(html_body, encoding="unicode")
+        return content
+
+    def get_content(self):
+        """ download the content for the course """
+
+        def clean_content(html_article):
+            """ removes unwanted elements from homepage html """
+
+            unwanted_elements = {
+                "div": {"class": "dismiss-message"},
+                "a": {"class": "action-show-bookmarks"},
+                "button": {"class": "toggle-visibility-button"},
+            }
+            for element_type, attribute in unwanted_elements.items():
+                element = html_article.find(element_type, attrs=attribute)
+                if element:
+                    element.decompose()
+
         # download favicon
         self.download_file(
             "https://www.google.com/s2/favicons?domain=" + self.instance_url,
             self.build_dir.joinpath("favicon.png"),
         )
 
+        # get the course url and generate homepage
         logger.info("Getting homepage ...")
-        content = connection.get_page(self.course_url)
+        content = self.instance_connection.get_page(self.course_url)
         self.build_dir.joinpath("home").mkdir(parents=True, exist_ok=True)
-        self.html_homepage = []
         soup = BeautifulSoup(content, "lxml")
-        html_content = soup.find("div", attrs={"class": "welcome-message"})
-        if html_content is None:
-            html_content = soup.find_all(
+        welcome_message = soup.find("div", attrs={"class": "welcome-message"})
+
+        # there are multiple welcome messages
+        if not welcome_message:
+            info_articles = soup.find_all(
                 "div", attrs={"class": re.compile("info-wrapper")}
             )
-            if html_content == []:
+            if info_articles == []:
                 self.has_homepage = False
             else:
-                for x in range(0, len(html_content)):
-                    article = html_content[x]
-                    dismiss = article.find("div", attrs={"class": "dismiss-message"})
-                    if dismiss is not None:
-                        dismiss.decompose()
-                    bookmark = article.find(
-                        "a", attrs={"class": "action-show-bookmarks"}
-                    )
-                    if bookmark is not None:
-                        bookmark.decompose()
-                    buttons = article.find_all(
-                        "button", attrs={"class": "toggle-visibility-button"}
-                    )
-                    if buttons is not None:
-                        for button in buttons:
-                            button.decompose()
+                for article in info_articles:
+                    clean_content(article)
                     article["class"] = "toggle-visibility-element article-content"
-                    self.html_homepage.append(
-                        dl_dependencies(
-                            article.prettify(),
-                            self.build_dir.joinpath("home"),
-                            "home",
-                            connection,
-                            self,
+                    self.homepage_html.append(
+                        self.dl_dependencies(
+                            content=article.prettify(),
+                            output_path=self.build_dir.joinpath("home"),
+                            path_from_html="home",
                         )
                     )
+
+        # there is a single welcome message
         else:
-            dismiss = html_content.find("div", attrs={"class": "dismiss-message"})
-            if dismiss is not None:
-                dismiss.decompose()
-            bookmark = html_content.find("a", attrs={"class": "action-show-bookmarks"})
-            if bookmark is not None:
-                bookmark.decompose()
-            buttons = html_content.find_all(
-                "button", attrs={"class": "toggle-visibility-button"}
-            )
-            if buttons is not None:
-                for button in buttons:
-                    button.decompose()
-            self.html_homepage.append(
-                dl_dependencies(
-                    html_content.prettify(),
-                    self.build_dir.joinpath("home"),
-                    "home",
-                    connection,
-                    self,
+            clean_content(welcome_message)
+            self.homepage_html.append(
+                self.dl_dependencies(
+                    content=welcome_message.prettify(),
+                    output_path=self.build_dir.joinpath("home"),
+                    path_from_html="home",
                 )
             )
+
+        # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
         for obj in self.xblock_extractor_objects:
-            obj.download(connection)
+            obj.download(self.instance_connection)
 
     def s3_credentials_ok(self):
         logger.info("Testing S3 Optimization Cache credentials ...")
@@ -429,7 +562,7 @@ class Openedx2Zim:
         if not self.s3_storage.check_credentials(
             list_buckets=True, bucket=True, write=True, read=True, failsafe=True
         ):
-            logger.error("S3 cache connection error testing permissions.")
+            logger.error("S3 cache instance_connection error testing permissions.")
             logger.error(f"  Server: {self.s3_storage.url.netloc}")
             logger.error(f"  Bucket: {self.s3_storage.bucket_name}")
             logger.error(f"  Key ID: {self.s3_storage.params.get('keyid')}")
@@ -491,15 +624,17 @@ class Openedx2Zim:
             return download_path
         except Exception as exc:
             logger.error(f"Error while running save_large_file(): {exc}")
-            os.unlink(download_path)
+            if download_path.exists() and download_path.is_file():
+                os.unlink(download_path)
             return None
 
     def download_from_youtube(self, url, fpath):
         audext, vidext = {"webm": ("webm", "webm"), "mp4": ("m4a", "mp4")}[
             self.video_format
         ]
+        output_file_name = fpath.name.replace(fpath.suffix, "")
         options = {
-            "outtmpl": fpath,
+            "outtmpl": str(fpath.parent.joinpath(f"{output_file_name}.%(ext)s")),
             "preferredcodec": self.video_format,
             "format": f"best[ext={vidext}]/bestvideo[ext={vidext}]+bestaudio[ext={audext}]/best",
             "retries": 20,
@@ -508,7 +643,11 @@ class Openedx2Zim:
         try:
             with youtube_dl.YoutubeDL(options) as ydl:
                 ydl.download([url])
-                return fpath
+                for content in fpath.parent.iterdir():
+                    if content.is_file() and content.name.startswith(
+                        f"{output_file_name}."
+                    ):
+                        return content
         except Exception as exc:
             logger.error(f"Error while running youtube_dl: {exc}")
             return None
@@ -614,7 +753,7 @@ class Openedx2Zim:
                 self.build_dir.joinpath("index.html"),
                 "home.html",
                 False,
-                messages=self.html_homepage,
+                messages=self.homepage_html,
                 mooc=self,
                 render_homepage=True,
             )
@@ -652,12 +791,15 @@ class Openedx2Zim:
                 f"Using cache: {self.s3_storage.url.netloc} with bucket: {self.s3_storage.bucket_name}"
             )
         logger.info("Testing openedx instance credentials ...")
-        connection = Connection(self.password, self.course_url, self.email)
+        self.instance_connection = InstanceConnection(
+            self.course_url, self.email, self.password
+        )
+        self.instance_connection.establish_connection()
         jinja_init()
-        self.prepare_mooc_data(connection)
+        self.prepare_mooc_data()
         self.parse_course_xblocks()
-        self.annex(connection)
-        self.get_content(connection)
+        self.annex()
+        self.get_content()
         self.render()
         if not self.no_zim:
             self.fname = (

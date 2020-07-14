@@ -7,17 +7,21 @@ from ..utils import jinja
 
 
 class Discussion(BaseXblock):
-    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
-        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+    def __init__(
+        self, xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+    ):
+        super().__init__(
+            xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+        )
 
         # extra vars
         self.data = []
         self.category_title = ""
         self.is_video = False
 
-    def download(self, c):
+    def download(self, instance_connection):
         if self.scraper.forum_thread:
-            content = c.get_page(self.xblock_json["student_view_url"])
+            content = instance_connection.get_page(self.xblock_json["student_view_url"])
             soup = BeautifulSoup(content, "lxml")
             discussion_block = soup.find(
                 re.compile(r".*"), {"data-discussion-id": re.compile(r".*")}

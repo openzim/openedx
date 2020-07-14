@@ -13,17 +13,21 @@ logger = getLogger()
 
 
 class Video(BaseXblock):
-    def __init__(self, xblock_json, relative_path, root_url, id, descendants, scraper):
-        super().__init__(xblock_json, relative_path, root_url, id, descendants, scraper)
+    def __init__(
+        self, xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+    ):
+        super().__init__(
+            xblock_json, relative_path, root_url, xblock_id, descendants, scraper
+        )
 
         # extra vars
         self.subs = []
 
-    def download(self, c):
+    def download(self, instance_connection):
         subs_lang = {}
         youtube = False
         if "student_view_data" not in self.xblock_json:
-            content = c.get_page(self.xblock_json["student_view_url"])
+            content = instance_connection.get_page(self.xblock_json["student_view_url"])
             soup = BeautifulSoup.BeautifulSoup(content, "lxml")
             url = str(soup.find("video").find("source")["src"])
             subs = soup.find("video").find_all("track")
@@ -67,7 +71,9 @@ class Video(BaseXblock):
                 ]["url"]
                 youtube = True
             else:
-                content = c.get_page(self.xblock_json["student_view_url"])
+                content = instance_connection.get_page(
+                    self.xblock_json["student_view_url"]
+                )
                 soup = BeautifulSoup.BeautifulSoup(content, "lxml")
                 youtube_json = soup.find("div", attrs={"id": re.compile("^video_")})
                 if youtube_json and youtube_json.has_attr("data-metadata"):
@@ -82,9 +88,11 @@ class Video(BaseXblock):
                         and "transcriptLanguages" in youtube_json
                     ):
                         for lang in youtube_json["transcriptLanguages"]:
-                            subs_lang[lang] = c.conf["instance_url"] + youtube_json[
-                                "transcriptTranslationUrl"
-                            ].replace("__lang__", lang)
+                            subs_lang[lang] = instance_connection.conf[
+                                "instance_url"
+                            ] + youtube_json["transcriptTranslationUrl"].replace(
+                                "__lang__", lang
+                            )
                 else:
                     self.no_video = True
                     logger.error(
@@ -109,7 +117,9 @@ class Video(BaseXblock):
                     prepare_url(urllib.parse.unquote(url), self.scraper.instance_url),
                     video_path,
                 )
-        real_subtitle = download_and_convert_subtitles(self.output_path, subs_lang, c)
+        real_subtitle = download_and_convert_subtitles(
+            self.output_path, subs_lang, instance_connection
+        )
         self.subs = [
             {"file": f"{self.folder_name}/{lang}.vtt", "code": lang}
             for lang in real_subtitle
@@ -121,7 +131,7 @@ class Video(BaseXblock):
             "video.html",
             False,
             format=self.scraper.video_format,
-            folder_name=self.folder_name,
+            video_path=f"{self.folder_name}/video.{self.scraper.video_format}",
             title=self.xblock_json["display_name"],
             subs=self.subs,
         )

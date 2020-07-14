@@ -16,8 +16,8 @@
       <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.xblock_json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
         <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.xblock_json["id"] }}" data-position="1">
           <div class="sequence-nav">
-              {% if pred_vertical %}
-              <a href="{{ rooturl }}{{ pred_vertical.relative_path }}/index.html" title="{{ pred_vertical.display_name }}">
+              {% if prev_vertical %}
+              <a href="{{ rooturl }}{{ prev_vertical.relative_path }}/index.html" title="{{ prev_vertical.display_name }}">
                 <button class="sequence-nav-button button-previous">
               {% else %}
                 <button class="sequence-nav-button button-previous deactivated">
@@ -25,7 +25,7 @@
                   <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
                   <span class="sr">Previous</span>
                 </button>
-              {% if pred_vertical %}
+              {% if prev_vertical %}
               </a>
 	      {% endif %}
             <nav class="sequence-list-wrapper" aria-label="Sequence">
@@ -73,8 +73,8 @@
             </div>
           </div>
           <nav class="sequence-bottom" aria-label="Section">
-              <a href="{{ rooturl }}{{ pred_vertical.relative_path }}/index.html" title="{{ pred_vertical.display_name }}">
-              {% if pred_vertical %}
+              <a href="{{ rooturl }}{{ prev_vertical.relative_path }}/index.html" title="{{ prev_vertical.display_name }}">
+              {% if prev_vertical %}
                 <button class="sequence-nav-button button-previous">
               {% else %}
                 <button class="sequence-nav-button button-previous deactivated">
