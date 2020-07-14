@@ -28,7 +28,7 @@ OPTIMIZER_VERSIONS = {
     "gif": "v1",
 }
 
-DOWNLOADABLE_CONTENT = [
+DOWNLOADABLE_EXTENSIONS = [
     ".doc",
     ".docx",
     ".pdf",
@@ -72,7 +72,7 @@ INSTANCE_CONFIGS = {
     },
 }
 
-UNSUPPORTED_XBLOCKS = {"grademebutton": "Grade Me (Unavialable Offline)"}
+UNSUPPORTED_XBLOCKS = {"grademebutton": "Grade Me (Unavailable Offline)"}
 
 
 class Global:

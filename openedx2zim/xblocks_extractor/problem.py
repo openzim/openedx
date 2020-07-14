@@ -80,10 +80,9 @@ class Problem(BaseXblock):
             )
             if "success" in answers_content:
                 """
-                    #IMPROUVEMENT instance_connection , same as hint ?
+                    #IMPROVEMENT instance_connection , same as hint ?
                     post_data=urlencode({'event_type': "problem_show", "event": { "problem": self.json["id"] }, "page" : self.json["lms_web_url"]}).encode('utf-8')
-                    instance_connection.get_api_json("/event", post_data)
-                    """
+                    instance_connection.get_api_json("/event", post_data) """
                 instance_connection.get_api_json(
                     "/courses/"
                     + self.scraper.course_id

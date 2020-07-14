@@ -27,7 +27,7 @@ from zimscraperlib.zim import ZimInfo, make_zim_file
 
 from .annex import booknav, forum, render_booknav, render_forum, render_wiki, wiki
 from .constants import (
-    DOWNLOADABLE_CONTENT,
+    DOWNLOADABLE_EXTENSIONS,
     IMAGE_FORMATS,
     OPTIMIZER_VERSIONS,
     ROOT_DIR,
@@ -408,7 +408,7 @@ class Openedx2Zim:
                 filename = self.download_and_get_filename(
                     src=anchor.attrib["href"],
                     output_path=output_path,
-                    filter_ext=DOWNLOADABLE_CONTENT,
+                    filter_ext=DOWNLOADABLE_EXTENSIONS,
                 )
                 if filename:
                     anchor.attrib["href"] = f"{path_from_html}/{filename}"
