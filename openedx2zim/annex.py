@@ -15,122 +15,122 @@ from .utils import jinja, markdown, prepare_url
 logger = getLogger()
 
 
-def forum(instance_connection, scraper):
-    forum_output = scraper.build_dir.joinpath("forum")
-    forum_output.mkdir(parents=True, exist_ok=True)
-    content = instance_connection.get_page(
-        scraper.instance_url + "/courses/" + scraper.course_id + "/discussion/forum"
-    )
-    good_content = BeautifulSoup(content, "lxml").find(
-        "script", attrs={"id": "thread-list-template"}
-    )
-    category = collections.OrderedDict()
-    if good_content:
-        soup = BeautifulSoup(content, "lxml")
+class MoocForum:
+    def __init__(self, scraper):
+        self.scraper = scraper
+        self.threads = []
+        self.categories = collections.OrderedDict()
+        self.staff_user = []
+        self.output_path = self.scraper.build_dir.joinpath("forum")
+        self.output_path.mkdir(parents=True, exist_ok=True)
 
-        all_category = soup.find_all(
-            "li", attrs={"class": "forum-nav-browse-menu-item"}
-        )
-        if len(all_category) == 0:
-            soup = BeautifulSoup(
-                good_content.text, "lxml"
-            )  # On Fun plateform, categorie list is in script with id thread-list-template
-            all_category = soup.find_all(
-                "li", attrs={"class": "forum-nav-browse-menu-item"}
-            )
-        for cat in all_category:
+    def add_categories(self, categories):
+        for category in categories:
             if (
-                cat.has_attr("id")
-                and cat["id"] in ["all_discussions", "posts_following"]
+                category.has_attr("id")
+                and category["id"] in ["all_discussions", "posts_following"]
             ) or (
-                cat.has_attr("class")
+                category.has_attr("class")
                 and (
-                    "forum-nav-browse-menu-all" in cat["class"]
-                    or "forum-nav-browse-menu-following" in cat["class"]
+                    "forum-nav-browse-menu-all" in category["class"]
+                    or "forum-nav-browse-menu-following" in category["class"]
                 )
             ):
                 continue
-            if not cat.has_attr("data-discussion-id"):  # and cat.find("a") != None:
-                category[str(uuid.uuid4())] = {
-                    "title": cat.find(
+            if not category.has_attr(
+                "data-discussion-id"
+            ):  # and cat.find("a") != None:
+                self.categories[str(uuid.uuid4())] = {
+                    "title": category.find(
                         ["a", "span"], attrs={"class": "forum-nav-browse-title"}
                     ).text,
                     "catego_with_sub_catego": True,
                 }
-            elif cat.has_attr("data-discussion-id"):
-                category[cat["data-discussion-id"]] = {
-                    "title": str(cat.text).replace("\n", "")
+            elif category.has_attr("data-discussion-id"):
+                self.categories[category["data-discussion-id"]] = {
+                    "title": str(category.text).replace("\n", "")
                 }
 
-    else:
-        logger.error("No forum category found")
-    threads = []
-
-    # Search for Staff user :
-    json_user = {}
-    section_user = BeautifulSoup(content, "lxml").find(
-        "section", attrs={"id": "discussion-container"}
-    )
-    if section_user and section_user.has_attr("data-roles"):
-        if "&#34;" in section_user["data-roles"]:
-            json_user = json.loads(html.unescape(section_user["data-roles"]))
-        else:
-            json_user = json.loads(section_user["data-roles"])
-    else:
-        section_user = re.search("roles: [^\n]*", content)
-        if section_user:  # TODO check ok in this case
-            json_user = json.loads(re.sub(r"roles: (.*),", r"\1", section_user.group()))
-    staff_user = []
-    for x in json_user:
-        staff_user += [str(y) for y in json_user[x]]
-
-    # Search category
-    for x in category:
-        forum_output.joinpath(x).mkdir(parents=True, exist_ok=True)
-        url = (
-            "/courses/"
-            + scraper.course_id
-            + "/discussion/forum/"
-            + x
-            + "/inline?ajax=1&page=1&sort_key=activity&sort_order=desc"
-        )
-        data = instance_connection.get_api_json(url)
-        d = data["discussion_data"]
-        threads += d
-        for i in range(1, data["num_pages"]):
-            url = (
-                "/courses/"
-                + scraper.course_id
-                + "/discussion/forum/"
-                + x
-                + "/inline?ajax=1&page="
-                + str(i + 1)
-                + "&sort_key=activity&sort_order=desc"
+    def prepare_forum_categories(self, forum_content):
+        soup = BeautifulSoup(forum_content, "lxml")
+        good_content = soup.find("script", attrs={"id": "thread-list-template"})
+        if good_content:
+            categories = soup.find_all(
+                "li", attrs={"class": "forum-nav-browse-menu-item"}
             )
-            data = instance_connection.get_api_json(url)
-            d = data["discussion_data"]
-            threads += d
+            if len(categories) == 0:
+                soup = BeautifulSoup(
+                    good_content.text, "lxml"
+                )  # On Fun plateform, categorie list is in script with id thread-list-template
+                categories = soup.find_all(
+                    "li", attrs={"class": "forum-nav-browse-menu-item"}
+                )
+            self.add_categories(categories)
+        else:
+            logger.error("No forum category found")
 
-    for thread in threads:
+    def populate_staff_users(self, forum_content):
+        user_json = {}
+        user_section = BeautifulSoup(forum_content, "lxml").find(
+            "section", attrs={"id": "discussion-container"}
+        )
+        if user_section and user_section.has_attr("data-roles"):
+            if "&#34;" in user_section["data-roles"]:
+                user_json = json.loads(html.unescape(user_section["data-roles"]))
+            else:
+                user_json = json.loads(user_section["data-roles"])
+        else:
+            user_section = re.search("roles: [^\n]*", forum_content)
+            if user_section:  # TODO check ok in this case
+                user_json = json.loads(
+                    re.sub(r"roles: (.*),", r"\1", user_section.group())
+                )
+        for user in user_json:
+            self.staff_user += [str(y) for y in user_json[user]]
+
+    def prepare_thread_list(self):
+        for category in self.categories:
+            self.output_path.joinpath(category).mkdir(parents=True, exist_ok=True)
+            data = self.scraper.instance_connection.get_api_json(
+                "/courses/"
+                + self.scraper.course_id
+                + "/discussion/forum/"
+                + category
+                + "/inline?ajax=1&page=1&sort_key=activity&sort_order=desc"
+            )
+            self.threads += data["discussion_data"]
+            for i in range(1, data["num_pages"]):
+                data = self.scraper.instance_connection.get_api_json(
+                    "/courses/"
+                    + self.scraper.course_id
+                    + "/discussion/forum/"
+                    + category
+                    + "/inline?ajax=1&page="
+                    + str(i + 1)
+                    + "&sort_key=activity&sort_order=desc"
+                )
+                self.threads += data["discussion_data"]
+
+    def fetch_thread_data(self, thread):
         url = (
             "/courses/"
-            + scraper.course_id
+            + self.scraper.course_id
             + "/discussion/forum/"
             + thread["commentable_id"]
             + "/threads/"
             + thread["id"]
             + "?ajax=1&resp_skip=0&resp_limit=100"
         )
-        forum_output.joinpath(thread["id"]).mkdir(parents=True, exist_ok=True)
+        self.output_path.joinpath(thread["id"]).mkdir(parents=True, exist_ok=True)
         try:
-            thread["data_thread"] = instance_connection.get_api_json(
-                url, referer=scraper.instance_url + url.split("?")[0]
+            thread["data_thread"] = self.scraper.instance_connection.get_api_json(
+                url, referer=self.scraper.instance_url + url.split("?")[0]
             )
             total_answers = 100
             while total_answers < thread["data_thread"]["content"]["resp_total"]:
                 url = (
                     "/courses/"
-                    + scraper.course_id
+                    + self.scraper.course_id
                     + "/discussion/forum/"
                     + thread["commentable_id"]
                     + "/threads/"
@@ -139,92 +139,99 @@ def forum(instance_connection, scraper):
                     + str(total_answers)
                     + "&resp_limit=100"
                 )
-                new_answers = instance_connection.get_api_json(
-                    url, referer=scraper.instance_url + url.split("?")[0]
+                new_answers = self.scraper.instance_connection.get_api_json(
+                    url, referer=self.scraper.instance_url + url.split("?")[0]
                 )["content"]["children"]
                 thread["data_thread"]["content"]["children"] += new_answers
                 total_answers += 100
         except Exception:
             try:
-                thread["data_thread"] = instance_connection.get_api_json(url)
+                thread["data_thread"] = self.scraper.instance_connection.get_api_json(
+                    url
+                )
             except Exception:
-                logger.debug("Can not get " + scraper.instance_url + url + "discussion")
-        if (
-            "endorsed_responses" in thread["data_thread"]["content"]
-            or "non_endorsed_responses" in thread["data_thread"]["content"]
-        ) and "children" in thread["data_thread"]["content"]:
-            logger.warning("pb endorsed VS children" + thread["id"])
-        if "children" not in thread["data_thread"]["content"]:
-            thread["data_thread"]["content"]["children"] = []
-        if "endorsed_responses" in thread["data_thread"]["content"]:
-            thread["data_thread"]["content"]["children"] += thread["data_thread"][
-                "content"
-            ]["endorsed_responses"]
-        if "non_endorsed_responses" in thread["data_thread"]["content"]:
-            thread["data_thread"]["content"]["children"] += thread["data_thread"][
-                "content"
-            ]["non_endorsed_responses"]
-        thread["data_thread"]["content"]["body"] = scraper.dl_dependencies(
-            markdown(thread["data_thread"]["content"]["body"]),
-            forum_output.joinpath(thread["id"]),
-            "",
-            instance_connection,
-            scraper,
-        )
+                logger.debug(
+                    "Can not get " + self.scraper.instance_url + url + "discussion"
+                )
+
+    def update_thread_children(self, thread):
         for children in thread["data_thread"]["content"]["children"]:
-            children["body"] = scraper.dl_dependencies(
-                markdown(children["body"]),
-                forum_output.joinpath(thread["id"]),
-                "",
-                instance_connection,
-                scraper,
+            children["body"] = self.scraper.dl_dependencies(
+                content=markdown(children["body"]),
+                output_path=self.output_path.joinpath(thread["id"]),
+                path_from_html="",
             )
             if "children" in children:
                 for children_children in children["children"]:
-                    children_children["body"] = scraper.dl_dependencies(
-                        markdown(children_children["body"]),
-                        forum_output.joinpath(thread["id"]),
-                        "",
-                        instance_connection,
-                        scraper,
+                    children_children["body"] = self.scraper.dl_dependencies(
+                        content=markdown(children_children["body"]),
+                        output_path=self.output_path.joinpath(thread["id"]),
+                        path_from_html="",
                     )
 
-    return threads, category, staff_user
+    def annex_forum(self):
+        forum_content = self.scraper.instance_connection.get_page(
+            self.scraper.instance_url
+            + "/courses/"
+            + self.scraper.course_id
+            + "/discussion/forum"
+        )
+        self.prepare_forum_categories(forum_content)
+        self.populate_staff_users(forum_content)
+        self.prepare_thread_list()
 
+        for thread in self.threads:
+            self.fetch_thread_data(thread)
+            if (
+                "endorsed_responses" in thread["data_thread"]["content"]
+                or "non_endorsed_responses" in thread["data_thread"]["content"]
+            ) and "children" in thread["data_thread"]["content"]:
+                logger.warning("pb endorsed VS children" + thread["id"])
+            if "children" not in thread["data_thread"]["content"]:
+                thread["data_thread"]["content"]["children"] = []
+            if "endorsed_responses" in thread["data_thread"]["content"]:
+                thread["data_thread"]["content"]["children"] += thread["data_thread"][
+                    "content"
+                ]["endorsed_responses"]
+            if "non_endorsed_responses" in thread["data_thread"]["content"]:
+                thread["data_thread"]["content"]["children"] += thread["data_thread"][
+                    "content"
+                ]["non_endorsed_responses"]
+            thread["data_thread"]["content"]["body"] = self.scraper.dl_dependencies(
+                content=markdown(thread["data_thread"]["content"]["body"]),
+                output_path=self.output_path.joinpath(thread["id"]),
+                path_from_html="",
+            )
+            self.update_thread_children(thread)
 
-def render_forum(scraper):
-    threads = scraper.forum_thread
-    staff_user = scraper.staff_user_forum
-    forum_output = scraper.build_dir.joinpath("forum")
-    category = scraper.forum_category
-
-    thread_by_category = collections.defaultdict(list)
-    for thread in threads:
-        thread_by_category[thread["commentable_id"]].append(thread)
-    jinja(
-        forum_output.joinpath("index.html"),
-        "forum.html",
-        False,
-        category=category,
-        thread_by_category=thread_by_category,
-        staff_user=staff_user,
-        mooc=scraper,
-        rooturl="../",
-        display_on_mobile=True,
-    )
-    for thread in threads:
+    def render_forum(self):
+        thread_by_category = collections.defaultdict(list)
+        for thread in self.threads:
+            thread_by_category[thread["commentable_id"]].append(thread)
         jinja(
-            forum_output.joinpath(thread["id"]).joinpath("index.html"),
+            self.output_path.joinpath("index.html"),
             "forum.html",
             False,
-            thread=thread["data_thread"]["content"],
-            category=category,
+            category=self.categories,
             thread_by_category=thread_by_category,
-            staff_user=staff_user,
-            mooc=scraper,
-            rooturl="../../../",
-            forum_menu=True,
+            staff_user=self.staff_user,
+            scraper=self.scraper,
+            rooturl="../",
+            display_on_mobile=True,
         )
+        for thread in self.threads:
+            jinja(
+                self.output_path.joinpath(thread["id"]).joinpath("index.html"),
+                "forum.html",
+                False,
+                thread=thread["data_thread"]["content"],
+                category=self.categories,
+                thread_by_category=thread_by_category,
+                staff_user=self.staff_user,
+                scraper=self.scraper,
+                rooturl="../../../",
+                forum_menu=True,
+            )
 
 
 def wiki(instance_connection, scraper):
