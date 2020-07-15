@@ -22,6 +22,8 @@ class Discussion(BaseXblock):
     def download(self, instance_connection):
         if self.scraper.forum_thread:
             content = instance_connection.get_page(self.xblock_json["student_view_url"])
+            if not content:
+                return
             soup = BeautifulSoup(content, "lxml")
             discussion_block = soup.find(
                 re.compile(r".*"), {"data-discussion-id": re.compile(r".*")}

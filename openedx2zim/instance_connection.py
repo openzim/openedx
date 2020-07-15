@@ -19,7 +19,7 @@ def get_instance_config(instance_netloc):
     return INSTANCE_CONFIGS[instance_netloc]
 
 
-def get_response(url, post_data, headers, max_attempts=2):
+def get_response(url, post_data, headers, max_attempts=5):
     req = urllib.request.Request(url, post_data, headers)
     for attempt in range(max_attempts):
         try:
@@ -27,6 +27,8 @@ def get_response(url, post_data, headers, max_attempts=2):
         except Exception as exc:
             if attempt < max_attempts - 1:
                 logger.debug(f"Error opening {url}: {exc}\nRetrying ...")
+            else:
+                logger.debug(f"Error opening {url}: {exc}")
     logger.error(f"Max attempts exceeded for {url}")
     return {}
 

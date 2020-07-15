@@ -20,6 +20,8 @@ class Lti(BaseXblock):
             + "/handler/preview_handler"
         )
         content = instance_connection.get_page(url)
+        if not content:
+            return
         soup = BeautifulSoup(content, "lxml")
         content_url = soup.find("form")
         self.scraper.download_file(
