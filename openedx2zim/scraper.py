@@ -562,8 +562,9 @@ class Openedx2Zim:
 
         # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
-        for obj in self.xblock_extractor_objects:
-            obj.download(self.instance_connection)
+        # for obj in self.xblock_extractor_objects:
+        #     obj.download(self.instance_connection)
+        self.head_course_xblock.download(self.instance_connection)
 
     def s3_credentials_ok(self):
         logger.info("Testing S3 Optimization Cache credentials ...")
