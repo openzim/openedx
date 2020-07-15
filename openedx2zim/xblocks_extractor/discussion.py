@@ -20,7 +20,7 @@ class Discussion(BaseXblock):
         self.is_video = False
 
     def download(self, instance_connection):
-        if self.scraper.forum_thread:
+        if hasattr(self.scraper, "forum"):
             content = instance_connection.get_page(self.xblock_json["student_view_url"])
             if not content:
                 return
@@ -30,7 +30,7 @@ class Discussion(BaseXblock):
             )
             if discussion_block:
                 discussion_id = discussion_block["data-discussion-id"]
-                for thread in self.scraper.forum_thread:
+                for thread in self.scraper.forum.thread:
                     if thread["commentable_id"] == discussion_id:
                         self.data.append(thread)
                 if len(self.data) != 0:

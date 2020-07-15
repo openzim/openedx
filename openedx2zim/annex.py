@@ -328,16 +328,16 @@ class MoocWiki:
         self.get_first_page()
         page_to_visit = [self.first_page]
         while page_to_visit:
-            get_page_error = False
             url = page_to_visit.pop()
             self.add_to_wiki_data(url)
             content = self.scraper.instance_connection.get_page(url)
             # Parse content page
-            soup = BeautifulSoup(content, "lxml")
-            text = soup.find("div", attrs={"class": "wiki-article"})
-            if text:  # If it's a page (and not a list of page)
-                self.update_wiki_page(soup, text, url, page_to_visit)
-            elif get_page_error:
+            if content:
+                soup = BeautifulSoup(content, "lxml")
+                text = soup.find("div", attrs={"class": "wiki-article"})
+                if text:  # If it's a page (and not a list of page)
+                    self.update_wiki_page(soup, text, url, page_to_visit)
+            else:
                 self.wiki_data[url][
                     "text"
                 ] = """<div><h1 class="page-header">Permission Denied</h1><p class="alert denied">Sorry, you don't have permission to view this page.</p></div>"""
