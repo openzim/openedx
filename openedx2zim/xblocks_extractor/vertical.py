@@ -12,7 +12,7 @@ class Vertical(BaseXblock):
 
         # set icon
         if self.xblock_json["block_counts"]["video"] != 0:
-            self.icon_type = "fa-video-camera"
+            self.icon_type = "fa-video"
         elif self.xblock_json["block_counts"]["problem"] != 0:
             self.icon_type = "fa-question-circle"
         elif self.xblock_json["block_counts"]["discussion"] != 0:

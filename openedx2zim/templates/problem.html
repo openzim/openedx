@@ -1,7 +1,7 @@
           <div id="{{ problem.problem_id }}">
             {% if not problem.answers %}
 		<div class="noanswers">
-          		<p data-l10n-id="no_answers_for_problem" >  <b> Warning : </b> There is not automatic correction available for this problem. </p>
+          		<p>  <b> Warning : </b> There is not automatic correction available for this problem. </p>
 	        </div>
             {% endif %}
             {{ problem.html_content }}

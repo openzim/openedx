@@ -14,6 +14,10 @@ def read(*names, **kwargs):
         return fh.read()
 
 
+print("Downloading JS dependencies...")
+subprocess.run([str(root_dir.joinpath("get_js_deps.sh").resolve())], check=True)
+
+
 setup(
     name="openedx2zim",
     version=read("openedx2zim", "VERSION").strip(),
