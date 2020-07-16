@@ -25,7 +25,7 @@ from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
 from zimscraperlib.zim import ZimInfo, make_zim_file
 
-from .annex import booknav, forum, render_booknav, render_forum, render_wiki, wiki
+from .annex import MoocForum, MoocWiki
 from .constants import (
     DOWNLOADABLE_EXTENSIONS,
     IMAGE_FORMATS,
@@ -176,11 +176,6 @@ class Openedx2Zim:
         self.course_xblocks = None
         self.root_xblock_id = None
 
-        # forum related stuff
-        self.forum_thread = None
-        self.forum_category = None
-        self.staff_user_forum = None
-
     def get_course_id(self, url, course_page_name, course_prefix, instance_url):
         clean_url = re.match(
             instance_url + course_prefix + ".*" + course_page_name, url
@@ -282,6 +277,91 @@ class Openedx2Zim:
             root_url="../",
         )
 
+    def get_book_list(self, book, output_path):
+        pdf = book.find_all("a")
+        book_list = []
+        for url in pdf:
+            file_name = pathlib.Path(urllib.parse.urlparse(url["rel"][0]).path).name
+            self.download_file(
+                prepare_url(url["rel"][0], self.instance_url),
+                output_path.joinpath(file_name),
+            )
+            book_list.append({"url": file_name, "name": url.get_text()})
+        return book_list
+
+    def annex_extra_page(self, tab_href, tab_org_path):
+        output_path = self.build_dir.joinpath(tab_org_path)
+        output_path.mkdir(parents=True, exist_ok=True)
+        page_content = self.instance_connection.get_page(self.instance_url + tab_href)
+        if not page_content:
+            logger.error(f"Failed to get page content for tab {tab_org_path}")
+            raise SystemExit(1)
+        soup_page = BeautifulSoup(page_content, "lxml")
+        just_content = soup_page.find("section", attrs={"class": "container"})
+
+        # its a content page
+        if just_content is not None:
+            html_content = self.dl_dependencies(
+                content=str(just_content), output_path=output_path, path_from_html="",
+            )
+            self.annexed_pages.append(
+                {
+                    "output_path": output_path,
+                    "content": html_content,
+                    "title": soup_page.find("title").get_text(),
+                }
+            )
+            return f"{tab_org_path}/index.html"
+
+        # page contains a book_list
+        book = soup_page.find("section", attrs={"class": "book-sidebar"})
+        if book is not None:
+            self.book_lists.append(
+                {
+                    "output_path": output_path,
+                    "book_list": self.get_book_list(book, output_path),
+                    "dir_path": tab_org_path,
+                }
+            )
+            return f"{tab_org_path}/index.html"
+
+        # page is not supported
+        logger.warning(
+            "Oh it's seems we does not support one type of extra content (in top bar) :"
+            + tab_org_path
+        )
+        return None
+
+    def get_tab_path_and_name(self, tab_text, tab_href):
+        # set tab_org_path based on tab_href
+        if tab_href[-1] == "/":
+            tab_org_path = tab_href[:-1].split("/")[-1]
+        else:
+            tab_org_path = tab_href.split("/")[-1]
+
+        # default value for tab_name and tab_path
+        tab_name = tab_text
+        tab_path = None
+
+        # check for paths in org_tab_path
+        if tab_org_path == "course" or "courseware" in tab_org_path:
+            tab_name = tab_text.replace(", current location", "")
+            tab_path = "course/" + self.head_course_xblock.folder_name + "/index.html"
+        elif "info" in tab_org_path:
+            tab_name = tab_text.replace(", current location", "")
+            tab_path = "/index.html"
+        elif "wiki" in tab_org_path and self.add_wiki:
+            self.wiki = MoocWiki(self)
+            self.wiki.annex_wiki()
+            tab_path = f"{str(self.wiki.wiki_path)}/index.html"
+        elif "forum" in tab_org_path and self.add_forum:
+            self.forum = MoocForum(self)
+            self.forum.annex_forum()
+            tab_path = "forum/index.html"
+        elif ("wiki" not in tab_org_path) and ("forum" not in tab_org_path):
+            tab_path = self.annex_extra_page(tab_href, tab_org_path)
+        return tab_name, tab_path
+
     def annex(self):
         logger.info("Getting course tabs ...")
         content = self.instance_connection.get_page(self.course_url)
@@ -297,83 +377,11 @@ class Openedx2Zim:
         )
         if course_tabs is not None:
             for tab in course_tabs.find_all("li"):
-                tab = tab.find("a")
-                if tab["href"][-1] == "/":
-                    tab_path = tab["href"][:-1].split("/")[-1]
-                else:
-                    tab_path = tab["href"].split("/")[-1]
-                if tab_path == "course" or "courseware" in tab_path:
-                    name = tab.get_text().replace(", current location", "")
-                    self.course_tabs[name] = (
-                        "course/" + self.head_course_xblock.folder_name + "/index.html"
-                    )
-                if "info" in tab_path:
-                    name = tab.get_text().replace(", current location", "")
-                    self.course_tabs[name] = "/index.html"
-                if (
-                    tab_path == "course"
-                    or "edxnotes" in tab_path
-                    or "progress" in tab_path
-                    or "info" in tab_path
-                    or "courseware" in tab_path
-                ):
-                    continue
-                if "wiki" in tab_path and self.add_wiki:
-                    self.wiki, self.wiki_name, tab_path = wiki(
-                        self.instance_connection, self
-                    )
-                elif "forum" in tab_path and self.add_forum:
-                    tab_path = "forum/"
-                    (
-                        self.forum_thread,
-                        self.forum_category,
-                        self.staff_user_forum,
-                    ) = forum(self.instance_connection, self)
-                elif ("wiki" not in tab_path) and ("forum" not in tab_path):
-                    output_path = self.build_dir.joinpath(tab_path)
-                    output_path.mkdir(parents=True, exist_ok=True)
-                    page_content = self.instance_connection.get_page(
-                        self.instance_url + tab["href"]
-                    )
-                    if not page_content:
-                        logger.error(f"Failed to get page content for tab {tab_path}")
-                        raise SystemExit(1)
-                    soup_page = BeautifulSoup(page_content, "lxml")
-                    just_content = soup_page.find(
-                        "section", attrs={"class": "container"}
-                    )
-                    if just_content is not None:
-                        html_content = self.dl_dependencies(
-                            content=str(just_content),
-                            output_path=output_path,
-                            path_from_html="",
-                        )
-                        self.annexed_pages.append(
-                            {
-                                "output_path": output_path,
-                                "content": html_content,
-                                "title": soup_page.find("title").get_text(),
-                            }
-                        )
-                    else:
-                        book = soup_page.find(
-                            "section", attrs={"class": "book-sidebar"}
-                        )
-                        if book is not None:
-                            self.book_lists.append(
-                                {
-                                    "output_path": output_path,
-                                    "book_list": booknav(self, book, output_path),
-                                    "dir_path": tab_path,
-                                }
-                            )
-                        else:
-                            logger.warning(
-                                "Oh it's seems we does not support one type of extra content (in top bar) :"
-                                + tab_path
-                            )
-                            continue
-                self.course_tabs[tab.get_text()] = tab_path + "/index.html"
+                tab_name, tab_path = self.get_tab_path_and_name(
+                    tab_text=tab.get_text(), tab_href=tab.find("a")["href"]
+                )
+                if tab_name is not None and tab_path is not None:
+                    self.course_tabs[tab_name] = tab_path
 
     def download_and_get_filename(
         self, src, output_path, with_ext=None, filter_ext=None
@@ -562,8 +570,6 @@ class Openedx2Zim:
 
         # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
-        # for obj in self.xblock_extractor_objects:
-        #     obj.download(self.instance_connection)
         self.head_course_xblock.download(self.instance_connection)
 
     def s3_credentials_ok(self):
@@ -730,6 +736,18 @@ class Openedx2Zim:
                 if downloaded_file.resolve() != fpath.resolve() and not fpath.exists():
                     shutil.move(downloaded_file, fpath)
 
+    def render_booknav(self):
+        for book_nav in self.book_lists:
+            jinja(
+                book_nav["output_path"].joinpath("index.html"),
+                "booknav.html",
+                False,
+                book_list=book_nav["book_list"],
+                dir_path=book_nav["dir_path"],
+                mooc=self,
+                rooturl="../../../",
+            )
+
     def render(self):
         # Render course
         self.head_course_xblock.render()
@@ -748,15 +766,15 @@ class Openedx2Zim:
 
         # render wiki if available
         if hasattr(self, "wiki"):
-            render_wiki(self)
+            self.wiki.render_wiki()
 
         # render forum if available
-        if self.forum_category:
-            render_forum(self)
+        if hasattr(self, "forum"):
+            self.forum.render_forum()
 
         # render book lists
         if len(self.book_lists) != 0:
-            render_booknav(self)
+            self.render_booknav()
         if self.has_homepage:
             # render homepage
             jinja(
