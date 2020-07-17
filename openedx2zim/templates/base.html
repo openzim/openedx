@@ -6,15 +6,18 @@
     <meta name="generator" content="https://github.com/openzim/openedx/"/>
     <meta name="author" content="kiwix team"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link id="favicon" rel="shortcut icon" href="{{ rooturl }}/favicon.png" type="image/png">
     <link href="{{ rooturl }}assets/main.css" rel="stylesheet" type="text/css" />
     <link href="{{ rooturl }}assets/fontawesome/css/all.css" rel="stylesheet" type="text/css" />
     <link href="{{ rooturl }}assets/videojs/video-js.min.css" rel="stylesheet" type="text/css">
-    <script type="text/javascript" src="{{ rooturl }}assets/jquery/jquery.min.js"></script>
+    <script src="{{ rooturl }}assets/zim_prefix.js"></script>
+    <script type="{{ rooturl }}text/javascript" src="{{ rooturl }}assets/jquery.min.js"></script>
     <script src="{{ rooturl }}assets/videojs/video.min.js"></script>
+    <script src="{{ rooturl }}assets/ogvjs/ogv-support.js"></script>
+    <script src="{{ rooturl }}assets/ogvjs/ogv.js"></script>
+    <script src="{{ rooturl }}assets/videojs-ogvjs.js"></script>
     {% block addhead %}{% endblock %}
     <script type="text/javascript" src="{{ rooturl }}assets/mooc.js"></script>
-    <script type="application/l10n">{% include "l10n_strings.json" %}</script>
-    <link rel="icon" type="image/png" href="{{ rooturl }}/favicon.png">
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
     <div class="topmobilebar">

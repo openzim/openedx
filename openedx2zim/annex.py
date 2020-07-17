@@ -24,10 +24,7 @@ class MoocForum:
 
     def add_categories(self, categories):
         for category in categories:
-            if (
-                category.has_attr("id")
-                and category["id"] in ["all_discussions", "posts_following"]
-            ) or (
+            if (category.get("id") in ["all_discussions", "posts_following"]) or (
                 category.has_attr("class")
                 and (
                     "forum-nav-browse-menu-all" in category["class"]

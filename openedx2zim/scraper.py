@@ -86,6 +86,7 @@ class Openedx2Zim:
         password,
         video_format,
         low_quality,
+        autoplay,
         name,
         title,
         description,
@@ -143,6 +144,7 @@ class Openedx2Zim:
         self.add_wiki = add_wiki
         self.add_forum = add_forum
         self.ignore_missing_xblocks = ignore_missing_xblocks
+        self.autoplay = autoplay
 
         # authentication
         self.email = email
@@ -480,6 +482,7 @@ class Openedx2Zim:
                             format=self.video_format,
                             video_path=filename,
                             subs=[],
+                            autoplay=self.autoplay,
                         )
                         iframe.getparent().replace(iframe, lxml.html.fromstring(x))
                 elif ".pdf" in src:
