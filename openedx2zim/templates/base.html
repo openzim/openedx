@@ -6,15 +6,14 @@
     <meta name="generator" content="https://github.com/openzim/openedx/"/>
     <meta name="author" content="kiwix team"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link href="{{ rooturl }}static/css/main.css" rel="stylesheet" type="text/css" />
-    <link href="{{ rooturl }}static/css/font-awesome.css" rel="stylesheet" type="text/css" />
-    <link href="{{ rooturl }}static/css/video-js.css" rel="stylesheet" type="text/css">
-    <script type="text/javascript" src="{{ rooturl }}static/jquery-2.1.4.min.js"></script>
-    <script src="{{ rooturl }}static/video.js"></script>
+    <link href="{{ rooturl }}assets/main.css" rel="stylesheet" type="text/css" />
+    <link href="{{ rooturl }}assets/fontawesome/css/all.css" rel="stylesheet" type="text/css" />
+    <link href="{{ rooturl }}assets/videojs/video-js.min.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="{{ rooturl }}assets/jquery/jquery.min.js"></script>
+    <script src="{{ rooturl }}assets/videojs/video.min.js"></script>
     {% block addhead %}{% endblock %}
-    <script type="text/javascript" src="{{ rooturl }}static/mooc.js"></script>
+    <script type="text/javascript" src="{{ rooturl }}assets/mooc.js"></script>
     <script type="application/l10n">{% include "l10n_strings.json" %}</script>
-    <script src="{{ rooturl }}static/l10n.js" type="text/javascript"></script>
     <link rel="icon" type="image/png" href="{{ rooturl }}/favicon.png">
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
@@ -46,53 +45,32 @@
         {% block body %}{% endblock %}
    </div>
     </div>
-{#
-    <script type="text/x-mathjax-config">
-      MathJax.Hub.Config({
-          tex2jax: {
-            inlineMath: [ ['$','$'], ["\\(","\\)"]],
-            displayMath: [ ['$$','$$'], ["\\[","\\]"]]}
-      });
-    </script>
-#}
-	<script type="text/x-mathjax-config">
-	  MathJax.Hub.Config({
-	    tex2jax: {
-	      inlineMath: [
-		["\\(","\\)"],
-		['[mathjaxinline]','[/mathjaxinline]']
-	      ],
-	      displayMath: [
-		["\\[","\\]"],
-		['[mathjax]','[/mathjax]']
-	      ]
-	    }
-	  });
-          MathJax.Hub.setRenderer("PreviewHTML");
-	</script>
-    <script type="text/x-mathjax-config">
-
-      // In order to eliminate all flashing during interactive
-      // preview, it is necessary to set processSectionDelay to 0
-      // (remove delay between input and output phases). This
-      // effectively disables fast preview, regardless of
-      // the fast preview setting as shown in the context menu.
-      MathJax.Hub.processSectionDelay = 0;
-
-      MathJax.Hub.signal.Interest(function(message) {
-        if(message[0] === "End Math") {
-            set_mathjax_display_div_settings();
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+          ["\\(","\\)"],
+          ['[mathjaxinline]','[/mathjaxinline]']
+              ],
+          displayMath: [
+          ["\\[","\\]"],
+          ['[mathjax]','[/mathjax]']
+              ],
+          autoload: {
+            color: [],
+            colorV2: ['color']
+          },
+          packages: {'[+]': ['noerrors']}
+        },
+        options: {
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process'
+        },
+        loader: {
+          load: ['input/asciimath', '[tex]/noerrors']
         }
-      });
-      function set_mathjax_display_div_settings() {
-        $('.MathJax_Display').each(function( index ) {
-          this.setAttribute('tabindex', '0');
-          this.setAttribute('aria-live', 'off');
-          this.removeAttribute('role');
-          this.removeAttribute('aria-readonly');
-        });
-      }
-    </script>
-    <script type="text/javascript" src="{{ rooturl }}static/MathJax.js?config=TeX-MML-AM_SVG"></script>
+      };
+      </script>
+    <script type="text/javascript" src="{{ rooturl }}assets/mathjax/tex-mml-svg.js"></script>
   </body>
 </html>

@@ -786,7 +786,8 @@ class Openedx2Zim:
                 render_homepage=True,
             )
         shutil.copytree(
-            ROOT_DIR.joinpath("static"), self.build_dir.joinpath("static"),
+            ROOT_DIR.joinpath("templates").joinpath("assets"),
+            self.build_dir.joinpath("assets"),
         )
 
     def update_zim_info(self):

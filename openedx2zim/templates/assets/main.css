@@ -1,14 +1,10 @@
-
 @font-face {
   font-family: 'Open Sans';
-  src: url('font/opensans/OpenSans-Regular-webfont.eot');
-  src: url('font/opensans/OpenSans-Regular-webfont.eot?#iefix') format('embedded-opentype'),
-        url('font/opensans/OpenSans-Regular-webfont.woff2') format('woff2'),
-        url('font/opensans/OpenSans-Regular-webfont.woff') format('woff'),
-        url('font/opensans/OpenSans-Regular-webfont.ttf') format('truetype'),
-        url('font/opensans/OpenSans-Regular-webfont.svg#open_sansregular') format('svg');
-  font-weight: normal;
   font-style: normal;
+  font-weight: 400;
+  src: local('Open Sans Regular'), local('OpenSans-Regular'),
+     url('fonts/opensans/open-sans-v17-vietnamese_latin-ext_latin_greek-ext_greek_cyrillic-ext_cyrillic-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
+     url('fonts/opensans/open-sans-v17-vietnamese_latin-ext_latin_greek-ext_greek_cyrillic-ext_cyrillic-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }
 
 * {

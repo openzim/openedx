@@ -17,7 +17,7 @@ RUN apt-get update -y \
 COPY requirements.txt /src/
 RUN pip3 install -r /src/requirements.txt
 COPY openedx2zim /src/openedx2zim
-COPY setup.py *.md MANIFEST.in /src/
+COPY setup.py *.md get_js_deps.sh MANIFEST.in /src/
 RUN cd /src/ && python3 ./setup.py install
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
