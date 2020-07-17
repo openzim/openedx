@@ -138,4 +138,5 @@ class Video(BaseXblock):
             video_path=f"{self.folder_name}/video.{self.scraper.video_format}",
             title=self.xblock_json["display_name"],
             subs=self.subs,
+            autoplay=self.scraper.autoplay,
         )

@@ -87,3 +87,12 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# External assets
+openedx2zim/templates/assets/fonts/
+openedx2zim/templates/assets/fontawesome/
+openedx2zim/templates/assets/videojs/
+openedx2zim/templates/assets/mathjax/
+openedx2zim/templates/assets/ogvjs/
+openedx2zim/templates/assets/jquery.min.js
+openedx2zim/templates/assets/videojs-ogvjs.js
