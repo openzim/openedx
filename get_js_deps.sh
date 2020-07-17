@@ -21,6 +21,13 @@ ASSETS_PATH="${SCRIPT_PATH}/openedx2zim/templates/assets"
 
 echo "About to download JS assets to ${ASSETS_PATH}"
 
+echo "getting open sans font"
+curl -L -o opensans.zip http://google-webfonts-helper.herokuapp.com/api/fonts/open-sans?download=zip\&subsets=vietnamese,latin-ext,latin,greek-ext,greek,cyrillic-ext,cyrillic\&variants=regular\&formats=woff,woff2
+rm -rf $ASSETS_PATH/fonts/opensans
+mkdir -p $ASSETS_PATH/fonts/opensans
+unzip -o -d $ASSETS_PATH/fonts/opensans opensans.zip
+rm -f opensans.zip
+
 echo "getting fontawesome"
 curl -L -O https://use.fontawesome.com/releases/v5.13.1/fontawesome-free-5.13.1-web.zip
 rm -rf $ASSETS_PATH/fontawesome
