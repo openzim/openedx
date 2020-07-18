@@ -20,7 +20,7 @@ from kiwixstorage import KiwixStorage
 from pif import get_public_ip
 from slugify import slugify
 from zimscraperlib.download import save_large_file
-from zimscraperlib.imaging import resize_image
+from zimscraperlib.imaging import resize_image, convert_image
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
 from zimscraperlib.zim import ZimInfo, make_zim_file
@@ -509,6 +509,30 @@ class Openedx2Zim:
             content = lxml.html.tostring(html_body, encoding="unicode")
         return content
 
+    def get_favicon(self):
+        """ get the favicon from the given URL for the instance or the fallback URL """
+
+        favicon_fpath = self.build_dir.joinpath("favicon.png")
+
+        # download the favicon
+        for favicon_url in [
+            self.instance_connection.instance_config["favicon_url"],
+            "https://github.com/edx/edx-platform/raw/master/lms/static/images/favicon.ico",
+        ]:
+            try:
+                save_large_file(favicon_url, favicon_fpath)
+                logger.debug(f"Favicon successfully downloaded from {favicon_url}")
+                break
+            except Exception:
+                logger.debug(f"Favicon not downloaded from {favicon_url}")
+
+        # convert and resize
+        convert_image(favicon_fpath, favicon_fpath, "PNG")
+        resize_image(favicon_fpath, 48, allow_upscaling=True)
+
+        if not favicon_fpath.exists():
+            raise Exception("Favicon download failed")
+
     def get_content(self):
         """ download the content for the course """
 
@@ -526,10 +550,7 @@ class Openedx2Zim:
                     element.decompose()
 
         # download favicon
-        self.download_file(
-            "https://www.google.com/s2/favicons?domain=" + self.instance_url,
-            self.build_dir.joinpath("favicon.png"),
-        )
+        self.get_favicon()
 
         # get the course url and generate homepage
         logger.info("Getting homepage ...")

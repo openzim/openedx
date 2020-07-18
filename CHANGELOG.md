@@ -8,3 +8,4 @@
 - add s3 based optimization cache
 - removed javascript dependencies from repository
 - add support for webm on systems without native support
+- fix small favicons
