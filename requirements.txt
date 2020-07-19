@@ -6,8 +6,7 @@ Jinja2==2.11.2
 mistune==2.0.0a4
 requests>=2.24,<3.0
 iso-639==0.4.5
-zimscraperlib>=1.1.2,<1.2
-python-magic==0.4.18
+zimscraperlib@git+git://github.com/openzim/python_scraperlib.git@fix_link_rewriting#egg=zimscraperlib
 kiwixstorage>=0.3,<1.0
 pif==0.8.2
 # youtube-dl should be updated as frequently as possible

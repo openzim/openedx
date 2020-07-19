@@ -23,7 +23,7 @@ from zimscraperlib.download import save_large_file
 from zimscraperlib.imaging import resize_image, convert_image
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
-from zimscraperlib.zim import ZimInfo, make_zim_file
+from zimscraperlib.zim import make_zim_file
 
 from .annex import MoocForum, MoocWiki
 from .constants import (
@@ -128,16 +128,6 @@ class Openedx2Zim:
         if tmp_dir:
             pathlib.Path(tmp_dir).mkdir(parents=True, exist_ok=True)
         self.build_dir = pathlib.Path(tempfile.mkdtemp(dir=tmp_dir))
-
-        # zim info
-        self.zim_info = ZimInfo(
-            tags=self.tags + ["_category:openedx", "openedx"],
-            publisher=self.publisher,
-            name=self.name,
-            scraper=SCRAPER,
-            favicon="favicon.png",
-            language="eng",
-        )
 
         # scraper options
         self.course_url = course_url
@@ -785,7 +775,7 @@ class Openedx2Zim:
                 title=page["title"],
                 mooc=self,
                 content=page["content"],
-                rooturl="../../",
+                rooturl="../",
             )
 
         # render wiki if available
@@ -814,20 +804,26 @@ class Openedx2Zim:
             self.build_dir.joinpath("assets"),
         )
 
-    def update_zim_info(self):
+    def get_zim_info(self):
         if not self.has_homepage:
             homepage = f"{self.head_course_xblock.relative_path}/index.html"
         else:
             homepage = "index.html"
 
-        self.zim_info.update(
-            description=self.description
-            if self.description
-            else self.course_info["short_description"],
-            title=self.title if self.title else self.course_info["name"],
-            creator=self.creator if self.creator else self.course_info["org"],
-            homepage=homepage,
+        fallback_description = (
+            self.course_info["short_description"]
+            if self.course_info["short_description"]
+            else f"{self.course_info['name']} from {self.course_info['org']}"
         )
+
+        return {
+            "description": self.description
+            if self.description
+            else fallback_description,
+            "title": self.title if self.title else self.course_info["name"],
+            "creator": self.creator if self.creator else self.course_info["org"],
+            "homepage": homepage,
+        }
 
     def run(self):
         logger.info(
@@ -859,16 +855,23 @@ class Openedx2Zim:
                 self.fname or f"{self.name.replace(' ', '-')}_{{period}}.zim"
             ).format(period=datetime.datetime.now().strftime("%Y-%m"))
             logger.info("building ZIM file")
-            self.update_zim_info()
-            logger.debug(self.zim_info.to_zimwriterfs_args())
+            zim_info = self.get_zim_info()
             if not self.output_dir.exists():
                 self.output_dir.mkdir(parents=True)
             make_zim_file(
-                self.build_dir,
-                self.output_dir,
-                self.fname,
-                self.zim_info,
-                withoutFTIndex=True if self.no_fulltext_index else False,
+                build_dir=self.build_dir,
+                fpath=self.output_dir.joinpath(self.fname),
+                name=self.name,
+                main_page=zim_info["homepage"],
+                favicon="favicon.png",
+                title=zim_info["title"],
+                description=zim_info["description"],
+                language="eng",
+                creator=zim_info["creator"],
+                publisher=self.publisher,
+                tags=self.tags + ["_category:openedx", "openedx"],
+                scraper=SCRAPER,
+                without_fulltext_index=True if self.no_fulltext_index else False,
             )
             if not self.keep_build_dir:
                 logger.info("Removing temp folder...")

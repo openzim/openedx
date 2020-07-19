@@ -48,7 +48,7 @@ INSTANCE_CONFIGS = {
         "course_page_name": "/course",
         "course_prefix": "/courses/",
         "instance_url": "https://courses.edx.org",
-        "favicon_url": "https://courses.edx.org/favicon.ico",
+        "favicon_url": "https://edx.org/favicon.ico",
     },
     "courses.edraak.org": {
         "login_page": "/login_ajax",
