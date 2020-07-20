@@ -177,8 +177,7 @@ class Openedx2Zim:
         ]
         if "%3" in clean_id:  # course_id seems already encode
             return clean_id
-        else:
-            return urllib.parse.quote_plus(clean_id)
+        return urllib.parse.quote_plus(clean_id)
 
     def prepare_mooc_data(self):
         self.instance_url = self.instance_connection.instance_config["instance_url"]
@@ -293,13 +292,10 @@ class Openedx2Zim:
 
         # its a content page
         if just_content is not None:
-            html_content = self.dl_dependencies(
-                content=str(just_content), output_path=output_path, path_from_html="",
-            )
             self.annexed_pages.append(
                 {
                     "output_path": output_path,
-                    "content": html_content,
+                    "content": str(just_content),
                     "title": soup_page.find("title").get_text(),
                 }
             )
@@ -311,7 +307,7 @@ class Openedx2Zim:
             self.book_lists.append(
                 {
                     "output_path": output_path,
-                    "book_list": self.get_book_list(book, output_path),
+                    "book_list": book,
                     "dir_path": tab_org_path,
                 }
             )
@@ -322,6 +318,7 @@ class Openedx2Zim:
             "Oh it's seems we does not support one type of extra content (in top bar) :"
             + tab_org_path
         )
+        shutil.rmtree(output_path, ignore_errors=True)
         return None
 
     def get_tab_path_and_name(self, tab_text, tab_href):
@@ -344,17 +341,21 @@ class Openedx2Zim:
             tab_path = "/index.html"
         elif "wiki" in tab_org_path and self.add_wiki:
             self.wiki = MoocWiki(self)
-            self.wiki.annex_wiki()
             tab_path = f"{str(self.wiki.wiki_path)}/index.html"
         elif "forum" in tab_org_path and self.add_forum:
             self.forum = MoocForum(self)
-            self.forum.annex_forum()
             tab_path = "forum/index.html"
         elif ("wiki" not in tab_org_path) and ("forum" not in tab_org_path):
-            tab_path = self.annex_extra_page(tab_href, tab_org_path)
+            # check if already in dict
+            for _, val in self.course_tabs.items():
+                if val == f"{tab_org_path}/index.html":
+                    tab_path = val
+                    break
+            else:
+                tab_path = self.annex_extra_page(tab_href, tab_org_path)
         return tab_name, tab_path
 
-    def annex(self):
+    def get_course_tabs(self):
         logger.info("Getting course tabs ...")
         content = self.instance_connection.get_page(self.course_url)
         if not content:
@@ -374,6 +375,32 @@ class Openedx2Zim:
                 )
                 if tab_name is not None and tab_path is not None:
                     self.course_tabs[tab_name] = tab_path
+
+    def annex(self):
+        self.get_course_tabs()
+        logger.info("Downloading content for extra pages ...")
+        for page in self.annexed_pages:
+            page["content"] = self.dl_dependencies(
+                content=page["content"],
+                output_path=page["output_path"],
+                path_from_html="",
+            )
+
+        logger.info("Processing book lists")
+        for item in self.book_lists:
+            item["book_list"] = self.get_book_list(
+                item["book_list"], item["output_path"]
+            )
+
+        # annex wiki if available
+        if hasattr(self, "wiki"):
+            logger.info("Annexing wiki ...")
+            self.wiki.annex_wiki()
+
+        # annex forum if available
+        if hasattr(self, "forum"):
+            logger.info("Annexing forum ...")
+            self.forum.annex_forum()
 
     def download_and_get_filename(
         self, src, output_path, with_ext=None, filter_ext=None
@@ -483,6 +510,71 @@ class Openedx2Zim:
                         iframe.attrib["src"] = f"{path_from_html}/{filename}"
         return bool(iframes)
 
+    def handle_jump_to_paths(self, target_path):
+        def check_descendants_and_return_path(xblock_extractor):
+            if xblock_extractor.xblock_json["type"] in ["vertical", "course"]:
+                return xblock_extractor.relative_path + "/index.html"
+            if not xblock_extractor.descendants:
+                return None
+            return check_descendants_and_return_path(xblock_extractor.descendants[0])
+
+        for xblock_extractor in self.xblock_extractor_objects:
+            if (
+                urllib.parse.urlparse(xblock_extractor.xblock_json["lms_web_url"]).path
+                == target_path
+            ):
+                # we have a path match, we now check xblock type to redirect properly
+                # Only vertical and course xblocks have HTMLs
+                return check_descendants_and_return_path(xblock_extractor)
+
+    def relative_dots(self, output_path):
+        relative_path = output_path.resolve().relative_to(self.build_dir.resolve())
+        path_length = len(relative_path.parts)
+        if path_length >= 5:
+            # from a vertical, the root is 5 jumps deep
+            return "../" * 5
+        return "../" * path_length
+
+    def update_root_relative_path(self, anchor, fixed_path, output_path):
+        if fixed_path:
+            anchor.attrib["href"] = self.relative_dots(output_path) + fixed_path
+        else:
+            anchor.attrib["href"] = self.instance_url + anchor.attrib["href"]
+
+    def rewrite_internal_links(self, html_body, output_path):
+        anchors = html_body.xpath("//a")
+        path_prefix = f"{self.instance_connection.instance_config['course_prefix']}{urllib.parse.unquote_plus(self.course_id)}"
+        path_fixed = False
+        for anchor in anchors:
+            if "href" in anchor.attrib:
+                src = urllib.parse.urlparse(anchor.attrib["href"])
+                if (
+                    src.netloc == self.instance_url or src.netloc == ""
+                ) and src.path.startswith(path_prefix):
+                    if "jump_to" in src.path:
+                        # handle jump to paths (to an xblock)
+                        fixed_path = self.handle_jump_to_paths(src.path)
+                        if not fixed_path:
+                            # xblock may be one of those from which a vertical is consisted of
+                            # thus check if the parent has the valid path
+                            # we only need to check one layer deep as there's single layer of xblocks beyond vertical
+                            fixed_path = self.handle_jump_to_paths(
+                                str(pathlib.Path(src.path).parent)
+                            )
+                        self.update_root_relative_path(anchor, fixed_path, output_path)
+                        path_fixed = True
+                    else:
+                        # handle tab paths
+                        _, tab_path = self.get_tab_path_and_name(
+                            tab_text="", tab_href=src.path
+                        )
+                        self.update_root_relative_path(anchor, tab_path, output_path)
+                        path_fixed = True
+                elif src.netloc == "" and src.path.startswith("/"):
+                    self.update_root_relative_path(anchor, None, output_path)
+                    path_fixed = True
+        return path_fixed
+
     def dl_dependencies(self, content, output_path, path_from_html):
         html_body = lxml.html.fromstring(str(content))
         imgs = self.download_images_from_html(html_body, output_path, path_from_html)
@@ -495,7 +587,16 @@ class Openedx2Zim:
         iframes = self.download_iframes_from_html(
             html_body, output_path, path_from_html
         )
-        if imgs or docs or css_files or js_files or sources or iframes:
+        rewritten_links = self.rewrite_internal_links(html_body, output_path)
+        if (
+            imgs
+            or docs
+            or css_files
+            or js_files
+            or sources
+            or iframes
+            or rewritten_links
+        ):
             content = lxml.html.tostring(html_body, encoding="unicode")
         return content
 
@@ -869,7 +970,7 @@ class Openedx2Zim:
                 language="eng",
                 creator=zim_info["creator"],
                 publisher=self.publisher,
-                tags=self.tags + ["_category:openedx", "openedx"],
+                tags=self.tags + ["_category:other", "openedx"],
                 scraper=SCRAPER,
                 without_fulltext_index=True if self.no_fulltext_index else False,
             )

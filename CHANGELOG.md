@@ -10,3 +10,4 @@
 - add support for webm on systems without native support
 - fix small favicons
 - use pylibzim for creating ZIMs
+- fix internal links
