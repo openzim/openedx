@@ -527,53 +527,60 @@ class Openedx2Zim:
                 # Only vertical and course xblocks have HTMLs
                 return check_descendants_and_return_path(xblock_extractor)
 
-    def relative_dots(self, output_path):
-        relative_path = output_path.resolve().relative_to(self.build_dir.resolve())
-        path_length = len(relative_path.parts)
-        if path_length >= 5:
-            # from a vertical, the root is 5 jumps deep
-            return "../" * 5
-        return "../" * path_length
-
-    def update_root_relative_path(self, anchor, fixed_path, output_path):
-        if fixed_path:
-            anchor.attrib["href"] = self.relative_dots(output_path) + fixed_path
-        else:
-            anchor.attrib["href"] = self.instance_url + anchor.attrib["href"]
-
     def rewrite_internal_links(self, html_body, output_path):
+        def relative_dots(self, output_path):
+            relative_path = output_path.resolve().relative_to(self.build_dir.resolve())
+            path_length = len(relative_path.parts)
+            if path_length >= 5:
+                # from a vertical, the root is 5 jumps deep
+                return "../" * 5
+            return "../" * path_length
+
+        def update_root_relative_path(self, anchor, fixed_path, output_path):
+            if fixed_path:
+                anchor.attrib["href"] = relative_dots(output_path) + fixed_path
+            else:
+                anchor.attrib["href"] = self.instance_url + anchor.attrib["href"]
+
         anchors = html_body.xpath("//a")
         path_prefix = f"{self.instance_connection.instance_config['course_prefix']}{urllib.parse.unquote_plus(self.course_id)}"
-        path_fixed = False
+        has_changed = False
         for anchor in anchors:
-            if "href" in anchor.attrib:
-                src = urllib.parse.urlparse(anchor.attrib["href"])
-                if (
-                    src.netloc == self.instance_url or src.netloc == ""
-                ) and src.path.startswith(path_prefix):
-                    if "jump_to" in src.path:
-                        # handle jump to paths (to an xblock)
-                        fixed_path = self.handle_jump_to_paths(src.path)
-                        if not fixed_path:
-                            # xblock may be one of those from which a vertical is consisted of
-                            # thus check if the parent has the valid path
-                            # we only need to check one layer deep as there's single layer of xblocks beyond vertical
-                            fixed_path = self.handle_jump_to_paths(
-                                str(pathlib.Path(src.path).parent)
-                            )
-                        self.update_root_relative_path(anchor, fixed_path, output_path)
-                        path_fixed = True
-                    else:
-                        # handle tab paths
-                        _, tab_path = self.get_tab_path_and_name(
-                            tab_text="", tab_href=src.path
+            if "href" not in anchor.attrib:
+                continue
+            src = urllib.parse.urlparse(anchor.attrib["href"])
+
+            # ignore external links
+            if src.netloc and src.netloc != self.instance_url:
+                continue
+
+            # fix absolute path
+            if src.path.startswith("/"):
+                update_root_relative_path(anchor, None, output_path)
+                has_changed = True
+                continue
+
+            if src.path.startswith(path_prefix):
+                if "jump_to" in src.path:
+                    # handle jump to paths (to an xblock)
+                    path_fixed = self.handle_jump_to_paths(src.path)
+                    if not path_fixed:
+                        # xblock may be one of those from which a vertical is consisted of
+                        # thus check if the parent has the valid path
+                        # we only need to check one layer deep as there's single layer of xblocks beyond vertical
+                        path_fixed = self.handle_jump_to_paths(
+                            str(pathlib.Path(src.path).parent)
                         )
-                        self.update_root_relative_path(anchor, tab_path, output_path)
-                        path_fixed = True
-                elif src.netloc == "" and src.path.startswith("/"):
-                    self.update_root_relative_path(anchor, None, output_path)
-                    path_fixed = True
-        return path_fixed
+                    update_root_relative_path(anchor, path_fixed, output_path)
+                    has_changed = True
+                else:
+                    # handle tab paths
+                    _, tab_path = self.get_tab_path_and_name(
+                        tab_text="", tab_href=src.path
+                    )
+                    update_root_relative_path(anchor, tab_path, output_path)
+                    has_changed = True
+        return has_changed
 
     def dl_dependencies(self, content, output_path, path_from_html):
         html_body = lxml.html.fromstring(str(content))
@@ -588,15 +595,7 @@ class Openedx2Zim:
             html_body, output_path, path_from_html
         )
         rewritten_links = self.rewrite_internal_links(html_body, output_path)
-        if (
-            imgs
-            or docs
-            or css_files
-            or js_files
-            or sources
-            or iframes
-            or rewritten_links
-        ):
+        if any([imgs, docs, css_files, js_files, sources, iframes, rewritten_links]):
             content = lxml.html.tostring(html_body, encoding="unicode")
         return content
 
