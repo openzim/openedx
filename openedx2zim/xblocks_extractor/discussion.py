@@ -20,7 +20,7 @@ class Discussion(BaseXblock):
         self.is_video = False
 
     def download(self, instance_connection):
-        if hasattr(self.scraper, "forum"):
+        if self.scraper.forum:
             content = instance_connection.get_page(self.xblock_json["student_view_url"])
             if not content:
                 return

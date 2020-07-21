@@ -31,10 +31,13 @@ class FreeTextResponse(BaseXblock):
         # check["onclick"] = 'check_freetext("{}")'.format(self.id)
         save["onclick"] = 'save_freetext("{}")'.format(self.xblock_id)
         html_no_answers = '<div class="noanswers"><p data-l10n-id="no_answers_for_freetext" >  <b> Warning : </b> There is not correction for Freetext block. </p> </div>'
-        self.html = html_no_answers + self.scraper.dl_dependencies(
-            content=str(soup),
-            output_path=self.output_path,
-            path_from_html=self.folder_name,
+        self.html = (
+            html_no_answers
+            + self.scraper.html_processor.dl_dependencies_and_fix_links(
+                content=str(soup),
+                output_path=self.output_path,
+                path_from_html=self.folder_name,
+            )
         )
 
     def render(self):

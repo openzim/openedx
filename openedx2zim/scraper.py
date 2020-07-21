@@ -3,7 +3,6 @@
 # vim: ai ts=4 sts=4 et sw=4 nu
 
 import datetime
-import hashlib
 import os
 import pathlib
 import re
@@ -13,7 +12,6 @@ import tempfile
 import urllib
 import uuid
 
-import lxml.html
 import youtube_dl
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
@@ -27,7 +25,6 @@ from zimscraperlib.zim import make_zim_file
 
 from .annex import MoocForum, MoocWiki
 from .constants import (
-    DOWNLOADABLE_EXTENSIONS,
     IMAGE_FORMATS,
     OPTIMIZER_VERSIONS,
     ROOT_DIR,
@@ -35,6 +32,7 @@ from .constants import (
     VIDEO_FORMATS,
     getLogger,
 )
+from .html_processor import HtmlProcessor
 from .instance_connection import InstanceConnection
 from .utils import (
     check_missing_binary,
@@ -159,6 +157,7 @@ class Openedx2Zim:
 
         # scraper data
         self.instance_connection = None
+        self.html_processor = None
         self.xblock_extractor_objects = []
         self.head_course_xblock = None
         self.homepage_html = []
@@ -167,6 +166,8 @@ class Openedx2Zim:
         self.course_tabs = {}
         self.course_xblocks = None
         self.root_xblock_id = None
+        self.wiki = None
+        self.forum = None
 
     def get_course_id(self, url, course_page_name, course_prefix, instance_url):
         clean_url = re.match(
@@ -261,7 +262,7 @@ class Openedx2Zim:
             self.xblock_extractor_objects.append(obj)
             return obj
 
-        logger.info("Parsing xblocks and preparing extractor objects")
+        logger.info("Parsing xblocks and preparing extractor objects ...")
         make_objects(
             current_path=pathlib.Path("course"),
             current_id=self.root_xblock_id,
@@ -380,224 +381,27 @@ class Openedx2Zim:
         self.get_course_tabs()
         logger.info("Downloading content for extra pages ...")
         for page in self.annexed_pages:
-            page["content"] = self.dl_dependencies(
+            page["content"] = self.html_processor.dl_dependencies_and_fix_links(
                 content=page["content"],
                 output_path=page["output_path"],
                 path_from_html="",
             )
 
-        logger.info("Processing book lists")
+        logger.info("Processing book lists ...")
         for item in self.book_lists:
             item["book_list"] = self.get_book_list(
                 item["book_list"], item["output_path"]
             )
 
         # annex wiki if available
-        if hasattr(self, "wiki"):
+        if self.wiki:
             logger.info("Annexing wiki ...")
             self.wiki.annex_wiki()
 
         # annex forum if available
-        if hasattr(self, "forum"):
+        if self.forum:
             logger.info("Annexing forum ...")
             self.forum.annex_forum()
-
-    def download_and_get_filename(
-        self, src, output_path, with_ext=None, filter_ext=None
-    ):
-        if with_ext:
-            ext = with_ext
-        else:
-            ext = os.path.splitext(src.split("?")[0])[1]
-        filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-        output_file = output_path.joinpath(filename)
-        if filter_ext and ext not in filter_ext:
-            return
-        if not output_file.exists():
-            self.download_file(
-                prepare_url(src, self.instance_url), output_file,
-            )
-        return filename
-
-    def download_images_from_html(self, html_body, output_path, path_from_html):
-        imgs = html_body.xpath("//img")
-        for img in imgs:
-            if "src" in img.attrib:
-                filename = self.download_and_get_filename(
-                    src=img.attrib["src"], output_path=output_path
-                )
-                if filename:
-                    img.attrib["src"] = f"{path_from_html}/{filename}"
-                    if "style" in img.attrib:
-                        img.attrib["style"] += " max-width:100%"
-                    else:
-                        img.attrib["style"] = " max-width:100%"
-        return bool(imgs)
-
-    def download_documents_from_html(self, html_body, output_path, path_from_html):
-        anchors = html_body.xpath("//a")
-        for anchor in anchors:
-            if "href" in anchor.attrib:
-                filename = self.download_and_get_filename(
-                    src=anchor.attrib["href"],
-                    output_path=output_path,
-                    filter_ext=DOWNLOADABLE_EXTENSIONS,
-                )
-                if filename:
-                    anchor.attrib["href"] = f"{path_from_html}/{filename}"
-        return bool(anchors)
-
-    def download_css_from_html(self, html_body, output_path, path_from_html):
-        css_files = html_body.xpath("//link")
-        for css in css_files:
-            if "href" in css.attrib:
-                filename = self.download_and_get_filename(
-                    src=css.attrib["href"], output_path=output_path
-                )
-                if filename:
-                    css.attrib["href"] = f"{path_from_html}/{filename}"
-        return bool(css_files)
-
-    def download_js_from_html(self, html_body, output_path, path_from_html):
-        js_files = html_body.xpath("//script")
-        for js in js_files:
-            if "src" in js.attrib:
-                filename = self.download_and_get_filename(
-                    src=js.attrib["src"], output_path=output_path
-                )
-                if filename:
-                    js.attrib["src"] = f"{path_from_html}/{filename}"
-        return bool(js_files)
-
-    def download_sources_from_html(self, html_body, output_path, path_from_html):
-        sources = html_body.xpath("//source")
-        for source in sources:
-            if "src" in source.attrib:
-                filename = self.download_and_get_filename(
-                    src=source.attrib["src"], output_path=output_path
-                )
-                if filename:
-                    source.attrib["src"] = f"{path_from_html}/{filename}"
-        return bool(sources)
-
-    def download_iframes_from_html(self, html_body, output_path, path_from_html):
-        iframes = html_body.xpath("//iframe")
-        for iframe in iframes:
-            if "src" in iframe.attrib:
-                src = iframe.attrib["src"]
-                if "youtube" in src:
-                    filename = self.download_and_get_filename(
-                        src=src,
-                        output_path=output_path,
-                        with_ext=f".{self.video_format}",
-                    )
-                    if filename:
-                        x = jinja(
-                            None,
-                            "video.html",
-                            False,
-                            format=self.video_format,
-                            video_path=filename,
-                            subs=[],
-                            autoplay=self.autoplay,
-                        )
-                        iframe.getparent().replace(iframe, lxml.html.fromstring(x))
-                elif ".pdf" in src:
-                    filename = self.download_and_get_filename(
-                        src=src, output_path=output_path
-                    )
-                    if filename:
-                        iframe.attrib["src"] = f"{path_from_html}/{filename}"
-        return bool(iframes)
-
-    def handle_jump_to_paths(self, target_path):
-        def check_descendants_and_return_path(xblock_extractor):
-            if xblock_extractor.xblock_json["type"] in ["vertical", "course"]:
-                return xblock_extractor.relative_path + "/index.html"
-            if not xblock_extractor.descendants:
-                return None
-            return check_descendants_and_return_path(xblock_extractor.descendants[0])
-
-        for xblock_extractor in self.xblock_extractor_objects:
-            if (
-                urllib.parse.urlparse(xblock_extractor.xblock_json["lms_web_url"]).path
-                == target_path
-            ):
-                # we have a path match, we now check xblock type to redirect properly
-                # Only vertical and course xblocks have HTMLs
-                return check_descendants_and_return_path(xblock_extractor)
-
-    def rewrite_internal_links(self, html_body, output_path):
-        def relative_dots(self, output_path):
-            relative_path = output_path.resolve().relative_to(self.build_dir.resolve())
-            path_length = len(relative_path.parts)
-            if path_length >= 5:
-                # from a vertical, the root is 5 jumps deep
-                return "../" * 5
-            return "../" * path_length
-
-        def update_root_relative_path(self, anchor, fixed_path, output_path):
-            if fixed_path:
-                anchor.attrib["href"] = relative_dots(output_path) + fixed_path
-            else:
-                anchor.attrib["href"] = self.instance_url + anchor.attrib["href"]
-
-        anchors = html_body.xpath("//a")
-        path_prefix = f"{self.instance_connection.instance_config['course_prefix']}{urllib.parse.unquote_plus(self.course_id)}"
-        has_changed = False
-        for anchor in anchors:
-            if "href" not in anchor.attrib:
-                continue
-            src = urllib.parse.urlparse(anchor.attrib["href"])
-
-            # ignore external links
-            if src.netloc and src.netloc != self.instance_url:
-                continue
-
-            # fix absolute path
-            if src.path.startswith("/"):
-                update_root_relative_path(anchor, None, output_path)
-                has_changed = True
-                continue
-
-            if src.path.startswith(path_prefix):
-                if "jump_to" in src.path:
-                    # handle jump to paths (to an xblock)
-                    path_fixed = self.handle_jump_to_paths(src.path)
-                    if not path_fixed:
-                        # xblock may be one of those from which a vertical is consisted of
-                        # thus check if the parent has the valid path
-                        # we only need to check one layer deep as there's single layer of xblocks beyond vertical
-                        path_fixed = self.handle_jump_to_paths(
-                            str(pathlib.Path(src.path).parent)
-                        )
-                    update_root_relative_path(anchor, path_fixed, output_path)
-                    has_changed = True
-                else:
-                    # handle tab paths
-                    _, tab_path = self.get_tab_path_and_name(
-                        tab_text="", tab_href=src.path
-                    )
-                    update_root_relative_path(anchor, tab_path, output_path)
-                    has_changed = True
-        return has_changed
-
-    def dl_dependencies(self, content, output_path, path_from_html):
-        html_body = lxml.html.fromstring(str(content))
-        imgs = self.download_images_from_html(html_body, output_path, path_from_html)
-        docs = self.download_documents_from_html(html_body, output_path, path_from_html)
-        css_files = self.download_css_from_html(html_body, output_path, path_from_html)
-        js_files = self.download_js_from_html(html_body, output_path, path_from_html)
-        sources = self.download_sources_from_html(
-            html_body, output_path, path_from_html
-        )
-        iframes = self.download_iframes_from_html(
-            html_body, output_path, path_from_html
-        )
-        rewritten_links = self.rewrite_internal_links(html_body, output_path)
-        if any([imgs, docs, css_files, js_files, sources, iframes, rewritten_links]):
-            content = lxml.html.tostring(html_body, encoding="unicode")
-        return content
 
     def get_favicon(self):
         """ get the favicon from the given URL for the instance or the fallback URL """
@@ -664,7 +468,7 @@ class Openedx2Zim:
                     clean_content(article)
                     article["class"] = "toggle-visibility-element article-content"
                     self.homepage_html.append(
-                        self.dl_dependencies(
+                        self.html_processor.dl_dependencies_and_fix_links(
                             content=article.prettify(),
                             output_path=self.build_dir.joinpath("home"),
                             path_from_html="home",
@@ -675,7 +479,7 @@ class Openedx2Zim:
         else:
             clean_content(welcome_message)
             self.homepage_html.append(
-                self.dl_dependencies(
+                self.html_processor.dl_dependencies_and_fix_links(
                     content=welcome_message.prettify(),
                     output_path=self.build_dir.joinpath("home"),
                     path_from_html="home",
@@ -879,11 +683,11 @@ class Openedx2Zim:
             )
 
         # render wiki if available
-        if hasattr(self, "wiki"):
+        if self.wiki:
             self.wiki.render_wiki()
 
         # render forum if available
-        if hasattr(self, "forum"):
+        if self.forum:
             self.forum.render_forum()
 
         # render book lists
@@ -945,6 +749,7 @@ class Openedx2Zim:
         )
         self.instance_connection.establish_connection()
         jinja_init()
+        self.html_processor = HtmlProcessor(self)
         self.prepare_mooc_data()
         self.parse_course_xblocks()
         self.annex()
