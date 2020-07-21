@@ -34,7 +34,7 @@ def exec_cmd(cmd, timeout=None):
         logger.error(exc)
 
 
-def check_missing_binary(no_zim):
+def check_missing_binary():
     """ check whether the required binaries are present on the system """
 
     def bin_is_present(binary):
@@ -47,9 +47,6 @@ def check_missing_binary(no_zim):
             return False
         return True
 
-    if not no_zim and not bin_is_present("zimwriterfs"):
-        logger.error("zimwriterfs is not available, please install it")
-        raise SystemExit
     for binary in ["jpegoptim", "pngquant", "advdef", "gifsicle", "ffmpeg"]:
         if not bin_is_present(binary):
             logger.error(binary + " is not available, please install it")
