@@ -737,7 +737,7 @@ class Openedx2Zim:
             f"  Email ID: {self.email}"
         )
         logger.debug("Checking for missing binaries")
-        check_missing_binary(self.no_zim)
+        check_missing_binary()
         if self.s3_url_with_credentials and not self.s3_credentials_ok():
             raise ValueError("Unable to connect to Optimization Cache. Check its URL.")
         if self.s3_storage:
