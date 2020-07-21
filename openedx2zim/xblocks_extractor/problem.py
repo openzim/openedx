@@ -59,7 +59,7 @@ class Problem(BaseXblock):
         for span in soup.find_all("span", attrs={"class": "sr"}):
             span.decompose()
         html_content = str(soup)
-        html_content = self.scraper.dl_dependencies(
+        html_content = self.scraper.html_processor.dl_dependencies_and_fix_links(
             content=html_content,
             output_path=self.output_path,
             path_from_html=self.folder_name,

@@ -151,14 +151,18 @@ class MoocForum:
 
     def update_thread_children(self, thread):
         for children in thread["data_thread"]["content"]["children"]:
-            children["body"] = self.scraper.dl_dependencies(
+            children[
+                "body"
+            ] = self.scraper.html_processor.dl_dependencies_and_fix_links(
                 content=markdown(children["body"]),
                 output_path=self.output_path.joinpath(thread["id"]),
                 path_from_html="",
             )
             if "children" in children:
                 for children_children in children["children"]:
-                    children_children["body"] = self.scraper.dl_dependencies(
+                    children_children[
+                        "body"
+                    ] = self.scraper.html_processor.dl_dependencies_and_fix_links(
                         content=markdown(children_children["body"]),
                         output_path=self.output_path.joinpath(thread["id"]),
                         path_from_html="",
@@ -192,7 +196,9 @@ class MoocForum:
                 thread["data_thread"]["content"]["children"] += thread["data_thread"][
                     "content"
                 ]["non_endorsed_responses"]
-            thread["data_thread"]["content"]["body"] = self.scraper.dl_dependencies(
+            thread["data_thread"]["content"][
+                "body"
+            ] = self.scraper.html_processor.dl_dependencies_and_fix_links(
                 content=markdown(thread["data_thread"]["content"]["body"]),
                 output_path=self.output_path.joinpath(thread["id"]),
                 path_from_html="",
@@ -284,7 +290,9 @@ class MoocWiki:
                         + "/index.html"
                     )
 
-        self.wiki_data[url]["text"] = self.scraper.dl_dependencies(
+        self.wiki_data[url][
+            "text"
+        ] = self.scraper.html_processor.dl_dependencies_and_fix_links(
             content=str(text),
             output_path=self.wiki_data[url]["path"],
             path_from_html="",

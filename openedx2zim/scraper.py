@@ -3,7 +3,6 @@
 # vim: ai ts=4 sts=4 et sw=4 nu
 
 import datetime
-import hashlib
 import os
 import pathlib
 import re
@@ -13,7 +12,6 @@ import tempfile
 import urllib
 import uuid
 
-import lxml.html
 import youtube_dl
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
@@ -23,11 +21,10 @@ from zimscraperlib.download import save_large_file
 from zimscraperlib.imaging import resize_image, convert_image
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
-from zimscraperlib.zim import ZimInfo, make_zim_file
+from zimscraperlib.zim import make_zim_file
 
 from .annex import MoocForum, MoocWiki
 from .constants import (
-    DOWNLOADABLE_EXTENSIONS,
     IMAGE_FORMATS,
     OPTIMIZER_VERSIONS,
     ROOT_DIR,
@@ -35,6 +32,7 @@ from .constants import (
     VIDEO_FORMATS,
     getLogger,
 )
+from .html_processor import HtmlProcessor
 from .instance_connection import InstanceConnection
 from .utils import (
     check_missing_binary,
@@ -129,16 +127,6 @@ class Openedx2Zim:
             pathlib.Path(tmp_dir).mkdir(parents=True, exist_ok=True)
         self.build_dir = pathlib.Path(tempfile.mkdtemp(dir=tmp_dir))
 
-        # zim info
-        self.zim_info = ZimInfo(
-            tags=self.tags + ["_category:openedx", "openedx"],
-            publisher=self.publisher,
-            name=self.name,
-            scraper=SCRAPER,
-            favicon="favicon.png",
-            language="eng",
-        )
-
         # scraper options
         self.course_url = course_url
         self.add_wiki = add_wiki
@@ -169,6 +157,7 @@ class Openedx2Zim:
 
         # scraper data
         self.instance_connection = None
+        self.html_processor = None
         self.xblock_extractor_objects = []
         self.head_course_xblock = None
         self.homepage_html = []
@@ -177,6 +166,8 @@ class Openedx2Zim:
         self.course_tabs = {}
         self.course_xblocks = None
         self.root_xblock_id = None
+        self.wiki = None
+        self.forum = None
 
     def get_course_id(self, url, course_page_name, course_prefix, instance_url):
         clean_url = re.match(
@@ -187,8 +178,7 @@ class Openedx2Zim:
         ]
         if "%3" in clean_id:  # course_id seems already encode
             return clean_id
-        else:
-            return urllib.parse.quote_plus(clean_id)
+        return urllib.parse.quote_plus(clean_id)
 
     def prepare_mooc_data(self):
         self.instance_url = self.instance_connection.instance_config["instance_url"]
@@ -272,7 +262,7 @@ class Openedx2Zim:
             self.xblock_extractor_objects.append(obj)
             return obj
 
-        logger.info("Parsing xblocks and preparing extractor objects")
+        logger.info("Parsing xblocks and preparing extractor objects ...")
         make_objects(
             current_path=pathlib.Path("course"),
             current_id=self.root_xblock_id,
@@ -303,13 +293,10 @@ class Openedx2Zim:
 
         # its a content page
         if just_content is not None:
-            html_content = self.dl_dependencies(
-                content=str(just_content), output_path=output_path, path_from_html="",
-            )
             self.annexed_pages.append(
                 {
                     "output_path": output_path,
-                    "content": html_content,
+                    "content": str(just_content),
                     "title": soup_page.find("title").get_text(),
                 }
             )
@@ -321,7 +308,7 @@ class Openedx2Zim:
             self.book_lists.append(
                 {
                     "output_path": output_path,
-                    "book_list": self.get_book_list(book, output_path),
+                    "book_list": book,
                     "dir_path": tab_org_path,
                 }
             )
@@ -332,6 +319,7 @@ class Openedx2Zim:
             "Oh it's seems we does not support one type of extra content (in top bar) :"
             + tab_org_path
         )
+        shutil.rmtree(output_path, ignore_errors=True)
         return None
 
     def get_tab_path_and_name(self, tab_text, tab_href):
@@ -354,17 +342,21 @@ class Openedx2Zim:
             tab_path = "/index.html"
         elif "wiki" in tab_org_path and self.add_wiki:
             self.wiki = MoocWiki(self)
-            self.wiki.annex_wiki()
             tab_path = f"{str(self.wiki.wiki_path)}/index.html"
         elif "forum" in tab_org_path and self.add_forum:
             self.forum = MoocForum(self)
-            self.forum.annex_forum()
             tab_path = "forum/index.html"
         elif ("wiki" not in tab_org_path) and ("forum" not in tab_org_path):
-            tab_path = self.annex_extra_page(tab_href, tab_org_path)
+            # check if already in dict
+            for _, val in self.course_tabs.items():
+                if val == f"{tab_org_path}/index.html":
+                    tab_path = val
+                    break
+            else:
+                tab_path = self.annex_extra_page(tab_href, tab_org_path)
         return tab_name, tab_path
 
-    def annex(self):
+    def get_course_tabs(self):
         logger.info("Getting course tabs ...")
         content = self.instance_connection.get_page(self.course_url)
         if not content:
@@ -385,129 +377,31 @@ class Openedx2Zim:
                 if tab_name is not None and tab_path is not None:
                     self.course_tabs[tab_name] = tab_path
 
-    def download_and_get_filename(
-        self, src, output_path, with_ext=None, filter_ext=None
-    ):
-        if with_ext:
-            ext = with_ext
-        else:
-            ext = os.path.splitext(src.split("?")[0])[1]
-        filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
-        output_file = output_path.joinpath(filename)
-        if filter_ext and ext not in filter_ext:
-            return
-        if not output_file.exists():
-            self.download_file(
-                prepare_url(src, self.instance_url), output_file,
+    def annex(self):
+        self.get_course_tabs()
+        logger.info("Downloading content for extra pages ...")
+        for page in self.annexed_pages:
+            page["content"] = self.html_processor.dl_dependencies_and_fix_links(
+                content=page["content"],
+                output_path=page["output_path"],
+                path_from_html="",
             )
-        return filename
 
-    def download_images_from_html(self, html_body, output_path, path_from_html):
-        imgs = html_body.xpath("//img")
-        for img in imgs:
-            if "src" in img.attrib:
-                filename = self.download_and_get_filename(
-                    src=img.attrib["src"], output_path=output_path
-                )
-                if filename:
-                    img.attrib["src"] = f"{path_from_html}/{filename}"
-                    if "style" in img.attrib:
-                        img.attrib["style"] += " max-width:100%"
-                    else:
-                        img.attrib["style"] = " max-width:100%"
-        return bool(imgs)
+        logger.info("Processing book lists ...")
+        for item in self.book_lists:
+            item["book_list"] = self.get_book_list(
+                item["book_list"], item["output_path"]
+            )
 
-    def download_documents_from_html(self, html_body, output_path, path_from_html):
-        anchors = html_body.xpath("//a")
-        for anchor in anchors:
-            if "href" in anchor.attrib:
-                filename = self.download_and_get_filename(
-                    src=anchor.attrib["href"],
-                    output_path=output_path,
-                    filter_ext=DOWNLOADABLE_EXTENSIONS,
-                )
-                if filename:
-                    anchor.attrib["href"] = f"{path_from_html}/{filename}"
-        return bool(anchors)
+        # annex wiki if available
+        if self.wiki:
+            logger.info("Annexing wiki ...")
+            self.wiki.annex_wiki()
 
-    def download_css_from_html(self, html_body, output_path, path_from_html):
-        css_files = html_body.xpath("//link")
-        for css in css_files:
-            if "href" in css.attrib:
-                filename = self.download_and_get_filename(
-                    src=css.attrib["href"], output_path=output_path
-                )
-                if filename:
-                    css.attrib["href"] = f"{path_from_html}/{filename}"
-        return bool(css_files)
-
-    def download_js_from_html(self, html_body, output_path, path_from_html):
-        js_files = html_body.xpath("//script")
-        for js in js_files:
-            if "src" in js.attrib:
-                filename = self.download_and_get_filename(
-                    src=js.attrib["src"], output_path=output_path
-                )
-                if filename:
-                    js.attrib["src"] = f"{path_from_html}/{filename}"
-        return bool(js_files)
-
-    def download_sources_from_html(self, html_body, output_path, path_from_html):
-        sources = html_body.xpath("//source")
-        for source in sources:
-            if "src" in source.attrib:
-                filename = self.download_and_get_filename(
-                    src=source.attrib["src"], output_path=output_path
-                )
-                if filename:
-                    source.attrib["src"] = f"{path_from_html}/{filename}"
-        return bool(sources)
-
-    def download_iframes_from_html(self, html_body, output_path, path_from_html):
-        iframes = html_body.xpath("//iframe")
-        for iframe in iframes:
-            if "src" in iframe.attrib:
-                src = iframe.attrib["src"]
-                if "youtube" in src:
-                    filename = self.download_and_get_filename(
-                        src=src,
-                        output_path=output_path,
-                        with_ext=f".{self.video_format}",
-                    )
-                    if filename:
-                        x = jinja(
-                            None,
-                            "video.html",
-                            False,
-                            format=self.video_format,
-                            video_path=filename,
-                            subs=[],
-                            autoplay=self.autoplay,
-                        )
-                        iframe.getparent().replace(iframe, lxml.html.fromstring(x))
-                elif ".pdf" in src:
-                    filename = self.download_and_get_filename(
-                        src=src, output_path=output_path
-                    )
-                    if filename:
-                        iframe.attrib["src"] = f"{path_from_html}/{filename}"
-        return bool(iframes)
-
-    def dl_dependencies(self, content, output_path, path_from_html):
-        html_body = lxml.html.fromstring(str(content))
-        imgs = self.download_images_from_html(html_body, output_path, path_from_html)
-        docs = self.download_documents_from_html(html_body, output_path, path_from_html)
-        css_files = self.download_css_from_html(html_body, output_path, path_from_html)
-        js_files = self.download_js_from_html(html_body, output_path, path_from_html)
-        sources = self.download_sources_from_html(
-            html_body, output_path, path_from_html
-        )
-        iframes = self.download_iframes_from_html(
-            html_body, output_path, path_from_html
-        )
-        if imgs or docs or css_files or js_files or sources or iframes:
-            content = lxml.html.tostring(html_body, encoding="unicode")
-        return content
+        # annex forum if available
+        if self.forum:
+            logger.info("Annexing forum ...")
+            self.forum.annex_forum()
 
     def get_favicon(self):
         """ get the favicon from the given URL for the instance or the fallback URL """
@@ -574,7 +468,7 @@ class Openedx2Zim:
                     clean_content(article)
                     article["class"] = "toggle-visibility-element article-content"
                     self.homepage_html.append(
-                        self.dl_dependencies(
+                        self.html_processor.dl_dependencies_and_fix_links(
                             content=article.prettify(),
                             output_path=self.build_dir.joinpath("home"),
                             path_from_html="home",
@@ -585,7 +479,7 @@ class Openedx2Zim:
         else:
             clean_content(welcome_message)
             self.homepage_html.append(
-                self.dl_dependencies(
+                self.html_processor.dl_dependencies_and_fix_links(
                     content=welcome_message.prettify(),
                     output_path=self.build_dir.joinpath("home"),
                     path_from_html="home",
@@ -785,15 +679,15 @@ class Openedx2Zim:
                 title=page["title"],
                 mooc=self,
                 content=page["content"],
-                rooturl="../../",
+                rooturl="../",
             )
 
         # render wiki if available
-        if hasattr(self, "wiki"):
+        if self.wiki:
             self.wiki.render_wiki()
 
         # render forum if available
-        if hasattr(self, "forum"):
+        if self.forum:
             self.forum.render_forum()
 
         # render book lists
@@ -814,20 +708,26 @@ class Openedx2Zim:
             self.build_dir.joinpath("assets"),
         )
 
-    def update_zim_info(self):
+    def get_zim_info(self):
         if not self.has_homepage:
             homepage = f"{self.head_course_xblock.relative_path}/index.html"
         else:
             homepage = "index.html"
 
-        self.zim_info.update(
-            description=self.description
-            if self.description
-            else self.course_info["short_description"],
-            title=self.title if self.title else self.course_info["name"],
-            creator=self.creator if self.creator else self.course_info["org"],
-            homepage=homepage,
+        fallback_description = (
+            self.course_info["short_description"]
+            if self.course_info["short_description"]
+            else f"{self.course_info['name']} from {self.course_info['org']}"
         )
+
+        return {
+            "description": self.description
+            if self.description
+            else fallback_description,
+            "title": self.title if self.title else self.course_info["name"],
+            "creator": self.creator if self.creator else self.course_info["org"],
+            "homepage": homepage,
+        }
 
     def run(self):
         logger.info(
@@ -849,6 +749,7 @@ class Openedx2Zim:
         )
         self.instance_connection.establish_connection()
         jinja_init()
+        self.html_processor = HtmlProcessor(self)
         self.prepare_mooc_data()
         self.parse_course_xblocks()
         self.annex()
@@ -859,16 +760,23 @@ class Openedx2Zim:
                 self.fname or f"{self.name.replace(' ', '-')}_{{period}}.zim"
             ).format(period=datetime.datetime.now().strftime("%Y-%m"))
             logger.info("building ZIM file")
-            self.update_zim_info()
-            logger.debug(self.zim_info.to_zimwriterfs_args())
+            zim_info = self.get_zim_info()
             if not self.output_dir.exists():
                 self.output_dir.mkdir(parents=True)
             make_zim_file(
-                self.build_dir,
-                self.output_dir,
-                self.fname,
-                self.zim_info,
-                withoutFTIndex=True if self.no_fulltext_index else False,
+                build_dir=self.build_dir,
+                fpath=self.output_dir.joinpath(self.fname),
+                name=self.name,
+                main_page=zim_info["homepage"],
+                favicon="favicon.png",
+                title=zim_info["title"],
+                description=zim_info["description"],
+                language="eng",
+                creator=zim_info["creator"],
+                publisher=self.publisher,
+                tags=self.tags + ["_category:other", "openedx"],
+                scraper=SCRAPER,
+                without_fulltext_index=True if self.no_fulltext_index else False,
             )
             if not self.keep_build_dir:
                 logger.info("Removing temp folder...")
