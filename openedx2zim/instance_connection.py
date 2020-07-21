@@ -5,21 +5,9 @@ import json
 import sys
 import urllib
 
-from .constants import INSTANCE_CONFIGS, getLogger
+from .constants import getLogger
 
 logger = getLogger()
-
-
-def get_instance_config(instance_netloc):
-    if instance_netloc not in INSTANCE_CONFIGS:
-        INSTANCE_CONFIGS["default"].update(
-            {
-                "instance_url": f"https://{instance_netloc}",
-                "favicon_url": f"https://{instance_netloc}/favicon.ico",
-            }
-        )
-        return INSTANCE_CONFIGS["default"]
-    return INSTANCE_CONFIGS[instance_netloc]
 
 
 def get_response(url, post_data, headers, max_attempts=5):
@@ -37,12 +25,10 @@ def get_response(url, post_data, headers, max_attempts=5):
 
 
 class InstanceConnection:
-    def __init__(self, course_url, email, password):
-        self.instance_netloc = urllib.parse.urlparse(course_url)[1]
+    def __init__(self, email, password, instance_config):
         self.email = email
         self.password = password if password else getpass.getpass(stream=sys.stderr)
-
-        self.instance_config = get_instance_config(self.instance_netloc)
+        self.instance_config = instance_config
         self.cookie_jar = http.cookiejar.LWPCookieJar("lol.cookies")
         self.headers = None
         self.instance_connection = None

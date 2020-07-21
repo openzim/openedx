@@ -11,3 +11,4 @@
 - fix small favicons
 - use pylibzim for creating ZIMs
 - fix internal links
+- use params instead of instance configs

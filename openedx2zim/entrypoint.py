@@ -72,7 +72,7 @@ def main():
 
     parser.add_argument(
         "--tags",
-        help="List of comma-separated Tags for the ZIM file. category:openedx, openedx, and _videos:yes (if present) added automatically",
+        help="List of comma-separated Tags for the ZIM file. category:other, openedx, and _videos:yes (if present) added automatically",
     )
 
     parser.add_argument(
@@ -83,8 +83,27 @@ def main():
     )
 
     parser.add_argument(
-        "--lang",
-        help="Default language of the interface and the ZIM content (ISO-639-1 codes)",
+        "--instance-login-page",
+        help="The login path in the instance. Must start with /",
+        default="/login_ajax",
+    )
+
+    parser.add_argument(
+        "--instance-course-page",
+        help="The path to the course page after the course ID. Must start with /",
+        default="/course",
+    )
+
+    parser.add_argument(
+        "--instance-course-prefix",
+        help="The prefix in the path before the course ID. Must start and end with /",
+        default="/courses/",
+    )
+
+    parser.add_argument(
+        "--favicon-url",
+        help="URL pointing to a favicon image. Recommended size >= (48px x 48px)",
+        default="https://github.com/edx/edx-platform/raw/master/lms/static/images/favicon.ico",
     )
 
     parser.add_argument(

@@ -184,7 +184,7 @@ class HtmlProcessor:
                 )
 
         anchors = html_body.xpath("//a")
-        path_prefix = f"{self.scraper.instance_connection.instance_config['course_prefix']}{urllib.parse.unquote_plus(self.scraper.course_id)}"
+        path_prefix = f"{self.scraper.instance_config['course_prefix']}{urllib.parse.unquote_plus(self.scraper.course_id)}"
         has_changed = False
         for anchor in anchors:
             if "href" not in anchor.attrib:

@@ -41,41 +41,6 @@ DOWNLOADABLE_EXTENSIONS = [
     ".r",
 ]
 
-INSTANCE_CONFIGS = {
-    "courses.edx.org": {
-        "login_page": "/login_ajax",
-        "account_page": "/account/settings",
-        "course_page_name": "/course",
-        "course_prefix": "/courses/",
-        "instance_url": "https://courses.edx.org",
-        "favicon_url": "https://edx.org/favicon.ico",
-    },
-    "courses.edraak.org": {
-        "login_page": "/login_ajax",
-        "account_page": "/account/settings",
-        "course_page_name": "/",
-        "course_prefix": "/courses/",
-        "instance_url": "https://courses.edraak.org",
-        "favicon_url": "https://courses.edraak.org/favicon.ico",
-    },
-    "mooc.phzh.ch": {
-        "login_page": "/login_ajax",
-        "account_page": "/account/settings",
-        "course_page_name": "/course",
-        "course_prefix": "/courses/",
-        "instance_url": "https://mooc.phzh.ch",
-        "favicon_url": "https://mooc.phzh.ch/favicon.ico",
-    },
-    "default": {
-        "login_page": "/login_ajax",
-        "account_page": "/account/settings",
-        "course_page_name": "/info",
-        "course_prefix": "/courses/",
-        "instance_url": "",
-        "favicon_url": None,
-    },
-}
-
 UNSUPPORTED_XBLOCKS = {"grademebutton": "Grade Me (Unavailable Offline)"}
 
 

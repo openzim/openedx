@@ -92,7 +92,10 @@ class Openedx2Zim:
         publisher,
         tags,
         ignore_missing_xblocks,
-        lang,
+        instance_login_page,
+        instance_course_page,
+        instance_course_prefix,
+        favicon_url,
         add_wiki,
         add_forum,
         s3_url_with_credentials,
@@ -118,7 +121,6 @@ class Openedx2Zim:
         self.creator = creator
         self.publisher = publisher
         self.name = name
-        self.lang = lang or "en"
         self.no_fulltext_index = no_fulltext_index
 
         # directory setup
@@ -129,6 +131,7 @@ class Openedx2Zim:
 
         # scraper options
         self.course_url = course_url
+        self.favicon_url = favicon_url
         self.add_wiki = add_wiki
         self.add_forum = add_forum
         self.ignore_missing_xblocks = ignore_missing_xblocks
@@ -137,6 +140,13 @@ class Openedx2Zim:
         # authentication
         self.email = email
         self.password = password
+
+        # instance config
+        self.instance_config = {
+            "login_page": instance_login_page,
+            "course_page_name": instance_course_page,
+            "course_prefix": instance_course_prefix,
+        }
 
         # optimization cache
         self.s3_url_with_credentials = s3_url_with_credentials
@@ -181,11 +191,11 @@ class Openedx2Zim:
         return urllib.parse.quote_plus(clean_id)
 
     def prepare_mooc_data(self):
-        self.instance_url = self.instance_connection.instance_config["instance_url"]
+        self.instance_url = self.instance_config["instance_url"]
         self.course_id = self.get_course_id(
             self.course_url,
-            self.instance_connection.instance_config["course_page_name"],
-            self.instance_connection.instance_config["course_prefix"],
+            self.instance_config["course_page_name"],
+            self.instance_config["course_prefix"],
             self.instance_url,
         )
         logger.info("Getting course info ...")
@@ -409,16 +419,7 @@ class Openedx2Zim:
         favicon_fpath = self.build_dir.joinpath("favicon.png")
 
         # download the favicon
-        for favicon_url in [
-            self.instance_connection.instance_config["favicon_url"],
-            "https://github.com/edx/edx-platform/raw/master/lms/static/images/favicon.ico",
-        ]:
-            try:
-                save_large_file(favicon_url, favicon_fpath)
-                logger.debug(f"Favicon successfully downloaded from {favicon_url}")
-                break
-            except Exception:
-                logger.debug(f"Favicon not downloaded from {favicon_url}")
+        save_large_file(self.favicon_url, favicon_fpath)
 
         # convert and resize
         convert_image(favicon_fpath, favicon_fpath, "PNG")
@@ -743,9 +744,13 @@ class Openedx2Zim:
             logger.info(
                 f"Using cache: {self.s3_storage.url.netloc} with bucket: {self.s3_storage.bucket_name}"
             )
+
+        # update instance config
+        instance_netloc = urllib.parse.urlparse(self.course_url).netloc
+        self.instance_config.update({"instance_url": f"https://{instance_netloc}"})
         logger.info("Testing openedx instance credentials ...")
         self.instance_connection = InstanceConnection(
-            self.course_url, self.email, self.password
+            self.email, self.password, self.instance_config,
         )
         self.instance_connection.establish_connection()
         jinja_init()
