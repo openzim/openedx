@@ -44,7 +44,11 @@ class HtmlProcessor:
                     src=img.attrib["src"], output_path=output_path
                 )
                 if filename:
-                    img.attrib["src"] = f"{path_from_html}/{filename}"
+                    img.attrib["src"] = (
+                        f"{filename}"
+                        if not path_from_html
+                        else f"{path_from_html}/{filename}"
+                    )
                     if "style" in img.attrib:
                         img.attrib["style"] += " max-width:100%"
                     else:
@@ -63,7 +67,11 @@ class HtmlProcessor:
                     filter_ext=DOWNLOADABLE_EXTENSIONS,
                 )
                 if filename:
-                    anchor.attrib["href"] = f"{path_from_html}/{filename}"
+                    anchor.attrib["href"] = (
+                        f"{filename}"
+                        if not path_from_html
+                        else f"{path_from_html}/{filename}"
+                    )
         return bool(anchors)
 
     def download_css_from_html(self, html_body, output_path, path_from_html):
@@ -76,7 +84,11 @@ class HtmlProcessor:
                     src=css.attrib["href"], output_path=output_path
                 )
                 if filename:
-                    css.attrib["href"] = f"{path_from_html}/{filename}"
+                    css.attrib["href"] = (
+                        f"{filename}"
+                        if not path_from_html
+                        else f"{path_from_html}/{filename}"
+                    )
         return bool(css_files)
 
     def download_js_from_html(self, html_body, output_path, path_from_html):
@@ -89,7 +101,11 @@ class HtmlProcessor:
                     src=js.attrib["src"], output_path=output_path
                 )
                 if filename:
-                    js.attrib["src"] = f"{path_from_html}/{filename}"
+                    js.attrib["src"] = (
+                        f"{filename}"
+                        if not path_from_html
+                        else f"{path_from_html}/{filename}"
+                    )
         return bool(js_files)
 
     def download_sources_from_html(self, html_body, output_path, path_from_html):
@@ -102,7 +118,11 @@ class HtmlProcessor:
                     src=source.attrib["src"], output_path=output_path
                 )
                 if filename:
-                    source.attrib["src"] = f"{path_from_html}/{filename}"
+                    source.attrib["src"] = (
+                        f"{filename}"
+                        if not path_from_html
+                        else f"{path_from_html}/{filename}"
+                    )
         return bool(sources)
 
     def download_iframes_from_html(self, html_body, output_path, path_from_html):
@@ -124,7 +144,9 @@ class HtmlProcessor:
                             "video.html",
                             False,
                             format=self.scraper.video_format,
-                            video_path=filename,
+                            video_path=f"{filename}"
+                            if not path_from_html
+                            else f"{path_from_html}/{filename}",
                             subs=[],
                             autoplay=self.scraper.autoplay,
                         )
@@ -134,7 +156,11 @@ class HtmlProcessor:
                         src=src, output_path=output_path
                     )
                     if filename:
-                        iframe.attrib["src"] = f"{path_from_html}/{filename}"
+                        iframe.attrib["src"] = (
+                            f"{filename}"
+                            if not path_from_html
+                            else f"{path_from_html}/{filename}"
+                        )
         return bool(iframes)
 
     def handle_jump_to_paths(self, target_path):
@@ -148,9 +174,9 @@ class HtmlProcessor:
             return check_descendants_and_return_path(xblock_extractor.descendants[0])
 
         for xblock_extractor in self.scraper.xblock_extractor_objects:
-            if (
+            if (xblock_extractor.xblock_json["block_id"] == target_path.parts[-1]) or (
                 urllib.parse.urlparse(xblock_extractor.xblock_json["lms_web_url"]).path
-                == target_path
+                == str(target_path)
             ):
                 # we have a path match, we now check xblock type to redirect properly
                 # Only vertical and course xblocks have HTMLs
@@ -199,14 +225,13 @@ class HtmlProcessor:
             if src.path.startswith(path_prefix):
                 if "jump_to" in src.path:
                     # handle jump to paths (to an xblock)
-                    path_fixed = self.handle_jump_to_paths(src.path)
+                    src_path = pathlib.Path(src.path)
+                    path_fixed = self.handle_jump_to_paths(src_path)
                     if not path_fixed:
                         # xblock may be one of those from which a vertical is consisted of
                         # thus check if the parent has the valid path
                         # we only need to check one layer deep as there's single layer of xblocks beyond vertical
-                        path_fixed = self.handle_jump_to_paths(
-                            str(pathlib.Path(src.path).parent)
-                        )
+                        path_fixed = self.handle_jump_to_paths(str(src_path.parent))
                     update_root_relative_path(anchor, path_fixed, output_path)
                     has_changed = True
                 else:
