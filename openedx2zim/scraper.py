@@ -220,6 +220,9 @@ class Openedx2Zim:
     def parse_course_xblocks(self):
         def make_objects(current_path, current_id, root_url):
             current_xblock = self.course_xblocks[current_id]
+            # ensure the display name is not empty to avoid path issues
+            if not current_xblock["display_name"]:
+                current_xblock["display_name"] = "xblock"
             xblock_path = current_path.joinpath(slugify(current_xblock["display_name"]))
 
             # update root url respective to the current xblock
