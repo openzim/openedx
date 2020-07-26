@@ -5,19 +5,19 @@
 {% block title %} Textbook {% endblock %}
 
 {% block body %}
-<div class="container">
-<main id="main" aria-label="Content" tabindex="-1">
-<div class="book-wrapper">
-    <section class="book-sidebar" aria-label="Textbook Navigation">
-	    <ul id="booknav">
+<div class="zim-container">
+<main id="zim-main" aria-label="Content" tabindex="-1">
+<div class="zim-book-wrapper">
+    <section class="zim-book-sidebar" aria-label="Textbook Navigation">
+	    <ul id="zim-booknav">
 	    {% for book in book_list %}
 		  <li>
-		    <a class="chapter" rel="{{ book["url"] }}" href="{{ rooturl }}{{ dir_path }}/{{ book["url"] }}" onclick="return booknav_change(this)"> {{ book["name"] }}</a>
+		    <a class="zim-chapter" rel="{{ book["url"] }}" href="{{ rooturl }}{{ dir_path }}/{{ book["url"] }}" onclick="return booknav_change(this)"> {{ book["name"] }}</a>
 		  </li>
 	    {% endfor %}
 	    </ul>
     </section>
-    <div class="book">
+    <div class="zim-book">
 	    <iframe
 	    title="{{ book_list[0]["name"] }}"
 	    id="viewer-frame"

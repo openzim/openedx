@@ -19,7 +19,7 @@ class Html(BaseXblock):
         if not content:
             return
         soup = BeautifulSoup(content, "lxml")
-        html_content = soup.find("div", attrs={"class": "edx-notes-wrapper"})
+        html_content = soup.find("div", attrs={"class": "xblock"})
         if not html_content:
             html_content = str(soup.find("div", attrs={"class": "course-wrapper"}))
         self.html = self.scraper.html_processor.dl_dependencies_and_fix_links(

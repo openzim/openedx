@@ -1,11 +1,12 @@
 import hashlib
 import pathlib
+import re
 import urllib
 
 import lxml.html
 
 from .constants import DOWNLOADABLE_EXTENSIONS
-from .utils import prepare_url, jinja
+from .utils import jinja, prepare_url
 
 
 class HtmlProcessor:
@@ -27,12 +28,66 @@ class HtmlProcessor:
         filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
         output_file = output_path.joinpath(filename)
         if filter_ext and ext not in filter_ext:
-            return
+            return None, None
+        fresh_download = False
         if not output_file.exists():
             self.scraper.download_file(
                 prepare_url(src, self.scraper.instance_url), output_file,
             )
-        return filename
+            fresh_download = True
+        return filename, fresh_download
+
+    def download_dependencies_from_css(
+        self, css_org_url, content, folder, path_from_css
+    ):
+        """ Download all dependencies from CSS file contained in url()
+
+            - css_org_url: URL to the CSS file on the internet
+            - content: CSS text to rewrite
+            - folder: “parent” folder of CSS to download files to
+            - path_from_css: path of the supplied folder from CSS """
+
+        def encapsulate(url):
+            return f"url({url})"
+
+        # ensure the original CSS url has netloc
+        css_org_url = prepare_url(css_org_url, self.scraper.instance_url)
+        css_org_url = urllib.parse.urlparse(css_org_url)
+
+        # split whole content on `url()` pattern to retrieve a list composed of
+        # alternatively pre-pattern text and inside url() –– actual target text
+        parts = re.split(r"url\((.+?)\)", content)
+        for index, _ in enumerate(parts):
+            if index % 2 == 0:  # skip even lines (0, 2, ..) as those are CSS code
+                continue
+            css_url = parts[index]  # css_urls are on odd lines
+
+            # remove potential quotes (can be none, single or double)
+            if css_url[0] and css_url[-1] == "'":
+                css_url = css_url[1:-1]
+            if css_url[0] and css_url[-1] == '"':
+                css_url = css_url[1:-1]
+
+            # don't rewrite data: and empty URLs
+            if re.match(r"^(://|data:|#)", css_url):
+                parts[index] = encapsulate(css_url)
+                continue
+
+            # add netloc if not present
+            parsed_url = urllib.parse.urlparse(css_url)
+            if parsed_url.netloc == "":
+                if parsed_url.path.startswith("/"):
+                    css_url = self.scraper.instance_url + css_url
+                else:
+                    css_url = css_org_url.netloc + str(
+                        pathlib.Path(css_org_url.path).parent.joinpath(css_url)
+                    )
+
+            # download the file
+            filename, _ = self.download_and_get_filename(css_url, folder)
+            fixed = filename if not path_from_css else f"{path_from_css}/{filename}"
+            parts[index] = encapsulate(fixed)
+        return "".join(parts)
 
     def download_images_from_html(self, html_body, output_path, path_from_html):
         """ download images from <img> tag and fix path """
@@ -40,7 +95,7 @@ class HtmlProcessor:
         imgs = html_body.xpath("//img")
         for img in imgs:
             if "src" in img.attrib:
-                filename = self.download_and_get_filename(
+                filename, _ = self.download_and_get_filename(
                     src=img.attrib["src"], output_path=output_path
                 )
                 if filename:
@@ -61,7 +116,7 @@ class HtmlProcessor:
         anchors = html_body.xpath("//a")
         for anchor in anchors:
             if "href" in anchor.attrib:
-                filename = self.download_and_get_filename(
+                filename, _ = self.download_and_get_filename(
                     src=anchor.attrib["href"],
                     output_path=output_path,
                     filter_ext=DOWNLOADABLE_EXTENSIONS,
@@ -80,10 +135,21 @@ class HtmlProcessor:
         css_files = html_body.xpath("//link")
         for css in css_files:
             if "href" in css.attrib:
-                filename = self.download_and_get_filename(
+                filename, fresh_download = self.download_and_get_filename(
                     src=css.attrib["href"], output_path=output_path
                 )
                 if filename:
+                    if fresh_download:
+                        css_fpath = output_path.joinpath(filename)
+                        with open(css_fpath, "r") as fh:
+                            fixed = self.download_dependencies_from_css(
+                                css.attrib["href"],
+                                fh.read(),
+                                folder=css_fpath.parent,
+                                path_from_css="",
+                            )
+                        with open(css_fpath, "w") as fh:
+                            fh.write(fixed)
                     css.attrib["href"] = (
                         f"{filename}"
                         if not path_from_html
@@ -97,7 +163,7 @@ class HtmlProcessor:
         js_files = html_body.xpath("//script")
         for js in js_files:
             if "src" in js.attrib:
-                filename = self.download_and_get_filename(
+                filename, _ = self.download_and_get_filename(
                     src=js.attrib["src"], output_path=output_path
                 )
                 if filename:
@@ -114,7 +180,7 @@ class HtmlProcessor:
         sources = html_body.xpath("//source")
         for source in sources:
             if "src" in source.attrib:
-                filename = self.download_and_get_filename(
+                filename, _ = self.download_and_get_filename(
                     src=source.attrib["src"], output_path=output_path
                 )
                 if filename:
@@ -133,7 +199,7 @@ class HtmlProcessor:
             if "src" in iframe.attrib:
                 src = iframe.attrib["src"]
                 if "youtube" in src:
-                    filename = self.download_and_get_filename(
+                    filename, _ = self.download_and_get_filename(
                         src=src,
                         output_path=output_path,
                         with_ext=f".{self.scraper.video_format}",
@@ -152,7 +218,7 @@ class HtmlProcessor:
                         )
                         iframe.getparent().replace(iframe, lxml.html.fromstring(x))
                 elif ".pdf" in src:
-                    filename = self.download_and_get_filename(
+                    filename, _ = self.download_and_get_filename(
                         src=src, output_path=output_path
                     )
                     if filename:
@@ -231,7 +297,7 @@ class HtmlProcessor:
                         # xblock may be one of those from which a vertical is consisted of
                         # thus check if the parent has the valid path
                         # we only need to check one layer deep as there's single layer of xblocks beyond vertical
-                        path_fixed = self.handle_jump_to_paths(str(src_path.parent))
+                        path_fixed = self.handle_jump_to_paths(src_path.parent)
                     update_root_relative_path(anchor, path_fixed, output_path)
                     has_changed = True
                 else:

@@ -1,26 +1,35 @@
 {% extends "base.html" %}
 
-{% block addhead %} <script type="text/javascript" src="{{ rooturl }}assets/xblocks.js"></script> {% endblock %}
+{% block title %}
+{{ vertical.display_name }}
+{% endblock %}
 
-{% block bodyclass %}vertical{% endblock %}
+{% block addhead %}
+<script type="text/javascript" src="{{ rooturl }}assets/xblocks.js"></script>
+{% for header_element in extra_headers %}
+{{ header_element }}
+{% endfor %}
+{% endblock %}
 
-{% block title %}{{ vertical.display_name }}{% endblock %}
+{% block bodyclass %}
+vertical
+{% endblock %}
 
 {% block body %}
-<div class="container">
-  <div class="course-wrapper" role="presentation">
+<div class="zim-container">
+  <div class="zim-course-wrapper" role="presentation">
     {% if side_menu %}
         {% include "side_menu.html" %}
     {% endif %}
-    <section id="course-content" class="course-content" role="main" aria-label="Content">
+    <section id="course-content" class="zim-course-content" role="main" aria-label="Content">
       <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.xblock_json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
         <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.xblock_json["id"] }}" data-position="1">
-          <div class="sequence-nav">
+          <div class="zim-sequence-nav">
               {% if prev_vertical %}
               <a href="{{ rooturl }}{{ prev_vertical.relative_path }}/index.html" title="{{ prev_vertical.display_name }}">
-                <button class="sequence-nav-button button-previous">
+                <button class="zim-sequence-nav-button button-previous">
               {% else %}
-                <button class="sequence-nav-button button-previous deactivated">
+                <button class="zim-sequence-nav-button button-previous deactivated">
               {% endif %}
                   <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
                   <span class="sr">Previous</span>
@@ -28,8 +37,8 @@
               {% if prev_vertical %}
               </a>
 	      {% endif %}
-            <nav class="sequence-list-wrapper" aria-label="Sequence">
-              <ol id="sequence-list" role="tablist">
+            <nav class="zim-sequence-list-wrapper" aria-label="Sequence">
+              <ol id="zim-sequence-list" role="tablist">
               {% for vertical_ in sequential.descendants %}
                 <li {% if vertical_.id == vertical.id %} class="current_vertical" {% endif %}>
                   <a id="tab_0" tabindex=0 data-id="{{ vertical_.xblock_json["id"] }}" data-page-title="{{ vertical_.display_name }}" href="{{ rooturl }}{{ vertical_.relative_path }}/index.html" title="{{ vertical_.display_name }}">
@@ -47,9 +56,9 @@
             </nav>
                 {% if next_vertical %}
                 <a href="{{ rooturl }}{{ next_vertical.relative_path }}/index.html" title="{{ next_vertical.display_name }}">
-                  <button class="sequence-nav-button button-next">
+                  <button class="zim-sequence-nav-button button-next">
                 {% else %}
-                  <button class="sequence-nav-button button-next deactivated">
+                  <button class="zim-sequence-nav-button button-next deactivated">
                 {% endif %}
                   <span class="icon fa fa-chevron-right" aria-hidden="true"></span>
                   <span class="sr">Next</span>
@@ -59,34 +68,34 @@
 		{% endif %}
           </div>
           <div id="seq_content">
+            <div class="course-wrapper" role="presentation">
+            <section id="course-content" class="course-content" role="main" aria-label="Content">
             <div class="xblock xblock-student_view xblock-student_view-vertical xblock-initialized">
               <h2 class="hd hd-2 unit-title"> {{ vertical.xblock_json["display_name"] }} </h2>
-              {% for elem  in vertical_content %}
-                <div class="vert-mod">
-                  <div class="vert vert-0">
-                    <div class="xblock xblock-student_view xmodule_display xblock-initialized">
-                      {{ elem }}
-                    </div>
-                  </div>
-                </div>
+              <div class="vert-mod">
+              {% for elem in vertical_content %}
+              {{ elem }}
               {% endfor %}
+              </div>
+            </div>
+            </section>
             </div>
           </div>
-          <nav class="sequence-bottom" aria-label="Section">
+          <nav class="zim-sequence-bottom" aria-label="Section">
               <a href="{{ rooturl }}{{ prev_vertical.relative_path }}/index.html" title="{{ prev_vertical.display_name }}">
               {% if prev_vertical %}
-                <button class="sequence-nav-button button-previous">
+                <button class="zim-sequence-nav-button button-previous">
               {% else %}
-                <button class="sequence-nav-button button-previous deactivated">
+                <button class="zim-sequence-nav-button button-previous deactivated">
               {% endif %}
                 <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
               </button>
               </a>
               <a href="{{ rooturl }}{{ next_vertical.relative_path }}/index.html" title="{{ next_vertical.display_name }}">
                 {% if next_vertical %}
-                  <button class="sequence-nav-button button-next">
+                  <button class="zim-sequence-nav-button button-next">
                 {% else %}
-                  <button class="sequence-nav-button button-next deactivated">
+                  <button class="zim-sequence-nav-button button-next deactivated">
                 {% endif %}
                 <i class="icon fa fa-chevron-right" aria-hidden="true"></i>
               </button>
@@ -97,5 +106,10 @@
     </section>
   </div>
 </div>
+{% endblock %}
 
+{% block body_scripts %}
+{% for elem in body_scripts %}
+{{ elem }}
+{% endfor %}
 {% endblock %}

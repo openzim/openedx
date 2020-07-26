@@ -20,24 +20,24 @@
     <script type="text/javascript" src="{{ rooturl }}assets/mooc.js"></script>
   </head>
   <body class="{% block bodyclass %}{% endblock %}">
-    <div class="topmobilebar">
+    <div class="zim-topmobilebar">
       {% if side_menu or forum_menu %}
-        <a onclick="{% if side_menu %}show_sidemenu(){% else %}show_forum_menu(){% endif %}" id="show_sidemenu">
+        <a onclick="{% if side_menu %}show_sidemenu(){% else %}show_forum_menu(){% endif %}" id="zim-show_sidemenu">
           <i class="fa fa-bars"></i>
         </a>
       {% endif %}
-      <a onclick="show_pagemobilemenu()" id="show_pagemobilemenu">
+      <a onclick="show_pagemobilemenu()" id="zim-show_pagemobilemenu">
         <i class="fa fa-angle-down"></i>
       </a>
     </div>
-  <div class="window-wrap">
-    <div id="content" class="content-wrapper">
-      <nav class="courseware wrapper-course-material" aria-label="Course Material">
-        <div class="course-material">
-          <ol class="course-tabs">
+  <div class="zim-window-wrap">
+    <div id="content" class="zim-content-wrapper">
+      <nav class="zim-courseware zim-wrapper-course-material" aria-label="Course Material">
+        <div class="zim-course-material">
+          <ol class="zim-course-tabs">
             {% for elem_name in mooc.course_tabs %}
                 {% if (mooc.course_tabs[elem_name] != "/index.html" and mooc.course_tabs[elem_name] | clean_top in output_path) or (mooc.course_tabs[elem_name] == "/index.html" and render_homepage) %}
-                  <li><a class="active" href="{{ rooturl }}{{ mooc.course_tabs[elem_name] }}">{{ elem_name }}</a></li>
+                  <li><a class="zim-active" href="{{ rooturl }}{{ mooc.course_tabs[elem_name] }}">{{ elem_name }}</a></li>
                 {% else %}
                   <li><a href="{{ rooturl }}{{ mooc.course_tabs[elem_name] }}">{{ elem_name }}</a></li>
                 {% endif %}
@@ -48,6 +48,7 @@
         {% block body %}{% endblock %}
    </div>
     </div>
+    {% block body_scripts %}{% endblock %}
     <script>
       window.MathJax = {
         tex: {

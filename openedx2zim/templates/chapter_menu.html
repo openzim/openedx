@@ -5,8 +5,8 @@
 {% block title %}{{ chapter.display_name }}{% endblock %}
 
 {% block body %}
-<div class="container">
-  <div class="list_course">
+<div class="zim-container">
+  <div class="zim-list_course">
     <ul>
       {% for sequential in chapter.descendants %}
         {% if sequential.descendants|length > 0 %}
