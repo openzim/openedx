@@ -398,6 +398,10 @@ class Openedx2Zim:
                 content=page["content"],
                 output_path=page["output_path"],
                 path_from_html="",
+                root_from_html=len(
+                    page["output_path"].relative_to(self.build_dir).parts
+                )
+                * "../",
             )
 
         logger.info("Processing book lists ...")
@@ -476,6 +480,7 @@ class Openedx2Zim:
                             content=article.prettify(),
                             output_path=self.build_dir.joinpath("home"),
                             path_from_html="home",
+                            root_from_html="",
                         )
                     )
 
@@ -487,6 +492,7 @@ class Openedx2Zim:
                     content=welcome_message.prettify(),
                     output_path=self.build_dir.joinpath("home"),
                     path_from_html="home",
+                    root_from_html="",
                 )
             )
 

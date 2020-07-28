@@ -26,6 +26,7 @@ class Html(BaseXblock):
             content=html_content,
             output_path=self.output_path,
             path_from_html=self.folder_name,
+            root_from_html="../" * 5,
         )
 
     def render(self):

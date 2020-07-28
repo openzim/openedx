@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Audio</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link href="{{ path_to_root }}assets/videojs/video-js.min.css" rel="stylesheet" type="text/css" />
+        <script src="{{ path_to_root }}assets/videojs/video.min.js"></script>
+    </head>
+    <style>
+        body,
+        head {
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            background-color: black;
+        }
+    </style>
+    <body>
+        <div style="width: 256px; height: 256px; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">
+            <audio
+                class="video-js vjs-default-skin vjs-big-play-centered vjs-fill"
+                width="256px"
+                height="256px"
+                poster="{{ path_to_root }}assets/audio_default.png"
+                controls
+                preload="auto"
+                data-setup='{"controls": true, "controlBar": {"pictureInPictureToggle":false}}'
+            >
+                <source src="{{ audio_path }}" type="audio/{{ audio_format }}" />
+            </audio>
+        </div>
+    </body>
+</html>

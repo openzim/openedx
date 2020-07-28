@@ -63,6 +63,7 @@ class Problem(BaseXblock):
             content=html_content,
             output_path=self.output_path,
             path_from_html=self.folder_name,
+            root_from_html="../" * 5,
         )
         html_content = self.scraper.html_processor.defer_scripts(
             content=html_content,

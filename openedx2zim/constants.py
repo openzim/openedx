@@ -20,6 +20,8 @@ VIDEO_FORMATS = ["webm", "mp4"]
 
 IMAGE_FORMATS = ["png", "jpeg", "jpg", "gif"]
 
+AUDIO_FORMATS = ["ogg", "mp3", "aif", "mpa", "wav", "wma"]
+
 OPTIMIZER_VERSIONS = {
     "mp4": f"v{VideoMp4Low().VERSION}",
     "webm": f"v{VideoWebmLow().VERSION}",
@@ -39,6 +41,11 @@ DOWNLOADABLE_EXTENSIONS = [
     ".txt",
     ".csv",
     ".r",
+    ".aif",
+    ".m4a",
+    ".wav",
+    ".wma",
+    ".ogg",
 ]
 
 UNSUPPORTED_XBLOCKS = {"grademebutton": "Grade Me (Unavailable Offline)"}
