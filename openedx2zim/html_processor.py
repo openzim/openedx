@@ -4,6 +4,7 @@ import re
 import urllib
 
 import lxml.html
+from bs4 import BeautifulSoup
 
 from .constants import DOWNLOADABLE_EXTENSIONS
 from .utils import jinja, prepare_url
@@ -334,3 +335,38 @@ class HtmlProcessor:
         if any([imgs, docs, css_files, js_files, sources, iframes, rewritten_links]):
             content = lxml.html.tostring(html_body, encoding="unicode")
         return content
+
+    def defer_scripts(self, content, output_path, path_from_html):
+        """ defer all scripts in content. For inline scripts, they're placed in a *.js file and deferred """
+
+        soup = BeautifulSoup(content, "lxml")
+        script_tags = soup.find_all("script")
+        for script_tag in script_tags:
+            if (
+                script_tag.has_attr("type")
+                and script_tag.attrs["type"] != "text/javascript"
+                and script_tag.attrs["type"] != "application/javascript"
+            ):
+                continue
+
+            if script_tag.has_attr("defer"):
+                continue
+
+            if script_tag.has_attr("src"):
+                script_tag.attrs["defer"] = None
+                continue
+
+            if script_tag.string.strip():
+                script_content = script_tag.string.strip()
+                filename = f"{hashlib.sha256(str(script_content[:200] if len(script_content) > 200 else script_content).encode('utf-8')).hexdigest()}.js"
+                fpath = output_path.joinpath(filename)
+                with open(fpath, "w") as fp:
+                    fp.write(script_content)
+                script_tag.string = ""
+                script_tag.attrs["src"] = (
+                    f"{filename}"
+                    if not path_from_html
+                    else f"{path_from_html}/{filename}"
+                )
+                script_tag.attrs["defer"] = None
+        return str(soup)

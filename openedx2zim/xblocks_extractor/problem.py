@@ -64,6 +64,11 @@ class Problem(BaseXblock):
             output_path=self.output_path,
             path_from_html=self.folder_name,
         )
+        html_content = self.scraper.html_processor.defer_scripts(
+            content=html_content,
+            output_path=self.output_path,
+            path_from_html=self.folder_name,
+        )
         self.html_content = str(html_content)
 
         # Save json answers
