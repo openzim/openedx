@@ -80,7 +80,7 @@ a {
 a {
     color: #005584;
 }
-.content-wrapper{
+.zim-content-wrapper{
   flex:1;
   border:none;
   width:100%;
@@ -169,7 +169,7 @@ table {
 margin: 0 auto 0;
   width:100%;
 }
-.course-material, .preview-menu{
+.zim-course-material, .preview-menu{
 width: auto;
 padding: 15px 2%;
 margin: 0 auto;
@@ -178,25 +178,25 @@ width: 100%;
 overflow: auto;
 }
 
-.wrapper-course-material .course-material .course-tabs {
+.zim-wrapper-course-material .zim-course-material .zim-course-tabs {
       padding: 0;
 }
 
-.wrapper-course-material ol.course-tabs {
+.zim-wrapper-course-material ol.zim-course-tabs {
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
 /*    margin-left: 10px;*/
     padding: 15px 0 15px 0;
 }
 
-ol.course-tabs li {
+ol.zim-course-tabs li {
   float: left;
   list-style: none;
   margin-right: 6px;
 }
 
 
-ol.course-tabs li a.active {
+ol.zim-course-tabs li a.zim-active {
     background-color: rgba(0,0,0,0.4);
     background-image: linear-gradient(to bottom,rgba(0,0,0,0.4),rgba(0,0,0,0.25));
     background-color: transparent;
@@ -204,7 +204,7 @@ ol.course-tabs li a.active {
     color: #fff;
     text-shadow: 0 1px 0 rgba(0,0,0,0.4);
 }
-ol.course-tabs li a {
+ol.zim-course-tabs li a {
     border-radius: 3px;
     color: #555;
     display: block;
@@ -235,7 +235,7 @@ ol.course-tabs li a {
 }
 
 
-.container {
+.zim-container {
     max-width: none;
     min-width: initial;
     width: auto;
@@ -245,11 +245,11 @@ ol.course-tabs li a {
     background-color: #f0f0f0;
 }
 
-div.course-wrapper {
+div.zim-course-wrapper {
     position: relative;
 }
 
-.container > div {
+.zim-container > div {
     table-layout: fixed;
     width: 100%;
     border-radius: 3px;
@@ -259,7 +259,7 @@ div.course-wrapper {
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 */
 }
-.course-index {
+.zim-course-index {
     transition: all 0.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s;
     border-right: 1px solid #c8c8c8;
     border-top-left-radius: 3px;
@@ -269,7 +269,7 @@ div.course-wrapper {
     display: table-cell;
 }
 
-.course-index .accordion .course-navigation .button-chapter {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-button-chapter {
     transition: all 3s ease-in-out;
     box-sizing: border-box;
     background-color: rgba(255,255,255,0.5);
@@ -286,13 +286,13 @@ div.course-wrapper {
     cursor:pointer;
 }
 
-.course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-chapter-content-container .zim-chapter-menu .zim-menu-item {
       margin: 4px 0;
       background: inherit;
       font-weight:600;
 
 }
-.course-index .accordion .course-navigation .button-chapter .group-heading {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-button-chapter .zim-group-heading {
     position: relative;
     display: block;
     padding: 15px 0;
@@ -303,7 +303,7 @@ div.course-wrapper {
     text-align: left;
 }
 
-.course-index .accordion .course-navigation .button-chapter .group-heading .icon {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-button-chapter .zim-group-heading .icon {
     position: absolute;
     left: 20px;
     top: 20px;
@@ -311,75 +311,75 @@ div.course-wrapper {
     color: #c8c8c8;
 }
 
-.course-index .accordion .course-navigation .chapter-content-container {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-chapter-content-container {
       background: #fff;
 }
 
-.course-index .accordion .course-navigation .chapter-content-container .chapter-menu {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-chapter-content-container .zim-chapter-menu {
 /*    display: none;*/
     padding: 0 14px;
     overflow: hidden;
 }
-.course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-chapter-content-container .zim-chapter-menu .zim-menu-item {
     margin: 4px 0;
     background: inherit;
 }
-.course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item a {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-chapter-content-container .zim-chapter-menu .zim-menu-item a {
     position: relative;
     display: block;
     padding: 5px 10px;
     border-radius: 5px;
     color: #3c3c3c;
 }
-.course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item.active a {
+.zim-course-index .zim-accordion .zim-course-navigation .zim-chapter-content-container .zim-chapter-menu .zim-menu-item.zim-active a {
     background: #e3e3e3;
 }
-.btn-link, .proctored_exam_status .exam-timer .exam-button-turn-in-exam, .course-index .accordion .course-navigation .chapter-content-container .chapter-menu .menu-item a {
+.btn-link, .proctored_exam_status .exam-timer .exam-button-turn-in-exam, .zim-course-index .accordion .zim-course-navigation .zim-chapter-content-container .zim-chapter-menu .zim-menu-item a {
     font-size: 14px;
     line-height: 20.72px;
 }
-div.course-wrapper section.course-content {
+div.zim-course-wrapper section.zim-course-content {
     padding: 40px 3%;
     line-height: 1.6;
 }
-.content, div.course-wrapper section.course-content, div.info-wrapper section.updates, div.book-wrapper .book, .profile-wrapper .course-info, div.gradebook-wrapper section.gradebook-content, .view-student-notes .wrapper-student-notes .student-notes, .instructor-dashboard-wrapper section.instructor-dashboard-content, .instructor-dashboard-content-2 {
+.content, div.zim-course-wrapper section.zim-course-content, div.zim-info-wrapper section.zim-updates, div.zim-book-wrapper .zim-book, .profile-wrapper .course-info, div.gradebook-wrapper section.gradebook-content, .view-student-notes .wrapper-student-notes .student-notes, .instructor-dashboard-wrapper section.instructor-dashboard-content, .instructor-dashboard-content-2 {
     box-sizing: border-box;
     display: table-cell;
     padding: 2em 2.5em;
     vertical-align: top;
     width: 76.27119%;
 }
-.course-content {
+.zim-course-content {
     margin-top: 30px;
     max-width:100%;
 }
-div.course-wrapper section.course-content .xblock {
+div.zim-course-wrapper section.zim-course-content .xblock {
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
 }
-div.course-wrapper section.course-content {
+div.zim-course-wrapper section.zim-course-content {
     line-height: 1.6;
 }
 
 
-.xmodule_display.xmodule_SequenceModule .sequence-nav {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav {
     margin: -4px 0 30px;
     position: relative;
     border-bottom: none;
     z-index: 0;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav-button.disabled {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav-button.disabled {
     cursor: normal;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav-button.button-previous {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav-button.button-previous {
     border-top-left-radius: 35px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 35px;
     left: 0;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav-button {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav-button {
     transition: all 0.2s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s;
     position: absolute;
     display: block;
@@ -388,7 +388,7 @@ div.course-wrapper section.course-content {
     height: 46px;
     padding: 0;
 }
-.nav-utilities, .xmodule_display.xmodule_CourseModule .sequence-nav-button, .xmodule_display.xmodule_VideoModule .a11y-menu-container .a11y-menu-list, .xmodule_display.xmodule_VideoModule .video .video-pre-roll, .xmodule_display.xmodule_SequenceModule .sequence-nav-button, .modal-backdrop {
+.nav-utilities, .xmodule_display.xmodule_CourseModule .zim-sequence-nav-button, .xmodule_display.xmodule_VideoModule .a11y-menu-container .a11y-menu-list, .xmodule_display.xmodule_VideoModule .video .video-pre-roll, .xmodule_display.xmodule_SequenceModule .zim-sequence-nav-button, .modal-backdrop {
     z-index: 1000;
 }
 .light-button:disabled, div.history-controls input[type="submit"]:disabled, a.light-button:disabled, .gray-button:disabled, body .xmodule_display.xmodule_CapaModule div.problem .action .save:disabled, input[type="reset"]:disabled, input[type="submit"]:disabled, input[type="button"]:disabled, button:disabled, .button:disabled, .xmodule_display.xmodule_LTIModule div.lti .wrapper-lti-link .lti-link .link_lti_new_window:disabled {
@@ -439,7 +439,7 @@ button[disabled], input[disabled] {
     background-clip: padding-box;
     font-size: 0.8125em;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav .sequence-list-wrapper {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav .zim-sequence-list-wrapper {
     background-color: #ddd;
     background-image: linear-gradient(to bottom,#ddd,#eee);
     position: relative;
@@ -456,10 +456,10 @@ button[disabled], input[disabled] {
 }
 
 
-.help-tab, .xmodule_display.xmodule_CourseModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_CourseModule .sequence-nav ol li a p, .xmodule_display.xmodule_SequenceModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p, div.timer-main, .view-teams .team-profile .page-content-secondary .member-profile p {
+.help-tab, .xmodule_display.xmodule_CourseModule .zim-sequence-nav .zim-sequence-list-wrapper, .xmodule_display.xmodule_CourseModule .zim-sequence-nav ol li a p, .xmodule_display.xmodule_SequenceModule .zim-sequence-nav .zim-sequence-list-wrapper, .xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol li a p, div.timer-main, .view-teams .team-profile .page-content-secondary .member-profile p {
     z-index: 100;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav ol {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol {
     position: absolute;
     top: 0;
     left: 0;
@@ -470,17 +470,17 @@ button[disabled], input[disabled] {
 /*    padding: 0 10px;*/
     width: 100%;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav ol li {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol li {
     display: table-cell;
     min-width: 20px;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a.active {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol li a.zim-active {
     background-color: #fff;
 }
-.xmodule_display.xmodule_CourseModule .sequence-nav ol li a.active, .xmodule_display.xmodule_CapaModule div.problem .CodeMirror pre.CodeMirror-cursor, .xmodule_display.xmodule_VideoModule .video .video-wrapper .video-controls .secondary-controls .menu-container .menu, .xmodule_display.xmodule_VideoModule .video .video-wrapper .video-controls .secondary-controls .volume .volume-slider-container, .xmodule_display.xmodule_ConditionalModule div.problem .CodeMirror pre.CodeMirror-cursor, .xmodule_display.xmodule_SequenceModule .sequence-nav ol li a.active, .edx-notes-wrapper .annotator-editor .annotator-controls, .instructor-dashboard-wrapper-2 section.idash-section#cohort_management .wrapper-tabs {
+.xmodule_display.xmodule_CourseModule .zim-sequence-nav ol li a.zim-active, .xmodule_display.xmodule_CapaModule div.problem .CodeMirror pre.CodeMirror-cursor, .xmodule_display.xmodule_VideoModule .video .video-wrapper .video-controls .secondary-controls .menu-container .menu, .xmodule_display.xmodule_VideoModule .video .video-wrapper .video-controls .secondary-controls .volume .volume-slider-container, .xmodule_display.xmodule_ConditionalModule div.problem .CodeMirror pre.CodeMirror-cursor, .xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol li a.zim-active, .edx-notes-wrapper .annotator-editor .annotator-controls, .instructor-dashboard-wrapper-2 section.idash-section#cohort_management .wrapper-tabs {
     z-index: 10;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol li a {
     transition: none;
     width: 100%;
     height: 42px;
@@ -493,12 +493,12 @@ button[disabled], input[disabled] {
     position: relative;
     text-align: center;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a .icon {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol li a .icon {
     line-height: 42px;
     font-size: 90%;
     color: #0a0a0a;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol li a p {
     background: #333;
     color: #fff;
     line-height: 1.41575em;
@@ -513,11 +513,11 @@ button[disabled], input[disabled] {
     visibility: hidden;
     pointer-events: none;
 }
-.help-tab, .xmodule_display.xmodule_CourseModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_CourseModule .sequence-nav ol li a p, .xmodule_display.xmodule_SequenceModule .sequence-nav .sequence-list-wrapper, .xmodule_display.xmodule_SequenceModule .sequence-nav ol li a p, div.timer-main, .view-teams .team-profile .page-content-secondary .member-profile p {
+.help-tab, .xmodule_display.xmodule_CourseModule .zim-sequence-nav .zim-sequence-list-wrapper, .xmodule_display.xmodule_CourseModule .zim-sequence-nav ol li a p, .xmodule_display.xmodule_SequenceModule .zim-sequence-nav .zim-sequence-list-wrapper, .xmodule_display.xmodule_SequenceModule .zim-sequence-nav ol li a p, div.timer-main, .view-teams .team-profile .page-content-secondary .member-profile p {
     z-index: 100;
 }
 /*
-div.course-wrapper section.course-content p {
+div.zim-course-wrapper section.zim-course-content p {
     margin-bottom: 1.41575em;
 }*/
 .left-shadow {
@@ -542,25 +542,25 @@ div.course-wrapper section.course-content p {
     background-color: transparent;
     pointer-events: none;
 }
-.xmodule_display.xmodule_SequenceModule .sequence-nav-button.button-next {
+.xmodule_display.xmodule_SequenceModule .zim-sequence-nav-button.button-next {
     border-top-left-radius: 0;
     border-top-right-radius: 35px;
     border-bottom-right-radius: 35px;
     border-bottom-left-radius: 0;
     right: 0;
 }
-div.course-wrapper section.course-content .vert-mod {
+div.zim-course-wrapper section.zim-course-content .vert-mod {
     padding: 0;
     margin: 0;
     line-height: 1.4;
     list-style: none;
 }
-div.course-wrapper section.course-content .vert-mod > div:last-child {
+div.zim-course-wrapper section.zim-course-content .vert-mod > div:last-child {
     border-bottom: none;
     margin-bottom: 0;
     padding-bottom: 0;
 }
-div.course-wrapper section.course-content .vert-mod .vert > .xblock-student_view {
+div.zim-course-wrapper section.zim-course-content .vert-mod .vert > .xblock-student_view {
     border-bottom: 1px solid #ddd;
     margin-bottom: 15px;
     padding: 0 0 15px;
@@ -580,14 +580,14 @@ div.course-wrapper section.course-content .vert-mod .vert > .xblock-student_view
     padding: 5px 0;
     color: #5e5e5e;
 }
-.xmodule_display.xmodule_SequenceModule nav.sequence-bottom {
+.xmodule_display.xmodule_SequenceModule nav.zim-sequence-bottom {
     position: relative;
     width: 79px;
     height: 1px;
     margin: 2.8315em auto;
     text-align: center;
 }
-nav.sequence-bottom {
+nav.zim-sequence-bottom {
     position: relative;
     width: 79px;
     height: 1px;
@@ -595,31 +595,31 @@ nav.sequence-bottom {
     text-align: center;
 }
 
-.window-wrap {
+.zim-window-wrap {
     display: flex;
     min-height: 100%;
     flex-direction: column;
     background-color:#f0f0f0;
 }
-body.view-in-course .info-wrapper {
+body.view-in-course .zim-info-wrapper {
     max-width: 1180px;
     margin: 0 auto;
 }
-div.info-wrapper section.updates {
+div.zim-info-wrapper section.zim-updates {
     line-height: 1.41575em;
 }
-div.info-wrapper section.updates > ol, div.info-wrapper section.updates section {
+div.zim-info-wrapper section.zim-updates > ol, div.zim-info-wrapper section.zim-updates section {
     list-style: none;
     margin-bottom: 1.41575em;
     padding-left: 30px;
 }
-div.info-wrapper section.updates > ol > li, div.info-wrapper section.updates > ol article, div.info-wrapper section.updates section > li, div.info-wrapper section.updates section article {
+div.zim-info-wrapper section.zim-updates > ol > li, div.zim-info-wrapper section.zim-updates > ol article, div.zim-info-wrapper section.zim-updates section > li, div.zim-info-wrapper section.zim-updates section article {
     border-bottom: 1px solid rgba(177,177,177,0.32);
     list-style-type: none;
     margin-bottom: 2.12363em;
     padding-bottom: 1.06181em;
 }
-div.info-wrapper section.handouts {
+div.zim-info-wrapper section.handouts {
     padding: 20px 30px;
     padding-left: 30px;
     margin: 0;
@@ -628,7 +628,7 @@ div.info-wrapper section.handouts {
     box-shadow: none;
     font-size: 14px;
 }
-.sidebar, div#wiki_panel, div.info-wrapper section.handouts, div.book-wrapper section.book-sidebar, .profile-wrapper .user-info {
+.sidebar, div#wiki_panel, div.zim-info-wrapper section.handouts, div.zim-book-wrapper section.zim-book-sidebar, .profile-wrapper .user-info {
     box-sizing: border-box;
     display: table-cell;
     font-family: "Droid Arabic Naskh","Open Sans",sans-serif;
@@ -644,13 +644,13 @@ div.info-wrapper section.handouts {
     list-style: none;
 }
 
-div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates > ol article h2, div.info-wrapper section.updates section > li h2, div.info-wrapper section.updates section article h2 {
+div.zim-info-wrapper section.zim-updates > ol > li h2, div.zim-info-wrapper section.zim-updates > ol article h2, div.zim-info-wrapper section.zim-updates section > li h2, div.zim-info-wrapper section.zim-updates section article h2 {
     font-size: 0.875em;
     font-weight: bold;
     padding-left: 20px;
 }
 
-.topmobilebar{
+.zim-topmobilebar{
     display:none;
     background-color:#f0f0f0;
 }
@@ -1065,10 +1065,10 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
     background: transparent;
     box-shadow: none;
 }
-.course-wrapper{
+.zim-course-wrapper{
   background-color:#ffffff;
 }
-.course-wrapper .course-content .xblock, .course-wrapper .courseware-results-wrapper .xblock {
+.zim-course-wrapper .zim-course-content .xblock, .zim-course-wrapper .courseware-results-wrapper .xblock {
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
@@ -1116,7 +1116,7 @@ div.info-wrapper section.updates > ol > li h2, div.info-wrapper section.updates 
     border: 1px solid #d9d9d9;
     border-radius: 3px;
 }
-.list_course{
+.zim-list_course{
   background-color:#ffffff;
   width:auto;
   box-sizing: border-box;
@@ -1225,12 +1225,12 @@ fieldset{
     font-size: 16px;
     font-weight: 600;
 }
-div.book-wrapper {
+div.zim-book-wrapper {
     max-width: 1150px;
     margin: 0 auto;
     width: 100%;
 }
-div.book-wrapper section.book-sidebar {
+div.zim-book-wrapper section.zim-book-sidebar {
     box-sizing: border-box;
     padding: 10px 0;
     border-radius: 3px 0 0 3px;
@@ -1241,7 +1241,7 @@ div.book-wrapper section.book-sidebar {
     border-right: none;
     width: 180px;
 }
-.sidebar, div#wiki_panel, div.info-wrapper section.handouts, div.book-wrapper section.book-sidebar, .profile-wrapper .user-info {
+.sidebar, div#wiki_panel, div.zim-info-wrapper section.handouts, div.zim-book-wrapper section.zim-book-sidebar, .profile-wrapper .user-info {
     box-sizing: border-box;
     display: table-cell;
     font-family: "Source Sans Pro","Open Sans",Verdana,Geneva,sans-serif,sans-serif;
@@ -1251,41 +1251,41 @@ div.book-wrapper section.book-sidebar {
     width: 23.72881%;
     background: #FBFFFD;
 }
-#booknav {
+#zim-booknav {
     list-style: none;
 }
-.sidebar ul, div#wiki_panel ul, div.info-wrapper section.handouts ul, div.book-wrapper section.book-sidebar ul, .profile-wrapper .user-info ul, .sidebar ol, div#wiki_panel ol, div.info-wrapper section.handouts ol, div.book-wrapper section.book-sidebar ol, .profile-wrapper .user-info ol {
+.sidebar ul, div#wiki_panel ul, div.zim-info-wrapper section.handouts ul, div.zim-book-wrapper section.zim-book-sidebar ul, .profile-wrapper .user-info ul, .sidebar ol, div#wiki_panel ol, div.zim-info-wrapper section.handouts ol, div.zim-book-wrapper section.zim-book-sidebar ol, .profile-wrapper .user-info ol {
     margin: 0;
     padding-left: 0;
 }
-div.book-wrapper section.book-sidebar #booknav > li {
+div.zim-book-wrapper section.zim-book-sidebar #zim-booknav > li {
     padding: 5px 6px;
     margin: 5px 10px;
 }
-div.book-wrapper section.book-sidebar #booknav li {
+div.zim-book-wrapper section.zim-book-sidebar #zim-booknav li {
     background: none;
     border-bottom: 0;
     padding-left: 10px;
 }
-div.book-wrapper section.book-sidebar #booknav .chapter {
+div.zim-book-wrapper section.zim-book-sidebar #zim-booknav .zim-chapter {
     line-height: 1.4em;
 }
-div.book-wrapper section.book-sidebar #booknav li a {
+div.zim-book-wrapper section.zim-book-sidebar #zim-booknav li a {
     padding: 0;
     color: #4F7573;
 }
-.sidebar ul li a, div#wiki_panel ul li a, div.info-wrapper section.handouts ul li a, div.book-wrapper section.book-sidebar ul li a, .profile-wrapper .user-info ul li a, .sidebar ol li a, div#wiki_panel ol li a, div.info-wrapper section.handouts ol li a, div.book-wrapper section.book-sidebar ol li a, .profile-wrapper .user-info ol li a {
+.sidebar ul li a, div#wiki_panel ul li a, div.zim-info-wrapper section.handouts ul li a, div.zim-book-wrapper section.zim-book-sidebar ul li a, .profile-wrapper .user-info ul li a, .sidebar ol li a, div#wiki_panel ol li a, div.zim-info-wrapper section.handouts ol li a, div.zim-book-wrapper section.zim-book-sidebar ol li a, .profile-wrapper .user-info ol li a {
     display: block;
     line-height: 1.41575em;
     font-size: 1em;
     box-sizing: border-box;
     padding: 0.35394em 0.70788em 0.35394em 0;
 }
-.sidebar a, div#wiki_panel a, div.info-wrapper section.handouts a, div.book-wrapper section.book-sidebar a, .profile-wrapper .user-info a {
+.sidebar a, div#wiki_panel a, div.zim-info-wrapper section.handouts a, div.zim-book-wrapper section.zim-book-sidebar a, .profile-wrapper .user-info a {
     border: none;
     font-style: normal;
 }
-div.book-wrapper .book {
+div.zim-book-wrapper .zim-book {
     padding: 0;
     width: 76%;
 }
@@ -1298,7 +1298,7 @@ div.book-wrapper .book {
     margin-top: 15px;
     color: #494949;
 }
-#course-content{
+#zim-course-content{
 	width:100%;
 }
 
@@ -1341,10 +1341,10 @@ div.book-wrapper .book {
 
 
 @media (max-width: 640px) {
-  .course-index, .courseware{
+  .zim-course-index, .zim-courseware{
     display:none;
   }
-  section.updates {
+  section.zim-updates {
     box-sizing: border-box;
     display: block;
     padding: 1em 1em;
@@ -1357,12 +1357,12 @@ div.book-wrapper .book {
     width: 50%;
   }
 
-  div.course-wrapper section.course-content {
+  div.zim-course-wrapper section.zim-course-content {
 	display: block;
 	width:100%;
 	max-width:100%;
   }
-  #course-content{
+  #zim-course-content{
     padding:2em 0.5em;
   }
   .topmobilebar{
@@ -1372,19 +1372,19 @@ div.book-wrapper .book {
     margin:5px 0;
     font-size: 28px;
   }
-  #show_pagemobilemenu {
+  #zim-show_pagemobilemenu {
     padding: 0.3em;
   }
-  #show_sidemenu{
+  #zim-show_sidemenu{
     padding: 0.3em;
   }
-  .course-index{
+  .zim-course-index{
     width:100%;
     position:sticky;
     z-index:1;
 
   }
-  ol.course-tabs li {
+  ol.zim-course-tabs li {
     text-align:center;
     width:100;
     position:sticky;
@@ -1408,7 +1408,7 @@ div.book-wrapper .book {
   .page-content {
       padding: 8px;
   }
-  .book{
+  .zim-book{
       display:none;
   }
 }

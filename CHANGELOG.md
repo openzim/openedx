@@ -12,3 +12,4 @@
 - use pylibzim for creating ZIMs
 - fix internal links
 - use params instead of instance configs
+- use course layout from instance
