@@ -157,6 +157,10 @@ class MoocForum:
                 content=markdown(children["body"]),
                 output_path=self.output_path.joinpath(thread["id"]),
                 path_from_html="",
+                root_from_html=len(
+                    self.output_path.relative_to(self.scraper.build_dir).parts
+                )
+                * "../",
             )
             if "children" in children:
                 for children_children in children["children"]:
@@ -166,6 +170,10 @@ class MoocForum:
                         content=markdown(children_children["body"]),
                         output_path=self.output_path.joinpath(thread["id"]),
                         path_from_html="",
+                        root_from_html=len(
+                            self.output_path.relative_to(self.scraper.build_dir).parts
+                        )
+                        * "../",
                     )
 
     def annex_forum(self):
@@ -202,6 +210,10 @@ class MoocForum:
                 content=markdown(thread["data_thread"]["content"]["body"]),
                 output_path=self.output_path.joinpath(thread["id"]),
                 path_from_html="",
+                root_from_html=len(
+                    self.output_path.relative_to(self.scraper.build_dir).parts
+                )
+                * "../",
             )
             self.update_thread_children(thread)
 
@@ -296,6 +308,10 @@ class MoocWiki:
             content=str(text),
             output_path=self.wiki_data[url]["path"],
             path_from_html="",
+            root_from_html=len(
+                self.wiki_data[url]["path"].relative_to(self.scraper.build_dir).parts
+            )
+            * "../",
         )
         self.wiki_data[url]["title"] = soup.find("title").text
         self.wiki_data[url]["last-modif"] = soup.find(

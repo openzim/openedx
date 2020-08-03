@@ -62,4 +62,5 @@ class Libcast(BaseXblock):
             title=self.xblock_json["display_name"],
             subs=self.subs,
             autoplay=self.scraper.autoplay,
+            path_to_root="../" * 5,
         )

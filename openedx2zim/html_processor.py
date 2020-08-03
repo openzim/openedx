@@ -6,7 +6,7 @@ import urllib
 import lxml.html
 from bs4 import BeautifulSoup
 
-from .constants import DOWNLOADABLE_EXTENSIONS
+from .constants import DOWNLOADABLE_EXTENSIONS, AUDIO_FORMATS
 from .utils import jinja, prepare_url
 
 
@@ -111,7 +111,9 @@ class HtmlProcessor:
                         img.attrib["style"] = " max-width:100%"
         return bool(imgs)
 
-    def download_documents_from_html(self, html_body, output_path, path_from_html):
+    def download_documents_from_html(
+        self, html_body, output_path, path_from_html, root_from_html
+    ):
         """ download documents from <a> tag and fix path """
 
         anchors = html_body.xpath("//a")
@@ -123,6 +125,22 @@ class HtmlProcessor:
                     filter_ext=DOWNLOADABLE_EXTENSIONS,
                 )
                 if filename:
+                    file_format = pathlib.Path(filename).suffix[1:]
+                    if file_format in AUDIO_FORMATS:
+                        html_fpath = output_path.joinpath(
+                            f"{filename.split('.')[0]}.html"
+                        )
+                        if not html_fpath.exists():
+                            jinja(
+                                html_fpath,
+                                "audio_player.html",
+                                False,
+                                audio_path=filename,
+                                path_to_root=root_from_html
+                                + len(pathlib.Path(path_from_html).parts) * "../",
+                                audio_format=file_format,
+                            )
+                        filename = html_fpath.name
                     anchor.attrib["href"] = (
                         f"{filename}"
                         if not path_from_html
@@ -192,7 +210,9 @@ class HtmlProcessor:
                     )
         return bool(sources)
 
-    def download_iframes_from_html(self, html_body, output_path, path_from_html):
+    def download_iframes_from_html(
+        self, html_body, output_path, path_from_html, root_from_html
+    ):
         """ download youtube videos and pdf files from iframes in html content """
 
         iframes = html_body.xpath("//iframe")
@@ -216,6 +236,7 @@ class HtmlProcessor:
                             else f"{path_from_html}/{filename}",
                             subs=[],
                             autoplay=self.scraper.autoplay,
+                            path_to_root=root_from_html,
                         )
                         iframe.getparent().replace(iframe, lxml.html.fromstring(x))
                 elif ".pdf" in src:
@@ -249,28 +270,15 @@ class HtmlProcessor:
                 # Only vertical and course xblocks have HTMLs
                 return check_descendants_and_return_path(xblock_extractor)
 
-    def rewrite_internal_links(self, html_body, output_path):
+    def rewrite_internal_links(self, html_body, root_from_html):
         """ rewrites internal links and ensures no root-relative links are left behind """
 
-        def relative_dots(output_path):
-            """ generates a relative path to root from the output path
-                automatically detects the path of HTML in zim from output path """
-
-            relative_path = output_path.resolve().relative_to(
-                self.scraper.build_dir.resolve()
-            )
-            path_length = len(relative_path.parts)
-            if path_length >= 5:
-                # from a vertical, the root is 5 jumps deep
-                return "../" * 5
-            return "../" * path_length
-
-        def update_root_relative_path(anchor, fixed_path, output_path):
+        def update_root_relative_path(anchor, fixed_path, root_from_html):
             """ updates a root-relative path to the fixed path in zim
                 if fixed path is not available, adds the instance url as its netloc """
 
             if fixed_path:
-                anchor.attrib["href"] = relative_dots(output_path) + fixed_path
+                anchor.attrib["href"] = root_from_html + fixed_path
             else:
                 anchor.attrib["href"] = (
                     self.scraper.instance_url + anchor.attrib["href"]
@@ -299,39 +307,43 @@ class HtmlProcessor:
                         # thus check if the parent has the valid path
                         # we only need to check one layer deep as there's single layer of xblocks beyond vertical
                         path_fixed = self.handle_jump_to_paths(src_path.parent)
-                    update_root_relative_path(anchor, path_fixed, output_path)
+                    update_root_relative_path(anchor, path_fixed, root_from_html)
                     has_changed = True
                 else:
                     # handle tab paths
                     _, tab_path = self.scraper.get_tab_path_and_name(
                         tab_text="", tab_href=src.path
                     )
-                    update_root_relative_path(anchor, tab_path, output_path)
+                    update_root_relative_path(anchor, tab_path, root_from_html)
                     has_changed = True
                 continue
 
             # fix root-relative path if not downloaded for zim
             if src.path.startswith("/"):
-                update_root_relative_path(anchor, None, output_path)
+                update_root_relative_path(anchor, None, root_from_html)
                 has_changed = True
 
         return has_changed
 
-    def dl_dependencies_and_fix_links(self, content, output_path, path_from_html):
+    def dl_dependencies_and_fix_links(
+        self, content, output_path, path_from_html, root_from_html
+    ):
         """ downloads all static dependencies from an HTML content, and fixes links """
 
         html_body = lxml.html.fromstring(str(content))
         imgs = self.download_images_from_html(html_body, output_path, path_from_html)
-        docs = self.download_documents_from_html(html_body, output_path, path_from_html)
+        docs = self.download_documents_from_html(
+            html_body, output_path, path_from_html, root_from_html
+        )
         css_files = self.download_css_from_html(html_body, output_path, path_from_html)
         js_files = self.download_js_from_html(html_body, output_path, path_from_html)
         sources = self.download_sources_from_html(
             html_body, output_path, path_from_html
         )
         iframes = self.download_iframes_from_html(
-            html_body, output_path, path_from_html
+            html_body, output_path, path_from_html, root_from_html
         )
-        rewritten_links = self.rewrite_internal_links(html_body, output_path)
+        rewritten_links = self.rewrite_internal_links(html_body, root_from_html)
         if any([imgs, docs, css_files, js_files, sources, iframes, rewritten_links]):
             content = lxml.html.tostring(html_body, encoding="unicode")
         return content

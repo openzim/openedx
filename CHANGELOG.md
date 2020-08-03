@@ -13,3 +13,4 @@
 - fix internal links
 - use params instead of instance configs
 - use course layout from instance
+- add videojs based audio player to solve compatability issues

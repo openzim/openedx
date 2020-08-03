@@ -59,6 +59,7 @@ class Vertical(BaseXblock):
                         content=str(header_element),
                         output_path=instance_assets_path,
                         path_from_html=f"{self.root_url}instance_assets",
+                        root_from_html=self.root_url,
                     )
                 )
             )
@@ -73,6 +74,7 @@ class Vertical(BaseXblock):
                         content=str(script),
                         output_path=instance_assets_path,
                         path_from_html=f"{self.root_url}instance_assets",
+                        root_from_html=self.root_url,
                     )
                 )
             )

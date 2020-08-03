@@ -1,9 +1,8 @@
 {% if self.no_video != False %}
-{% if title %} <h2> {{ title }} </h2> {% endif %}
 <video class="video video-js vjs-default-skin" 
   controls preload="auto"
   width="480px" height="270px"
-  data-setup='{"techOrder": ["html5", "ogvjs"], "ogvjs": {"base": "assets/ogvjs"}, "autoplay": {% if autoplay %}true{% else %}false{% endif %}, "preload": true, "controls": true, "controlBar": {"pictureInPictureToggle":false}}'>
+  data-setup='{"techOrder": ["html5", "ogvjs"], "ogvjs": {"base": "{{ path_to_root }}assets/ogvjs"}, "autoplay": {% if autoplay %}true{% else %}false{% endif %}, "preload": true, "controls": true, "controlBar": {"pictureInPictureToggle":false}}'>
   <source src="{{ video_path }}" type="video/{{ format }}" />
   {% for language in subs %}
     <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
