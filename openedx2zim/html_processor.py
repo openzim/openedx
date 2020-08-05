@@ -1,8 +1,8 @@
-import hashlib
 import pathlib
 import re
 import urllib
 
+import xxhash
 import lxml.html
 from bs4 import BeautifulSoup
 
@@ -22,11 +22,14 @@ class HtmlProcessor:
             with_ext: ensure that downloaded file has the given extension
             filter_ext: download only if the file to download has an extension in this list """
 
-        if with_ext:
-            ext = with_ext
+        server_path = pathlib.Path(urllib.parse.urlparse(src).path)
+        ext = with_ext if with_ext else server_path.suffix
+
+        if server_path.suffix:
+            filename = server_path.with_suffix(ext).name
         else:
-            ext = pathlib.Path(urllib.parse.urlparse(src).path).suffix
-        filename = hashlib.sha256(str(src).encode("utf-8")).hexdigest() + ext
+            filename = xxhash.xxh64(str(src).encode("utf-8")).hexdigest() + ext
+
         output_file = output_path.joinpath(filename)
         if filter_ext and ext not in filter_ext:
             return None, None
@@ -39,21 +42,30 @@ class HtmlProcessor:
         return filename, fresh_download
 
     def download_dependencies_from_css(
-        self, css_org_url, content, folder, path_from_css
+        self, css_org_url, css_path, output_path_from_css,
     ):
-        """ Download all dependencies from CSS file contained in url()
+        """ Download all dependencies from CSS file contained in url() recursively
 
             - css_org_url: URL to the CSS file on the internet
-            - content: CSS text to rewrite
-            - folder: “parent” folder of CSS to download files to
-            - path_from_css: path of the supplied folder from CSS """
+            - css_path: path of CSS on the filesystem (Path)
+            - output_path_from_css: string representing path of the output directory relative to css_path """
 
         def encapsulate(url):
             return f"url({url})"
 
+        def remove_quotes(url):
+            if url[0] and url[-1] == "'":
+                url = url[1:-1]
+            if url[0] and url[-1] == '"':
+                url = url[1:-1]
+            return url
+
         # ensure the original CSS url has netloc
         css_org_url = prepare_url(css_org_url, self.scraper.instance_url)
         css_org_url = urllib.parse.urlparse(css_org_url)
+
+        with open(css_path, "r") as fp:
+            content = fp.read()
 
         # split whole content on `url()` pattern to retrieve a list composed of
         # alternatively pre-pattern text and inside url() –– actual target text
@@ -64,10 +76,7 @@ class HtmlProcessor:
             css_url = parts[index]  # css_urls are on odd lines
 
             # remove potential quotes (can be none, single or double)
-            if css_url[0] and css_url[-1] == "'":
-                css_url = css_url[1:-1]
-            if css_url[0] and css_url[-1] == '"':
-                css_url = css_url[1:-1]
+            css_url = remove_quotes(css_url)
 
             # don't rewrite data: and empty URLs
             if re.match(r"^(://|data:|#)", css_url):
@@ -78,17 +87,46 @@ class HtmlProcessor:
             parsed_url = urllib.parse.urlparse(css_url)
             if parsed_url.netloc == "":
                 if parsed_url.path.startswith("/"):
-                    css_url = self.scraper.instance_url + css_url
+                    css_url = (
+                        css_org_url.netloc
+                        if css_org_url.netloc
+                        else self.scraper.instance_url
+                    ) + css_url
                 else:
-                    css_url = css_org_url.netloc + str(
-                        pathlib.Path(css_org_url.path).parent.joinpath(css_url)
-                    )
+                    path_prefix = pathlib.Path(css_org_url.path)
+                    if path_prefix.is_file():
+                        path_prefix = path_prefix.parent
+                    css_url = css_org_url.netloc + str(path_prefix.joinpath(css_url))
 
-            # download the file
-            filename, _ = self.download_and_get_filename(css_url, folder)
-            fixed = filename if not path_from_css else f"{path_from_css}/{filename}"
+            output_path = (
+                css_path.parent
+                if not output_path_from_css
+                else css_path.joinpath(output_path_from_css)
+            )
+
+            # download imported css files recursively
+            if parts[index - 1].endswith("@import "):
+                filename, _ = self.download_and_get_filename(
+                    css_url, output_path, with_ext=".css"
+                )
+                self.download_dependencies_from_css(
+                    css_org_url=css_url,
+                    css_path=output_path.joinpath(filename),
+                    output_path_from_css="",
+                )
+
+            else:
+                # download the file
+                filename, _ = self.download_and_get_filename(css_url, output_path)
+            fixed = (
+                filename
+                if not output_path_from_css
+                else f"{output_path_from_css}/{filename}"
+            )
             parts[index] = encapsulate(fixed)
-        return "".join(parts)
+
+        with open(css_path, "w") as fp:
+            fp.write("".join(parts))
 
     def download_images_from_html(self, html_body, output_path, path_from_html):
         """ download images from <img> tag and fix path """
@@ -159,16 +197,11 @@ class HtmlProcessor:
                 )
                 if filename:
                     if fresh_download:
-                        css_fpath = output_path.joinpath(filename)
-                        with open(css_fpath, "r") as fh:
-                            fixed = self.download_dependencies_from_css(
-                                css.attrib["href"],
-                                fh.read(),
-                                folder=css_fpath.parent,
-                                path_from_css="",
-                            )
-                        with open(css_fpath, "w") as fh:
-                            fh.write(fixed)
+                        self.download_dependencies_from_css(
+                            css_org_url=css.attrib["href"],
+                            css_path=output_path.joinpath(filename),
+                            output_path_from_css="",
+                        )
                     css.attrib["href"] = (
                         f"{filename}"
                         if not path_from_html
@@ -370,7 +403,7 @@ class HtmlProcessor:
 
             if script_tag.string.strip():
                 script_content = script_tag.string.strip()
-                filename = f"{hashlib.sha256(str(script_content[:200] if len(script_content) > 200 else script_content).encode('utf-8')).hexdigest()}.js"
+                filename = f"{xxhash.xxh64(str(script_content[:200] if len(script_content) > 200 else script_content).encode('utf-8')).hexdigest()}.js"
                 fpath = output_path.joinpath(filename)
                 with open(fpath, "w") as fp:
                     fp.write(script_content)
