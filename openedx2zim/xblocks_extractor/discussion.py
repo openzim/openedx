@@ -37,7 +37,8 @@ class Discussion(BaseXblock):
                     self.category_title = self.scraper.forum_category[discussion_id]
 
     def render(self):
-        if self.category_title != "":
+        if self.category_title:
+            # render the discussion
             return jinja(
                 None,
                 "discussion.html",
@@ -48,5 +49,8 @@ class Discussion(BaseXblock):
                 staff_user=self.scraper.staff_user_forum,
                 rooturl="/".join(self.root_url.split("/")[:-1]),  # rooturl - 1 folder
             )
-        else:
-            return "This discussion is not supported, sorry !"
+        if not self.scraper.forum:
+            # render nothing in no forum mode
+            return ""
+        # render an error message if forum mode and current discussion not supported
+        return "The discussion here is not supported in offline mode"
