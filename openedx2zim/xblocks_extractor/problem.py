@@ -21,64 +21,19 @@ class Problem(BaseXblock):
 
         # extra vars
         self.is_video = False
+        self.problem_header = ""
         self.html_content = ""
         self.answers = []
         self.explanation = []
         self.problem_id = None
 
-    def download(self, instance_connection):
-        content = instance_connection.get_page(self.xblock_json["student_view_url"])
-        if not content:
-            return
-        soup = BeautifulSoup(content, "lxml")
-        try:
-            html_content_from_div = str(
-                soup.find("div", attrs={"class": "problems-wrapper"})["data-content"]
-            )
-        except Exception:
-            problem_json_url = str(
-                soup.find("div", attrs={"class": "problems-wrapper"})["data-url"]
-            )
-            html_content_from_div = str(
-                instance_connection.get_api_json(problem_json_url + "/problem_get")[
-                    "html"
-                ]
-            )
-        soup = BeautifulSoup(html_content_from_div, "lxml")
-        # self.has_hint=soup.find("button", attrs={"class" : "hint-button"}) #Remove comment when  hint ok
-        for div in soup.find_all("div", attrs={"class": "notification"}):
-            div.decompose()
-        for input_tag in soup.find_all("input"):
-            if input_tag.has_attr("value"):
-                input_tag["value"] = ""
-            if input_tag.has_attr("checked"):
-                del input_tag.attrs["checked"]
-        soup.find("div", attrs={"class": "action"}).decompose()
-        for span in soup.find_all("span", attrs={"class": "unanswered"}):
-            span.decompose()
-        for span in soup.find_all("span", attrs={"class": "sr"}):
-            span.decompose()
-        html_content = str(soup)
-        html_content = self.scraper.html_processor.dl_dependencies_and_fix_links(
-            content=html_content,
-            output_path=self.output_path,
-            path_from_html=self.folder_name,
-            root_from_html="../" * 5,
-        )
-        html_content = self.scraper.html_processor.defer_scripts(
-            content=html_content,
-            output_path=self.output_path,
-            path_from_html=self.folder_name,
-        )
-        self.html_content = str(html_content)
-
-        # Save json answers
+    def get_answers(self, instance_connection):
+        # get the answers
         answers_path = self.output_path.joinpath("problem_show")
         answers_content = {"success": None}
         retry = 0
-        while (
-            "success" in answers_content and retry < 6
-        ):  # We use our check to finally get anwers
+        while "success" in answers_content and retry < 6:
+            # query the instance to get answers
             answers_content = instance_connection.get_api_json(
                 "/courses/"
                 + self.scraper.course_id
@@ -87,10 +42,6 @@ class Problem(BaseXblock):
                 + "/handler/xmodule_handler/problem_show"
             )
             if "success" in answers_content:
-                """
-                    #IMPROVEMENT instance_connection , same as hint ?
-                    post_data=urlencode({'event_type': "problem_show", "event": { "problem": self.json["id"] }, "page" : self.json["lms_web_url"]}).encode('utf-8')
-                    instance_connection.get_api_json("/event", post_data) """
                 instance_connection.get_api_json(
                     "/courses/"
                     + self.scraper.course_id
@@ -124,26 +75,67 @@ class Problem(BaseXblock):
                     )
             self.problem_id = str(uuid.uuid4())
 
-        """
-            #HINT fix it !
-            if self.has_hint:
-                self.hint = []
-                hint_index=0
-                referer=self.mooc.instance_url + "/courses/" + self.mooc.course_id + "/?activate_block_id=" + self.json["id"]
-                referer=self.json["lms_web_url"] + "/?activate_block_id=" + self.json["id"]
-                post_data=urlencode({'hint_index': hint_index, 'input_id': self.json["id"]}).encode('utf-8')
-                url_hint = "/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/hint_button"
-                get_info=instance_connection.get_api_json(url_hint, post_data, referer)
-                if "success" in get_info:
-                    self.hint.append(get_info)
-                    hint_index+=1
-                    while hint_index < get_info["total_possible"]:
-                        post_data=urlencode({'hint_index': hint_index,'input_id': self.json["id"]}).encode('utf-8')
-                        get_info=instance_connection.get_api_json("/courses/" + self.mooc.course_id + "/xblock/" + self.json["id"] + "/handler/xmodule_handler/hint_button", post_data, referer)
-                        if "success" in get_info:
-                            self.hint.append(get_info)
-                        hint_index+=1
-            """
+    def download(self, instance_connection):
+        content = instance_connection.get_page(self.xblock_json["student_view_url"])
+        if not content:
+            return
+        raw_soup = BeautifulSoup(content, "lxml")
+        try:
+            html_content_from_div = str(
+                raw_soup.find("div", attrs={"class": "problems-wrapper"})[
+                    "data-content"
+                ]
+            )
+        except Exception:
+            problem_json_url = str(
+                raw_soup.find("div", attrs={"class": "problems-wrapper"})["data-url"]
+            )
+            html_content_from_div = str(
+                instance_connection.get_api_json(problem_json_url + "/problem_get")[
+                    "html"
+                ]
+            )
+        soup = BeautifulSoup(html_content_from_div, "lxml")
+
+        # remove all notifications
+        for div in soup.find_all("div", attrs={"class": "notification"}):
+            div.decompose()
+
+        # clear all inputs
+        for input_tag in soup.find_all("input"):
+            if input_tag.has_attr("value"):
+                input_tag["value"] = ""
+            if input_tag.has_attr("checked"):
+                del input_tag.attrs["checked"]
+
+        # remove action bar (contains the submission button)
+        soup.find("div", attrs={"class": "action"}).decompose()
+        for span in soup.find_all("span", attrs={"class": "unanswered"}):
+            span.decompose()
+        for span in soup.find_all("span", attrs={"class": "sr"}):
+            span.decompose()
+
+        self.problem_header = str(soup.find("h3", attrs={"class": "problem-header"}))
+
+        # process final HTML content
+        html_content = self.scraper.html_processor.dl_dependencies_and_fix_links(
+            content=str(soup.find("div", attrs={"class": "problem"})),
+            output_path=self.output_path,
+            path_from_html=self.folder_name,
+            root_from_html="../" * 5,
+        )
+
+        # defer scripts in the HTML as they sometimes are inline and tend
+        # to access content below them
+        html_content = self.scraper.html_processor.defer_scripts(
+            content=html_content,
+            output_path=self.output_path,
+            path_from_html=self.folder_name,
+        )
+
+        # save the content
+        self.html_content = str(html_content)
+        self.get_answers(instance_connection)
 
     def render(self):
         return jinja(None, "problem.html", False, problem=self)
