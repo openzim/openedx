@@ -30,11 +30,11 @@ class Discussion(BaseXblock):
             )
             if discussion_block:
                 discussion_id = discussion_block["data-discussion-id"]
-                for thread in self.scraper.forum.thread:
+                for thread in self.scraper.forum.threads:
                     if thread["commentable_id"] == discussion_id:
                         self.data.append(thread)
                 if len(self.data) != 0:
-                    self.category_title = self.scraper.forum_category[discussion_id]
+                    self.category_title = self.scraper.forum.categories[discussion_id]
 
     def render(self):
         if self.category_title:
@@ -46,8 +46,8 @@ class Discussion(BaseXblock):
                 category_title=self.category_title,
                 threads=self.data,
                 discussion=self,
-                staff_user=self.scraper.staff_user_forum,
-                rooturl="/".join(self.root_url.split("/")[:-1]),  # rooturl - 1 folder
+                staff_user=self.scraper.forum.staff_user,
+                rooturl="../" * 5,
             )
         if not self.scraper.forum:
             # render nothing in no forum mode
