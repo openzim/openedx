@@ -1,75 +1,79 @@
-<div class="discussion-module">
-  <div class="discussion-module-header">
-     <h3 class="hd hd-3 discussion-module-title"> {{ discussion.xblock_json["display_name"] }}</h3>
-     <div class="inline-discussion-topic">
-        <span class="inline-discussion-topic-title">Topic:</span>
-        {{ category_title["title"] }}
-     </div>
-  </div>
-  <section class="discussion inline-discussion">
-     <div class="inline-discussion-thread-container">
-        <section class="inline-threads">
-           {# Same than home_categorie.html #}
-           <div class="forum-nav-thread-list-wrapper" id="sort-filter-wrapper" tabindex="-1">
-              {% if threads | length == 0 %}
-              <div class="zero-message">
-                 <p> 0 <i class="fa fa-comment"></i> </p>
-              </div>
-              {% else %}
-              <ul class="forum-nav-thread-list forum-nav-thread-list-limit">
-                 {% for thread in threads %} {# Except here #}
-                 <li data-id="{{ thread["id"] }}" class="forum-nav-thread">
-                 <a href="{{ rooturl }}forum/{{ thread["id"] }}/index.html" class="forum-nav-thread-link">
-                 <div class="forum-nav-thread-wrapper-0">
-                    <span class="sr">Discussion</span>
-                    {% if thread["data_thread"]["content"]["endorsed_responses"] %}
-                    <span class="icon fa fa-check-square-o" aria-hidden="true"></span>
-                    {% else %}
-                    {% if thread["thread_type"] == "discussion" %}
-                    <span class="icon fa fa-comments" aria-hidden="true"></span>
-                    {% else %}
-                    <span class="icon fa fa-question" aria-hidden="true"></span>
-                    {% endif %}
-                    {% endif %}
-                 </div>
-                 <div class="forum-nav-thread-wrapper-1">
-                    <span class="forum-nav-thread-title">{{ thread["title"] }}</span>
-                    <div class="thread-preview-body">{{ thread["body"] | first_word }} ... </div>
-                    <div class="thread-preview-body">Posted by {{ thread["username"] }} </div>
-                    {% if thread["pinned"] or thread["user_id"] in staff_user %}
-                    <ul class="forum-nav-thread-labels">
-                       {% if thread["pinned"] %}
-                       <li class="post-label-pinned">
-                          <i class="icon fa fa-thumb-tack"></i>
-                          Pinned
-                       </li>
+<div class="xblock xblock-student_view xblock-student_view-discussion xblock-initialized" data-graded="False" data-has-score="False" data-runtime-class="LmsRuntime" data-init="DiscussionInlineBlock" data-block-type="discussion">
+   {% for elem in pre_discussion_content %}
+   {{ elem }}
+   {% endfor %}
+   <div class="discussion-module">
+       {% for elem in discussion_header %}
+       {{ elem }}
+       {% endfor %}
+       <section class="discussion inline-discussion">
+           <div class="inline-discussion-thread-container">
+               <section class="inline-threads">
+                   {# Same than home_categorie.html #}
+                   <div class="forum-nav-thread-list-wrapper" id="sort-filter-wrapper" tabindex="-1">
+                       {% if threads | length == 0 %}
+                       <div class="zero-message">
+                           <p> 0 <i class="fa fa-comment"></i> </p>
+                       </div>
+                       {% else %}
+                       <ul class="forum-nav-thread-list forum-nav-thread-list-limit">
+                           {% for thread in threads %} {# Except here #}
+                           <li data-id="{{ thread["id"] }}" class="forum-nav-thread">
+                           <a href="{{ rooturl }}forum/{{ thread["id"] }}/index.html" class="forum-nav-thread-link">
+                           <div class="forum-nav-thread-wrapper-0">
+                               <span class="sr">Discussion</span>
+                               {% if thread["data_thread"]["content"]["endorsed_responses"] %}
+                               <span class="icon fa fa-check-square-o" aria-hidden="true"></span>
+                               {% else %}
+                               {% if thread["thread_type"] == "discussion" %}
+                               <span class="icon fa fa-comments" aria-hidden="true"></span>
+                               {% else %}
+                               <span class="icon fa fa-question" aria-hidden="true"></span>
+                               {% endif %}
+                               {% endif %}
+                           </div>
+                           <div class="forum-nav-thread-wrapper-1">
+                               <span class="forum-nav-thread-title">{{ thread["title"] }}</span>
+                               <div class="thread-preview-body">{{ thread["body"] | first_word }} ... </div>
+                               <div class="thread-preview-body">Posted by {{ thread["username"] }} </div>
+                               {% if thread["pinned"] or thread["user_id"] in staff_user %}
+                               <ul class="forum-nav-thread-labels">
+                                   {% if thread["pinned"] %}
+                                   <li class="post-label-pinned">
+                                       <i class="icon fa fa-thumb-tack"></i>
+                                       Pinned
+                                   </li>
+                                   {% endif %}
+                                   {% if thread["user_id"] in staff_user %}
+                                   <li class="post-label-by-staff">
+                                       <i class="icon fa fa-user"></i>
+                                       By: Staff
+                                   </li>
+                                   {% endif %}
+                               </ul>
+                               {% endif %}
+                           </div>
+                           <div class="forum-nav-thread-wrapper-2">
+                               <span class="forum-nav-thread-votes-count" style="display: none;">
+                               +0
+                               <span class="sr"> votes </span>
+                               </span>
+                               <span class="forum-nav-thread-comments-count" style="display: inline-block;">
+                               {{ thread["comments_count"] + 1 }}
+                               <span class="sr">comments </span> 
+                               </span>
+                           </div>
+                           </a>
+                           </li>
+                           {% endfor %}
+                       </ul>
                        {% endif %}
-                       {% if thread["user_id"] in staff_user %}
-                       <li class="post-label-by-staff">
-                          <i class="icon fa fa-user"></i>
-                          By: Staff
-                       </li>
-                       {% endif %}
-                    </ul>
-                    {% endif %}
-                 </div>
-                 <div class="forum-nav-thread-wrapper-2">
-                    <span class="forum-nav-thread-votes-count" style="display: none;">
-                    +0
-                    <span class="sr"> votes </span>
-                    </span>
-                    <span class="forum-nav-thread-comments-count" style="display: inline-block;">
-                    {{ thread["comments_count"] + 1 }}
-                    <span class="sr">comments </span> 
-                    </span>
-                 </div>
-                 </a>
-                 </li>
-                 {% endfor %}
-              </ul>
-              {% endif %}
+                   </div>
+               </section>
            </div>
-        </section>
-     </div>
-  </section>
+       </section>
+   </div>
+   {% for elem in post_discussion_content %}
+   {{ elem }}
+   {% endfor %}
 </div>
