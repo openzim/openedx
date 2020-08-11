@@ -242,7 +242,7 @@ class MoocForum:
                 thread_by_category=thread_by_category,
                 staff_user=self.staff_user,
                 mooc=self.scraper,
-                rooturl="../../../",
+                rooturl="../../",
                 forum_menu=True,
             )
 
