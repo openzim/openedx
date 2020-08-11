@@ -120,8 +120,8 @@ class Problem(BaseXblock):
         # process final HTML content
         html_content = self.scraper.html_processor.dl_dependencies_and_fix_links(
             content=str(soup.find("div", attrs={"class": "problem"})),
-            output_path=self.output_path,
-            path_from_html=self.folder_name,
+            output_path=self.scraper.instance_assets_dir,
+            path_from_html="../" * 5 + "instance_assets",
             root_from_html="../" * 5,
         )
 

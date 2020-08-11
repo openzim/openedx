@@ -78,6 +78,9 @@ def download_and_convert_subtitles(output_path, subtitles, instance_connection):
         if not subtitle_file.exists():
             try:
                 raw_subtitle = instance_connection.get_page(subtitles[lang])
+                if not raw_subtitle:
+                    logger.error(f"Subtitle fetch failed from {subtitles[lang]}")
+                    continue
                 subtitle = html.unescape(
                     re.sub(r"^0$", "1", str(raw_subtitle), flags=re.M)
                 )
@@ -87,9 +90,6 @@ def download_and_convert_subtitles(output_path, subtitles, instance_connection):
                     webvtt = WebVTT().from_srt(subtitle_file)
                     webvtt.save()
                 processed_subtitles[lang] = f"{lang}.vtt"
-            except urllib.error.HTTPError as exc:
-                if exc.code == 404 or exc.code == 403:
-                    logger.error(f"Failed to get subtitle from {subtitles[lang]}")
             except Exception as exc:
                 logger.error(
                     f"Error while converting subtitle {subtitles[lang]} : {exc}"

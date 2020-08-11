@@ -24,8 +24,8 @@ class Html(BaseXblock):
             html_content = str(soup.find("div", attrs={"class": "course-wrapper"}))
         self.html = self.scraper.html_processor.dl_dependencies_and_fix_links(
             content=html_content,
-            output_path=self.output_path,
-            path_from_html=self.folder_name,
+            output_path=self.scraper.instance_assets_dir,
+            path_from_html="../" * 5 + "instance_assets",
             root_from_html="../" * 5,
         )
 
