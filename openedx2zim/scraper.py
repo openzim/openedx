@@ -41,6 +41,7 @@ from .utils import (
     jinja,
     jinja_init,
     prepare_url,
+    get_back_jumps,
 )
 from .xblocks_extractor.chapter import Chapter
 from .xblocks_extractor.course import Course
@@ -398,8 +399,8 @@ class Openedx2Zim:
         self.get_course_tabs()
         logger.info("Downloading content for extra pages ...")
         for page in self.annexed_pages:
-            root_from_html = (
-                len(page["output_path"].relative_to(self.build_dir).parts) * "../"
+            root_from_html = get_back_jumps(
+                len(page["output_path"].relative_to(self.build_dir).parts)
             )
             page["content"] = self.html_processor.dl_dependencies_and_fix_links(
                 content=page["content"],
@@ -677,7 +678,7 @@ class Openedx2Zim:
                 book_list=book_nav["book_list"],
                 dir_path=book_nav["dir_path"],
                 mooc=self,
-                rooturl="../../../",
+                rooturl=get_back_jumps(3),
             )
 
     def render(self):

@@ -4,7 +4,7 @@ import json
 from bs4 import BeautifulSoup
 
 from .base_xblock import BaseXblock
-from ..utils import jinja, prepare_url
+from ..utils import jinja, prepare_url, get_back_jumps
 
 
 class DragAndDropV2(
@@ -35,7 +35,7 @@ class DragAndDropV2(
                 prepare_url(item["expandedImageURL"], self.scraper.instance_url),
                 self.scraper.instance_assets_dir.joinpath(name),
             )
-            item["expandedImageURL"] = "../" * 5 + f"instance_assets/{name}"
+            item["expandedImageURL"] = get_back_jumps(5) + f"instance_assets/{name}"
         # Grid
         name = pathlib.Path(self.content["target_img_expanded_url"]).name
         self.scraper.download_file(
@@ -44,7 +44,9 @@ class DragAndDropV2(
             ),
             self.scraper.instance_assets_dir.joinpath(name),
         )
-        self.content["target_img_expanded_url"] = "../" * 5 + f"instance_assets/{name}"
+        self.content["target_img_expanded_url"] = (
+            get_back_jumps(5) + f"instance_assets/{name}"
+        )
 
     def render(self):
         return jinja(None, "DragAndDropV2.html", False, dragdrop_content=self.content)

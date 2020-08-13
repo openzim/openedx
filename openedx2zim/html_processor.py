@@ -7,7 +7,7 @@ import lxml.html
 from bs4 import BeautifulSoup
 
 from .constants import DOWNLOADABLE_EXTENSIONS, AUDIO_FORMATS
-from .utils import jinja, prepare_url
+from .utils import jinja, prepare_url, get_back_jumps
 
 
 class HtmlProcessor:
@@ -160,11 +160,11 @@ class HtmlProcessor:
             (nb_back_jumps_output_path) * len("../") :
         ]
 
-        return (
+        return get_back_jumps(
             nb_jumps_root_from_html
             - nb_back_jumps_output_path
             + len(pathlib.Path(path_without_back_jumps).parts)
-        ) * "../"
+        )
 
     def download_documents_from_html(
         self, html_body, output_path, path_from_html, root_from_html

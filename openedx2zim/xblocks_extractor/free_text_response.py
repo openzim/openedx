@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 
 from .base_xblock import BaseXblock
-from ..utils import jinja
+from ..utils import jinja, get_back_jumps
 
 
 class FreeTextResponse(BaseXblock):
@@ -36,8 +36,8 @@ class FreeTextResponse(BaseXblock):
             + self.scraper.html_processor.dl_dependencies_and_fix_links(
                 content=str(soup),
                 output_path=self.scraper.instance_assets_dir,
-                path_from_html="../" * 5 + "instance_assets",
-                root_from_html="../" * 5,
+                path_from_html=get_back_jumps(5) + "instance_assets",
+                root_from_html=get_back_jumps(5),
             )
         )
 
