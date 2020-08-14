@@ -12,6 +12,7 @@ logger = getLogger()
 
 def get_response(url, post_data, headers, max_attempts=5):
     req = urllib.request.Request(url, post_data, headers)
+    print(req.header_items())
     for attempt in range(max_attempts):
         try:
             return urllib.request.urlopen(req).read().decode("utf-8")
@@ -34,6 +35,13 @@ class InstanceConnection:
         self.instance_connection = None
         self.user = None
 
+    def update_csrf_token_in_headers(self):
+        csrf_token = None
+        for cookie in self.cookie_jar:
+            if cookie.name == "csrftoken":
+                csrf_token = cookie.value
+        self.headers.update({"X-CSRFToken": csrf_token})
+
     def generate_connection_headers(self):
         opener = urllib.request.build_opener(
             urllib.request.HTTPCookieProcessor(self.cookie_jar)
@@ -41,10 +49,6 @@ class InstanceConnection:
         opener.addheaders = [("User-Agent", "Mozilla/5.0")]
         urllib.request.install_opener(opener)
         opener.open(self.instance_config["instance_url"] + "/login")
-        csrf_token = None
-        for cookie in self.cookie_jar:
-            if cookie.name == "csrftoken":
-                csrf_token = cookie.value
         self.headers = {
             "User-Agent": "Mozilla/5.0",
             "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -52,8 +56,8 @@ class InstanceConnection:
             "Referer": self.instance_config["instance_url"]
             + self.instance_config["login_page"],
             "X-Requested-With": "XMLHttpRequest",
-            "X-CSRFToken": csrf_token,
         }
+        self.update_csrf_token_in_headers()
 
     def establish_connection(self):
         self.generate_connection_headers()
@@ -74,8 +78,7 @@ class InstanceConnection:
                 )["username"]
 
     def get_api_json(self, page, post_data=None, referer=None):
-        if "hint" in page:  # see with xblocks_extractor/Problem.py
-            return {}
+        self.update_csrf_token_in_headers()
         headers = self.headers
         if referer:
             headers = copy.deepcopy(self.headers)
@@ -87,10 +90,12 @@ class InstanceConnection:
         )
 
     def get_page(self, url):
+        self.update_csrf_token_in_headers()
         headers = copy.deepcopy(self.headers)
         headers["X-Requested-With"] = ""
         return get_response(url, None, headers)
 
     def get_redirection(self, url):
+        self.update_csrf_token_in_headers()
         req = urllib.request.Request(url, None, self.headers)
         return urllib.request.urlopen(req).geturl()

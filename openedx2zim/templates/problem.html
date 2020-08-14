@@ -1,41 +1,16 @@
-<div id="{{ problem.problem_id }}">
-  {% if not problem.answers %}
-  <div class="noanswers">
-      <p><b> Warning : </b> Automatic correction is not available for this problem</p>
-  </div>
-  {% endif %}
-  <div class="xblock xblock-student_view xblock-student_view-problem xmodule_display xmodule_CapaModule" data-block-type="problem">
-      <div class="problems-wrapper">
-        {{ problem.problem_header }}
-      <div class="problem">
-        {{ problem.html_content }}
-        {% if problem.has_hint %}
-        <script>
-            problem_hint_array["{{ problem.problem_id }}"] = [ {% for ans in problem.hint %}"{{ ans }}", {% endfor %} ];
-        </script>
-        <div class="notification problem-hint notification-hint is-hidden" tabindex="-1" hint_index="0" style="display: none;" id="hint-{{ problem.problem_id }}">
-            <span class="icon fa fa-question" aria-hidden="true"></span>
-
-            <span class="notification-message">
-                <ol>
-                    <li class="hint-index-0" tabindex="-1" id="hint-content-{{ problem.problem_id }}"></li>
-                </ol>
-            </span>
-            <div class="notification-btn-wrapper">
-                <button type="button" class="btn btn-default btn-small notification-btn hint-button" disabled="disabled" id="hint-next-{{ problem.problem_id }}">Next Hint</button>
+<div class="xblock xblock-student_view xblock-student_view-problem xmodule_display xmodule_CapaModule" data-block-type="problem">
+    <div class="problems-wrapper">
+        {{ problem_header }}
+        <div class="problem" id="{{ problem_id }}">
+            {{ html_content }}
+            {% if answers_available %}
+            <div class="action">
+                <script type="text/javascript" src="{{ path_to_root }}instance_assets/{{ problem_id }}_answers.js"></script>
+                <div class="submit-attempt-container">
+                <button type="button" class="submit btn-brand" onclick="problem_check_answers('{{ problem_id }}')" >          <span class="submit-label">Submit</span>      </button>
+                </div>
             </div>
-        </div>
-        <button type="button" class="hint-button problem-action-btn btn-default btn-small" data-value="Hint" onclick="problem_hint('{{ problem.problem_id }}')"><span class="icon fa fa-question" aria-hidden="true"></span>Hint</button>
-        {% endif %}
-        {% if problem.answers %}
-        <script>
-            problem_answers_array["{{ problem.problem_id }}"]=[ {% for ans in problem.answers %}"{{ ans }}", {% endfor %} ];
-            problem_explanation_array["{{ problem.problem_id }}"]={ {% for ans in problem.explanation %} "{{ ans["name"] }}" : "{{ ans["value"] }}" , {% endfor %} };
-        </script>
-        <button onclick="problem_check_answers('{{ problem.problem_id }}')">Check answers</button>
-        <button onclick="problem_show_answers('{{ problem.problem_id }}')">Show answers and explanation</button>
-        {% endif %}
-      </div>
-      </div>
-  </div>
+            {% endif %}
+         </div>
+    </div>
 </div>
