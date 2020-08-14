@@ -7,7 +7,7 @@ import lxml.html
 from bs4 import BeautifulSoup
 
 from .constants import DOWNLOADABLE_EXTENSIONS, AUDIO_FORMATS
-from .utils import jinja, prepare_url
+from .utils import jinja, prepare_url, get_back_jumps
 
 
 class HtmlProcessor:
@@ -149,6 +149,23 @@ class HtmlProcessor:
                         img.attrib["style"] = " max-width:100%"
         return bool(imgs)
 
+    def get_root_from_asset(self, path_from_html, root_from_html):
+        """ get path to root from the downloaded/generated asset """
+
+        nb_jumps_root_from_html = root_from_html.count("../")
+        nb_back_jumps_output_path = path_from_html.count("../")
+
+        # the path to the asset from HTML, minus the back jumps
+        path_without_back_jumps = path_from_html[
+            (nb_back_jumps_output_path) * len("../") :
+        ]
+
+        return get_back_jumps(
+            nb_jumps_root_from_html
+            - nb_back_jumps_output_path
+            + len(pathlib.Path(path_without_back_jumps).parts)
+        )
+
     def download_documents_from_html(
         self, html_body, output_path, path_from_html, root_from_html
     ):
@@ -174,8 +191,9 @@ class HtmlProcessor:
                                 "audio_player.html",
                                 False,
                                 audio_path=filename,
-                                path_to_root=root_from_html
-                                + len(pathlib.Path(path_from_html).parts) * "../",
+                                path_to_root=self.get_root_from_asset(
+                                    path_from_html, root_from_html
+                                ),
                                 audio_format=file_format,
                             )
                         filename = html_fpath.name

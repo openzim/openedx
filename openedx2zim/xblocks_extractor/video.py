@@ -5,7 +5,7 @@ import urllib
 from bs4 import BeautifulSoup
 
 from .base_xblock import BaseXblock
-from ..utils import jinja, download_and_convert_subtitles, prepare_url
+from ..utils import jinja, download_and_convert_subtitles, prepare_url, get_back_jumps
 from ..constants import getLogger
 
 
@@ -139,5 +139,5 @@ class Video(BaseXblock):
             title=self.xblock_json["display_name"],
             subs=self.subs,
             autoplay=self.scraper.autoplay,
-            path_to_root="../" * 5,
+            path_to_root=get_back_jumps(5),
         )

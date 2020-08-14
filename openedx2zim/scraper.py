@@ -41,6 +41,7 @@ from .utils import (
     jinja,
     jinja_init,
     prepare_url,
+    get_back_jumps,
 )
 from .xblocks_extractor.chapter import Chapter
 from .xblocks_extractor.course import Course
@@ -178,6 +179,10 @@ class Openedx2Zim:
         self.root_xblock_id = None
         self.wiki = None
         self.forum = None
+
+    @property
+    def instance_assets_dir(self):
+        return self.build_dir.joinpath("instance_assets")
 
     def get_course_id(self, url, course_page_name, course_prefix, instance_url):
         clean_url = re.match(
@@ -394,14 +399,14 @@ class Openedx2Zim:
         self.get_course_tabs()
         logger.info("Downloading content for extra pages ...")
         for page in self.annexed_pages:
+            root_from_html = get_back_jumps(
+                len(page["output_path"].relative_to(self.build_dir).parts)
+            )
             page["content"] = self.html_processor.dl_dependencies_and_fix_links(
                 content=page["content"],
-                output_path=page["output_path"],
-                path_from_html="",
-                root_from_html=len(
-                    page["output_path"].relative_to(self.build_dir).parts
-                )
-                * "../",
+                output_path=self.instance_assets_dir,
+                path_from_html=root_from_html + "instance_assets",
+                root_from_html=root_from_html,
             )
 
         logger.info("Processing book lists ...")
@@ -478,8 +483,8 @@ class Openedx2Zim:
                     self.homepage_html.append(
                         self.html_processor.dl_dependencies_and_fix_links(
                             content=article.prettify(),
-                            output_path=self.build_dir.joinpath("home"),
-                            path_from_html="home",
+                            output_path=self.instance_assets_dir,
+                            path_from_html="instance_assets",
                             root_from_html="",
                         )
                     )
@@ -490,8 +495,8 @@ class Openedx2Zim:
             self.homepage_html.append(
                 self.html_processor.dl_dependencies_and_fix_links(
                     content=welcome_message.prettify(),
-                    output_path=self.build_dir.joinpath("home"),
-                    path_from_html="home",
+                    output_path=self.instance_assets_dir,
+                    path_from_html="instance_assets",
                     root_from_html="",
                 )
             )
@@ -673,7 +678,7 @@ class Openedx2Zim:
                 book_list=book_nav["book_list"],
                 dir_path=book_nav["dir_path"],
                 mooc=self,
-                rooturl="../../../",
+                rooturl=get_back_jumps(3),
             )
 
     def render(self):
@@ -763,6 +768,7 @@ class Openedx2Zim:
         )
         self.instance_connection.establish_connection()
         jinja_init()
+        self.instance_assets_dir.mkdir(exist_ok=True, parents=True)
         self.html_processor = HtmlProcessor(self)
         self.prepare_mooc_data()
         self.parse_course_xblocks()
