@@ -118,9 +118,13 @@ vertical
      we do this as our seq_content is static (as we have HTML at vertical level) but seq_content on instances 
      is not static (as they have HTML at sequential level) -->
 <script type="text/javascript">
-  $(window).load(function(){
-    $('#seq_content').append("<div id='dummy_div'></div>");
-    $('#dummy_div').css("display", "none")
-  });
+function trigger_seq_content_change_behaviour(){
+  $('#seq_content').append("<div id='dummy_div'></div>");
+  $('#dummy_div').remove();
+}
+
+$(window).load(function(){
+  trigger_seq_content_change_behaviour();
+});
 </script>
 {% endblock %}

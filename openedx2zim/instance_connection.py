@@ -12,7 +12,6 @@ logger = getLogger()
 
 def get_response(url, post_data, headers, max_attempts=5):
     req = urllib.request.Request(url, post_data, headers)
-    print(req.header_items())
     for attempt in range(max_attempts):
         try:
             return urllib.request.urlopen(req).read().decode("utf-8")

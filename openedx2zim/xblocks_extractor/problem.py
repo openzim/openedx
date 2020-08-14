@@ -29,6 +29,7 @@ class Problem(BaseXblock):
         self.explanation = []
         self.problem_id = None
         self.answers_available = False
+        self.xmodule_handler = None
 
     def check_problem_type_and_get_options(self, problem_tag):
         """ returns whether answers are fetchable for a problem, if yes, also returns whether the problem
@@ -49,42 +50,81 @@ class Problem(BaseXblock):
             return True, False, multi_answer_correct_options
         return False, None, None
 
-    def get_answers(self, instance_connection, problem_tag, xmodule_handler):
-        def check_result(answer_candidate):
-            post_data = {}
-            for candidate in answer_candidate:
-                post_data.update(
-                    {
-                        candidate.attrs.get("name"): candidate.attrs.get("id")[
-                            len(candidate.attrs.get("name")) + 1 :
-                        ]
-                    }
-                )
-            post_data = urllib.parse.urlencode(post_data).encode("utf-8")
-            return instance_connection.get_api_json(
-                f"{xmodule_handler}/problem_check",
-                post_data=post_data,
-                referer=self.xblock_json["student_view_url"],
+    def check_answer(self, answer_candidate, instance_connection):
+        """ call the instance API with a answer candidate (a set of options) and return the response """
+
+        post_data = {}
+
+        # prepare the payload to be sent
+        for candidate in answer_candidate:
+            post_data.update(
+                {
+                    candidate.attrs.get("name"): candidate.attrs.get("id")[
+                        len(candidate.attrs.get("name")) + 1 :
+                    ]
+                }
             )
 
+        # encode the payload as a byte string
+        post_data = urllib.parse.urlencode(post_data).encode("utf-8")
+
+        # send a POST request to the instance with the payload
+        return instance_connection.get_api_json(
+            f"{self.xmodule_handler}/problem_check",
+            post_data=post_data,
+            referer=self.xblock_json["student_view_url"],
+        )
+
+    def write_answers_and_mark_available(self):
+        """ saves the answers and marks them available """
+
+        # write the answer content in a javascript file
+        with open(
+            self.scraper.instance_assets_dir.joinpath(
+                f"{self.problem_id}_answers.js"
+            ),
+            "w",
+        ) as answer_file:
+            answer_file.write(
+                f"problem_answers['{self.problem_id}']="
+                + json.dumps(self.answers, indent=4)
+            )
+
+        # mark answers available
+        self.answers_available = True
+
+    def get_answers(self, instance_connection, problem_tag):
+        """ retrieve answers to a problem if the answers are retrievable
+
+            answers can only be retrieved if the problem is a multiple choice question with
+            single correct answers or with multiple correct answers (only if number of options <= 5)
+            the answers are saved in a js file in instance_assets directory """
+
+        def get_html_replacement_content(result):
+            """ get the content with which the content of the problem be replaced from the response from API """
+
+            spup = BeautifulSoup(result["contents"], "lxml")
+            return (
+                spup.find("div", attrs={"class": "problem"})
+                .find("div")
+                .find("div")
+            )
+
+        # check answer fetchability, problem type, and get options if applicable
         (
             answers_fetchable,
             single_correct,
             options_list,
         ) = self.check_problem_type_and_get_options(problem_tag)
+
         if answers_fetchable:
-            self.problem_id = str(uuid.uuid4())
+            # answer fetching is feasible
             if single_correct:
                 # fetch answer for single correct question
                 for answer_candidate in options_list:
-                    result = check_result([answer_candidate])
+                    result = self.check_answer([answer_candidate], instance_connection)
                     if result["success"] in ["correct", "incorrect"]:
-                        result_spup = BeautifulSoup(result["contents"], "lxml")
-                        html_content_to_replace = (
-                            result_spup.find("div", attrs={"class": "problem"})
-                            .find("div")
-                            .find("div")
-                        )
+                        html_content_to_replace = get_html_replacement_content(result)
                         self.answers.update(
                             {
                                 answer_candidate.attrs.get("id"): str(
@@ -92,18 +132,17 @@ class Problem(BaseXblock):
                                 )
                             }
                         )
+                    else:
+                        logger.error("Answer fetching failed...")
+                        return
             else:
                 # fetch answer for multiple correct question
+                # generate all possible combinations
                 for r in range(1, len(options_list) + 1):
                     for answer_candidate in itertools.combinations(options_list, r):
-                        result = check_result(answer_candidate)
+                        result = self.check_answer(answer_candidate, instance_connection)
                         if result["success"] in ["correct", "incorrect"]:
-                            result_spup = BeautifulSoup(result["contents"], "lxml")
-                            html_content_to_replace = (
-                                result_spup.find("div", attrs={"class": "problem"})
-                                .find("div")
-                                .find("div")
-                            )
+                            html_content_to_replace = get_html_replacement_content(result)
                             self.answers.update(
                                 {
                                     "-".join(
@@ -112,43 +151,17 @@ class Problem(BaseXblock):
                                     ): str(html_content_to_replace)
                                 }
                             )
-            with open(
-                self.scraper.instance_assets_dir.joinpath(
-                    f"{self.problem_id}_answers.js"
-                ),
-                "w",
-            ) as answer_file:
-                answer_file.write(
-                    f"problem_answers[{self.problem_id}]="
-                    + json.dumps(self.answers, indent=4)
-                )
-            self.answers_available = True
+                        else:
+                            logger.error("Answer fetching failed...")
+                            return
+
+            self.write_answers_and_mark_available()
 
         else:
             logger.warning("Answer fetching for this type of problem is not supported")
 
-    def download(self, instance_connection):
-        content = instance_connection.get_page(self.xblock_json["student_view_url"])
-        if not content:
-            return
-        raw_soup = BeautifulSoup(content, "lxml")
-        xmodule_handler = str(
-            raw_soup.find("div", attrs={"class": "problems-wrapper"})["data-url"]
-        )
-        try:
-            html_content_from_div = str(
-                raw_soup.find("div", attrs={"class": "problems-wrapper"})[
-                    "data-content"
-                ]
-            )
-        except Exception:
-            html_content_from_div = str(
-                instance_connection.get_api_json(xmodule_handler + "/problem_get")[
-                    "html"
-                ]
-            )
-        self.problem_id = str(uuid.uuid4())
-        soup = BeautifulSoup(html_content_from_div, "lxml")
+    def clean_problem_content(self, soup):
+        """ removes unnecessary content from the problem content """
 
         # remove all notifications
         for div in soup.find_all("div", attrs={"class": "notification"}):
@@ -160,13 +173,17 @@ class Problem(BaseXblock):
                 input_tag["value"] = ""
             if input_tag.has_attr("checked"):
                 del input_tag.attrs["checked"]
-        element = soup.find("label", attrs={"class": "response-label"})
-        if element and "choicegroup_correct" in element["class"]:
-            element["class"].remove("choicegroup_correct")
 
-        element = soup.find("span", attrs={"class": "message"})
-        if element:
-            element.decompose()
+        # clear all previously answered labels
+        label_list = soup.find_all("label", attrs={"class": "response-label"})
+        for label in label_list:
+            if "choicegroup_correct" in label["class"]:
+                label["class"].remove("choicegroup_correct")
+
+        # clear messages (if previously answered on instance)
+        span_message = soup.find("span", attrs={"class": "message"})
+        if span_message:
+            span_message.decompose()
 
         # remove action bar (contains the submission button)
         soup.find("div", attrs={"class": "action"}).decompose()
@@ -175,10 +192,47 @@ class Problem(BaseXblock):
         for span in soup.find_all("span", attrs={"class": "sr"}):
             span.decompose()
 
+    def download(self, instance_connection):
+        """ download the problem xblock content from the instance """
+
+        # try to fetch content
+        content = instance_connection.get_page(self.xblock_json["student_view_url"])
+        if not content:
+            return
+        raw_soup = BeautifulSoup(content, "lxml")
+        self.xmodule_handler = str(
+            raw_soup.find("div", attrs={"class": "problems-wrapper"})["data-url"]
+        )
+        try:
+            html_content_from_div = str(
+                raw_soup.find("div", attrs={"class": "problems-wrapper"})[
+                    "data-content"
+                ]
+            )
+        except Exception:
+            html_content_from_div = str(
+                instance_connection.get_api_json(self.xmodule_handler + "/problem_get")[
+                    "html"
+                ]
+            )
+
+        # assign a random problem ID
+        self.problem_id = str(uuid.uuid4())
+
+        # create the soup
+        soup = BeautifulSoup(html_content_from_div, "lxml")
+
+        # clean the soup content
+        self.clean_problem_content(soup)
+
+        # get the problem header
         self.problem_header = str(soup.find("h3", attrs={"class": "problem-header"}))
 
+        # get the main problem content
         problem_tag = soup.find("div", attrs={"class": "problem"})
-        self.get_answers(instance_connection, problem_tag, xmodule_handler)
+
+        # try to get answers
+        self.get_answers(instance_connection, problem_tag)
 
         # process final HTML content
         html_content = self.scraper.html_processor.dl_dependencies_and_fix_links(
@@ -200,6 +254,8 @@ class Problem(BaseXblock):
         self.html_content = str(html_content)
 
     def render(self):
+        """ render the fetched content and return it """
+
         return jinja(
             None,
             "problem.html",
