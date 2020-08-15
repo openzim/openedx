@@ -99,6 +99,7 @@ class Openedx2Zim:
         favicon_url,
         add_wiki,
         add_forum,
+        remove_seq_nav,
         s3_url_with_credentials,
         use_any_optimized_version,
         output_dir,
@@ -137,6 +138,7 @@ class Openedx2Zim:
         self.add_forum = add_forum
         self.ignore_missing_xblocks = ignore_missing_xblocks
         self.autoplay = autoplay
+        self.remove_seq_nav = remove_seq_nav
 
         # authentication
         self.email = email
