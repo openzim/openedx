@@ -35,10 +35,12 @@ class HtmlProcessor:
             return None, None
         fresh_download = False
         if not output_file.exists():
-            self.scraper.download_file(
+            if self.scraper.download_file(
                 prepare_url(src, self.scraper.instance_url), output_file,
-            )
-            fresh_download = True
+            ):
+                fresh_download = True
+            else:
+                return None, None
         return filename, fresh_download
 
     def download_dependencies_from_css(

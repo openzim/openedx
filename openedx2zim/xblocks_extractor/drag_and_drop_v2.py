@@ -31,22 +31,26 @@ class DragAndDropV2(
         # item
         for item in self.content["items"]:
             name = pathlib.Path(item["expandedImageURL"]).name
-            self.scraper.download_file(
+            if self.scraper.download_file(
                 prepare_url(item["expandedImageURL"], self.scraper.instance_url),
                 self.scraper.instance_assets_dir.joinpath(name),
-            )
-            item["expandedImageURL"] = get_back_jumps(5) + f"instance_assets/{name}"
+            ):
+                item["expandedImageURL"] = get_back_jumps(5) + f"instance_assets/{name}"
+            else:
+                item["expandedImageURL"] = ""
         # Grid
         name = pathlib.Path(self.content["target_img_expanded_url"]).name
-        self.scraper.download_file(
+        if self.scraper.download_file(
             prepare_url(
                 self.content["target_img_expanded_url"], self.scraper.instance_url
             ),
             self.scraper.instance_assets_dir.joinpath(name),
-        )
-        self.content["target_img_expanded_url"] = (
-            get_back_jumps(5) + f"instance_assets/{name}"
-        )
+        ):
+            self.content["target_img_expanded_url"] = (
+                get_back_jumps(5) + f"instance_assets/{name}"
+            )
+        else:
+            self.content["target_img_expanded_url"] = ""
 
     def render(self):
         return jinja(None, "DragAndDropV2.html", False, dragdrop_content=self.content)
