@@ -121,6 +121,13 @@ def main():
     )
 
     parser.add_argument(
+        "--remove-seq-nav",
+        help="Remove the top sequential navigation bar in the ZIM",
+        action="store_true",
+        default=False,
+    )
+
+    parser.add_argument(
         "--optimization-cache",
         help="URL with credentials and bucket name to S3 Optimization Cache",
         dest="s3_url_with_credentials",

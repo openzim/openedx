@@ -24,6 +24,7 @@ vertical
     <section id="course-content" class="zim-course-content" role="main" aria-label="Content">
       <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.xblock_json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
         <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.xblock_json["id"] }}" data-position="1">
+          {% if not remove_seq_nav %}
           <div class="zim-sequence-nav">
               {% if prev_vertical %}
               <a href="{{ rooturl }}{{ prev_vertical.relative_path }}/index.html" title="{{ prev_vertical.display_name }}">
@@ -67,6 +68,7 @@ vertical
                 </a>
 		{% endif %}
           </div>
+          {% endif %}
           <div class="window-wrap">
           <div id="seq_content">
             <div class="course-wrapper" role="presentation">
