@@ -314,7 +314,7 @@ class Openedx2Zim:
             self.annexed_pages.append(
                 {
                     "output_path": output_path,
-                    "content": str(just_content),
+                    "content": soup_page,
                     "title": soup_page.find("title").get_text(),
                 }
             )
@@ -402,11 +402,31 @@ class Openedx2Zim:
             root_from_html = get_back_jumps(
                 len(page["output_path"].relative_to(self.build_dir).parts)
             )
-            page["content"] = self.html_processor.dl_dependencies_and_fix_links(
-                content=page["content"],
+            soup = page["content"]
+            path_from_html = root_from_html + "instance_assets"
+            extra_head_content = self.html_processor.extract_head_css_js(
+                soup=soup,
                 output_path=self.instance_assets_dir,
-                path_from_html=root_from_html + "instance_assets",
+                path_from_html=path_from_html,
                 root_from_html=root_from_html,
+            )
+            body_end_scripts = self.html_processor.extract_body_end_scripts(
+                soup=soup,
+                output_path=self.instance_assets_dir,
+                path_from_html=path_from_html,
+                root_from_html=root_from_html,
+            )
+            page["content"] = self.html_processor.dl_dependencies_and_fix_links(
+                content=str(soup.find("div", attrs={"class": "xblock"})),
+                output_path=self.instance_assets_dir,
+                path_from_html=path_from_html,
+                root_from_html=root_from_html,
+            )
+            page.update(
+                {
+                    "extra_head_content": extra_head_content,
+                    "body_end_scripts": body_end_scripts,
+                }
             )
 
         logger.info("Processing book lists ...")
@@ -694,6 +714,8 @@ class Openedx2Zim:
                 title=page["title"],
                 mooc=self,
                 content=page["content"],
+                extra_headers=page["extra_head_content"],
+                body_scripts=page["body_end_scripts"],
                 rooturl="../",
             )
 
