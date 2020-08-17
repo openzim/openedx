@@ -53,6 +53,9 @@ This project can also be run with docker. Use the provided [Dockerfile](Dockerfi
 ## Features :robot:
 You can create ZIMs for MOOCs powered by the openedx platform (find a list of openedx powered instances [here](https://openedx.atlassian.net/wiki/spaces/COMM/pages/162245773/Sites+powered+by+Open+edX+Platform)), choose between different video formats (webm/mp4), different compression rates, and even use an S3 based cache.
 
+## Limitations :exclamation:
+The answers can be extracted only for "multiple choice question" type problems with single answer correct and multiple answer correct (only if the number of options in that case is at most 5). This is due to large number of requests required to extract answers for other types of answers. For more information, refer [here](https://github.com/openzim/openedx/issues/35).
+
 ## License :book:
 
 [GPLv3](https://www.gnu.org/licenses/gpl-3.0) or later, see
