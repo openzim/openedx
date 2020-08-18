@@ -565,13 +565,8 @@ div.zim-course-wrapper section.zim-course-content .vert-mod .vert > .xblock-stud
     margin-bottom: 15px;
     padding: 0 0 15px;
 }
-.video {
-    background: #f0f3f5;
-    display: block;
-    margin: 0 -12px;
-    padding: 12px;
-    border-radius: 5px;
-    outline: none;
+.video-wrapper {
+    height: 270px;
 }
 .content-wrapper .course-license, .content-wrapper .xblock-license {
     text-align: right;

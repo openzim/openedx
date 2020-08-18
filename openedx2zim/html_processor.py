@@ -288,6 +288,7 @@ class HtmlProcessor:
                             subs=[],
                             autoplay=self.scraper.autoplay,
                             path_to_root=root_from_html,
+                            title="",
                         )
                         iframe.getparent().replace(iframe, lxml.html.fromstring(x))
                 elif ".pdf" in src:

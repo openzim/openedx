@@ -1,13 +1,22 @@
-{% if self.no_video != False %}
-<video class="video video-js vjs-default-skin" 
-  controls preload="auto"
-  width="480px" height="270px"
-  data-setup='{"techOrder": ["html5", "ogvjs"], "ogvjs": {"base": "{{ path_to_root }}assets/ogvjs"}, "autoplay": {% if autoplay %}true{% else %}false{% endif %}, "preload": true, "controls": true, "controlBar": {"pictureInPictureToggle":false}}'>
-  <source src="{{ video_path }}" type="video/{{ format }}" />
-  {% for language in subs %}
-    <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
-  {% endfor %}
-</video>
-{% else %}
+<div class="xblock xblock-student_view xblock-student_view-video xmodule_display xmodule_VideoBlock xblock-initialized">
+  <h3 class="hd hd2">{{ title }}</h3>
+  {% if self.no_video != False %}
+  <div class="video is-initialized">
+      <div class="tc-wrapper">
+          <div class="video-wrapper" style="width: 100%;">
+              <video class="video-js vjs-default-skin vjs-fill" 
+                  controls preload="auto"
+                  data-setup='{"techOrder": ["html5", "ogvjs"], "ogvjs": {"base": "{{ path_to_root }}assets/ogvjs"}, "autoplay": {% if autoplay %}true{% else %}false{% endif %}, "preload": true, "controls": true, "controlBar": {"pictureInPictureToggle":false}}'>
+                  <source src="{{ video_path }}" type="video/{{ format }}" />
+                  {% for language in subs %}
+                  <track kind="subtitles" src="{{ language["file"] }}" srclang="{{ language["code"] }}" label="{{ language["code"] }}" />
+                  {% endfor %}
+              </video>
+          </div>
+      </div>
+  </div>
+  {% else %}
   <p> Sorry this video has not been downloaded </p>
-{% endif %}
+  {% endif %}
+</div>
+
