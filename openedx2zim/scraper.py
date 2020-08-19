@@ -294,11 +294,11 @@ class Openedx2Zim:
         book_list = []
         for url in pdf:
             file_name = pathlib.Path(urllib.parse.urlparse(url["rel"][0]).path).name
-            self.download_file(
+            if self.download_file(
                 prepare_url(url["rel"][0], self.instance_url),
                 output_path.joinpath(file_name),
-            )
-            book_list.append({"url": file_name, "name": url.get_text()})
+            ):
+                book_list.append({"url": file_name, "name": url.get_text()})
         return book_list
 
     def annex_extra_page(self, tab_href, tab_org_path):
@@ -666,30 +666,43 @@ class Openedx2Zim:
         return f"{fpath.suffix[1:]}/{safe_url}/{quality}"
 
     def download_file(self, url, fpath):
+        """ downloads a file from the supplied url to the supplied fpath
+            returns true if successful, false if unsuccessful """
+
         is_youtube = "youtube" in url
         downloaded_from_cache = False
         meta, filetype = get_meta_from_url(url)
         if self.s3_storage:
             s3_key = self.generate_s3_key(url, fpath)
             downloaded_from_cache = self.download_from_cache(s3_key, fpath, meta)
-        if not downloaded_from_cache:
+        if downloaded_from_cache:
+            # optimized file downloaded from cache
+            return True
+        else:
+            # file not downloaded from cache
             if is_youtube:
                 downloaded_file = self.download_from_youtube(url, fpath)
             else:
                 downloaded_file = self.downlaod_form_url(url, fpath, filetype)
             if not downloaded_file:
                 logger.error(f"Error while downloading file from URL {url}")
-                return
+                return False
             try:
                 optimized = self.optimize_file(downloaded_file, fpath)
                 if self.s3_storage and optimized:
                     self.upload_to_cache(s3_key, fpath, meta)
             except Exception as exc:
                 logger.error(f"Error while optimizing {fpath}: {exc}")
-                return
+                # clean leftovers if any
+                if downloaded_file.exists():
+                    downloaded_file.unlink()
+                if fpath.exists():
+                    fpath.unlink()
+                return False
             finally:
                 if downloaded_file.resolve() != fpath.resolve() and not fpath.exists():
                     shutil.move(downloaded_file, fpath)
+                return True
 
     def render_booknav(self):
         for book_nav in self.book_lists:
