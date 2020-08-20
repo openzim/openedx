@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 
+
 {% block title %}
 {{ vertical.display_name }}
 {% endblock %}
+
 
 {% block addhead %}
 <script type="text/javascript" src="{{ rooturl }}assets/xblocks.js"></script>
@@ -11,9 +13,11 @@
 {% endfor %}
 {% endblock %}
 
+
 {% block bodyclass %}
 vertical
 {% endblock %}
+
 
 {% block body %}
 <div class="zim-container">
@@ -37,17 +41,13 @@ vertical
                 </button>
               {% if prev_vertical %}
               </a>
-	      {% endif %}
+	            {% endif %}
             <nav class="zim-sequence-list-wrapper" aria-label="Sequence">
               <ol id="zim-sequence-list" role="tablist">
               {% for vertical_ in sequential.descendants %}
                 <li {% if vertical_.id == vertical.id %} class="current_vertical" {% endif %}>
                   <a id="tab_0" tabindex=0 data-id="{{ vertical_.xblock_json["id"] }}" data-page-title="{{ vertical_.display_name }}" href="{{ rooturl }}{{ vertical_.relative_path }}/index.html" title="{{ vertical_.display_name }}">
                     <i class="icon fa {{ vertical_.icon_type }}" aria-hidden="true"></i>
-		    <!--
-                    <p>
-                      {{ vertical_.display_name }}
-                    </p>-->
                   </a>
                 </li>
               {% endfor %}
@@ -66,7 +66,7 @@ vertical
                 </button>
                 {% if next_vertical %}
                 </a>
-		{% endif %}
+		            {% endif %}
           </div>
           {% endif %}
           <div class="window-wrap">
@@ -86,24 +86,28 @@ vertical
           </div>
           </div>
           <nav class="zim-sequence-bottom" aria-label="Section">
-              <a href="{{ rooturl }}{{ prev_vertical.relative_path }}/index.html" title="{{ prev_vertical.display_name }}">
-              {% if prev_vertical %}
-                <button class="zim-sequence-nav-button button-previous">
-              {% else %}
-                <button class="zim-sequence-nav-button button-previous deactivated">
-              {% endif %}
+            {% if prev_vertical %}
+            <a href="{{ rooturl }}{{ prev_vertical.relative_path }}/index.html" title="{{ prev_vertical.display_name }}">
+              <button class="zim-sequence-nav-button button-previous">
                 <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
               </button>
-              </a>
-              <a href="{{ rooturl }}{{ next_vertical.relative_path }}/index.html" title="{{ next_vertical.display_name }}">
-                {% if next_vertical %}
-                  <button class="zim-sequence-nav-button button-next">
-                {% else %}
-                  <button class="zim-sequence-nav-button button-next deactivated">
-                {% endif %}
+            </a>
+            {% else %}
+              <button class="zim-sequence-nav-button button-previous deactivated">
+                <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
+              </button>
+            {% endif %}
+            {% if next_vertical %}
+            <a href="{{ rooturl }}{{ next_vertical.relative_path }}/index.html" title="{{ next_vertical.display_name }}">
+              <button class="zim-sequence-nav-button button-next">
                 <i class="icon fa fa-chevron-right" aria-hidden="true"></i>
               </button>
-              </a>
+            </a>
+            {% else %}
+              <button class="zim-sequence-nav-button button-next deactivated">
+                <i class="icon fa fa-chevron-right" aria-hidden="true"></i>
+              </button>
+            {% endif %}
           </nav>
         </div>
       </div>
@@ -111,6 +115,7 @@ vertical
   </div>
 </div>
 {% endblock %}
+
 
 {% block body_scripts %}
 {% for elem in body_scripts %}
