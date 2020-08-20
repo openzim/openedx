@@ -154,6 +154,10 @@ class HtmlProcessor:
     def get_root_from_asset(self, path_from_html, root_from_html):
         """ get path to root from the downloaded/generated asset """
 
+        # return original root if path_from_html is empty
+        if path_from_html == "":
+            return root_from_html
+
         nb_jumps_root_from_html = root_from_html.count("../")
         nb_back_jumps_output_path = path_from_html.count("../")
 
@@ -303,6 +307,28 @@ class HtmlProcessor:
                             if not path_from_html
                             else f"{path_from_html}/{filename}"
                         )
+                else:
+                    # handle iframe recursively
+                    src_content = self.scraper.instance_connection.get_page(src)
+                    modified_content = self.dl_dependencies_and_fix_links(
+                        content=src_content,
+                        output_path=output_path,
+                        path_from_html="",
+                        root_from_html=self.get_root_from_asset(
+                            path_from_html, root_from_html
+                        ),
+                    )
+                    filename = (
+                        xxhash.xxh64(str(src).encode("utf-8")).hexdigest() + ".html"
+                    )
+                    fpath = output_path.joinpath(filename)
+                    with open(fpath, "w") as html_file:
+                        html_file.write(modified_content)
+                    iframe.attrib["src"] = (
+                        f"{filename}"
+                        if not path_from_html
+                        else f"{path_from_html}/{filename}"
+                    )
         return bool(iframes)
 
     def handle_jump_to_paths(self, target_path):
