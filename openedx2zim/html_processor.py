@@ -448,7 +448,7 @@ class HtmlProcessor:
                     _, tab_path = self.scraper.get_tab_path_and_name(
                         tab_text="", tab_href=src.path
                     )
-                    update_root_relative_path(anchor, tab_path, root_from_html.netloc)
+                    update_root_relative_path(anchor, tab_path, root_from_html, netloc)
                     has_changed = True
                 continue
 
