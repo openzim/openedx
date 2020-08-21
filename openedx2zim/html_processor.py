@@ -580,7 +580,7 @@ class HtmlProcessor:
             root_from_html: a string representing the path to the root from the resultant HTML """
 
         html_body = soup.find("body")
-        body_scripts = html_body.find_all("script", recursive=False)
+        body_scripts = html_body.find_all("script")
         body_end_scripts = []
         for script in body_scripts:
             body_end_scripts.append(
