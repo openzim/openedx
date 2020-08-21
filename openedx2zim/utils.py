@@ -2,6 +2,7 @@ import html
 import mimetypes
 import pathlib
 import re
+import urllib
 import shlex
 import subprocess
 import zlib
@@ -18,11 +19,15 @@ from .constants import ROOT_DIR, getLogger
 logger = getLogger()
 
 
-def prepare_url(url, instance_url):
+def prepare_url(url, netloc, path_on_remote=None):
     if url.startswith("//"):
         url = f"http:{url}"
     elif url.startswith("/"):
-        url = f"{instance_url}{url}"
+        url = f"{netloc}{url}"
+    else:
+        parsed_url = urllib.parse.urlparse(url)
+        if not parsed_url.netloc and path_on_remote:
+            url = f"{netloc}{str(pathlib.Path(path_on_remote).joinpath(url))}"
     return url
 
 
