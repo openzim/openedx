@@ -551,9 +551,11 @@ class HtmlProcessor:
 
         html_headers = soup.find("head")
         head_css_js = (
-            html_headers.find_all("script")
-            + html_headers.find_all("link", attrs={"rel": "stylesheet"})
-            + html_headers.find_all("style")
+            html_headers.find_all("script", recursive=False)
+            + html_headers.find_all(
+                "link", attrs={"rel": "stylesheet"}, recursive=False
+            )
+            + html_headers.find_all("style", recursive=False)
         )
 
         extra_head_content = []
@@ -580,7 +582,7 @@ class HtmlProcessor:
             root_from_html: a string representing the path to the root from the resultant HTML """
 
         html_body = soup.find("body")
-        body_scripts = html_body.find_all("script")
+        body_scripts = html_body.find_all("script", recursive=False)
         body_end_scripts = []
         for script in body_scripts:
             body_end_scripts.append(

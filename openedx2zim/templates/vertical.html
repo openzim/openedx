@@ -117,8 +117,8 @@ vertical
 {% endblock %}
 
 
-{% block body_scripts %}
-{% for elem in body_scripts %}
+{% block body_end %}
+{% for elem in extra_content %}
 {{ elem }}
 {% endfor %}
 <!-- workaround to simulate sequential content change behaviour as some custom JS may depend on this
