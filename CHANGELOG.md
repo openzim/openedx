@@ -1,17 +1,17 @@
-# 1.0.0.dev0
+# 1.0.0
 
 - new structure for the project
-- use fixed version of dependencies
-- make wiki and forums optional
-- use zimscraperlib for downloading and optimizing videos
+- using fixed version of dependencies
+- wiki and forums now optional
+- using zimscraperlib for downloading and optimizing videos
 - refactored Dockerfile
-- add s3 based optimization cache
+- added s3 based optimization cache
 - removed javascript dependencies from repository
-- add support for webm on systems without native support
-- fix small favicons
-- use pylibzim for creating ZIMs
-- fix internal links
-- use params instead of instance configs
-- use course layout from instance
-- add videojs based audio player to solve compatibility issues
-- fix problem answer fetching
+- added support for webm on systems without native support
+- fixed small favicons
+- using pylibzim for creating ZIMs
+- fixed internal links
+- using params instead of instance configs
+- using course layout from instance
+- added videojs based audio player to solve compatibility issues
+- fixed problem answer fetching
