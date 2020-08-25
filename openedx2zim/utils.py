@@ -25,6 +25,9 @@ def prepare_url(url, netloc, path_on_remote=None):
     elif url.startswith("/"):
         url = f"{netloc}{url}"
     else:
+        # add a scheme first to prevent wrong URL parsing
+        if not url.startswith("http://") and not url.startswith("https://"):
+            url = f"http://{url}"
         parsed_url = urllib.parse.urlparse(url)
         if not parsed_url.netloc and path_on_remote:
             url = f"{netloc}{str(pathlib.Path(path_on_remote).joinpath(url))}"
