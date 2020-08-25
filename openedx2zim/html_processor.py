@@ -230,6 +230,27 @@ class HtmlProcessor:
                     )
         return bool(anchors)
 
+    def get_path_and_netloc_to_send(self, netloc, path_on_server, downloaded_asset_url):
+        """ get the path and netloc to send recursively after downloading asset from downloaded_asset_url
+            path_on_server is the current path on server and netloc is the current netloc """
+
+        parsed_src = urllib.parse.urlparse(downloaded_asset_url)
+        path_recursive = path_on_server
+        if parsed_src.path:
+            asset_path_on_server = pathlib.Path(parsed_src.path)
+            path_recursive = (
+                asset_path_on_server
+                if not asset_path_on_server.suffix
+                else asset_path_on_server.parent
+            )
+            path_recursive = (
+                str(path_recursive)
+                if not parsed_src.path.startswith("/")
+                else str(pathlib.Path(path_on_server).joinpath(path_recursive))
+            )
+        netloc_recursive = parsed_src.netloc if parsed_src.netloc else netloc
+        return path_recursive, netloc_recursive
+
     def download_css_from_html(
         self, html_body, output_path, path_from_html, netloc, path_on_server
     ):
@@ -246,12 +267,18 @@ class HtmlProcessor:
                 )
                 if filename:
                     if fresh_download:
+                        (
+                            path_recursive,
+                            netloc_recursive,
+                        ) = self.get_path_and_netloc_to_send(
+                            netloc, path_on_server, css.attrib["href"]
+                        )
                         self.download_dependencies_from_css(
                             css_org_url=css.attrib["href"],
                             css_path=output_path.joinpath(filename),
                             output_path_from_css="",
-                            netloc=netloc,
-                            path_on_server=path_on_server,
+                            netloc=netloc_recursive,
+                            path_on_server=path_recursive,
                         )
                     css.attrib["href"] = (
                         f"{filename}"
@@ -357,9 +384,13 @@ class HtmlProcessor:
                         )
                 else:
                     # handle iframe recursively
-                    src_content = self.scraper.instance_connection.get_page(src)
-                    parsed_src = urllib.parse.urlparse(src)
-                    path_on_remote = pathlib.Path(parsed_src.path)
+                    iframe_url = prepare_url(src, netloc)
+                    src_content = self.scraper.instance_connection.get_page(iframe_url)
+                    if not src_content:
+                        continue
+                    path_recursive, netloc_recursive = self.get_path_and_netloc_to_send(
+                        netloc, path_on_server, iframe_url
+                    )
                     modified_content = self.dl_dependencies_and_fix_links(
                         content=src_content,
                         output_path=output_path,
@@ -367,10 +398,8 @@ class HtmlProcessor:
                         root_from_html=self.get_root_from_asset(
                             path_from_html, root_from_html
                         ),
-                        netloc=parsed_src.netloc,
-                        path_on_server=str(path_on_remote)
-                        if not path_on_remote.suffix
-                        else str(path_on_remote.parent),
+                        netloc=netloc_recursive,
+                        path_on_server=path_recursive,
                     )
                     filename = (
                         xxhash.xxh64(str(src).encode("utf-8")).hexdigest() + ".html"

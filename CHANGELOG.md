@@ -1,6 +1,6 @@
 # 1.0.1.dev0
 
-- n/a
+- fixed recursive paths and URLs in html_processor.py
 
 # 1.0.0
 
