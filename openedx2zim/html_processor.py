@@ -15,12 +15,18 @@ class HtmlProcessor:
         self.scraper = scraper
 
     def download_and_get_filename(
-        self, src, output_path, netloc, path_on_server, with_ext=None, filter_ext=None,
+        self,
+        src,
+        output_path,
+        netloc,
+        path_on_server,
+        with_ext=None,
+        filter_ext=None,
     ):
-        """ downloads a file from src and return the name of the downloaded file
+        """downloads a file from src and return the name of the downloaded file
 
-            with_ext: ensure that downloaded file has the given extension
-            filter_ext: download only if the file to download has an extension in this list """
+        with_ext: ensure that downloaded file has the given extension
+        filter_ext: download only if the file to download has an extension in this list"""
 
         server_path = pathlib.Path(urllib.parse.urlparse(src).path)
         ext = with_ext if with_ext else server_path.suffix
@@ -36,7 +42,8 @@ class HtmlProcessor:
         fresh_download = False
         if not output_file.exists():
             if self.scraper.download_file(
-                prepare_url(src, netloc, path_on_server), output_file,
+                prepare_url(src, netloc, path_on_server),
+                output_file,
             ):
                 fresh_download = True
             else:
@@ -46,11 +53,11 @@ class HtmlProcessor:
     def download_dependencies_from_css(
         self, css_org_url, css_path, output_path_from_css, netloc, path_on_server
     ):
-        """ Download all dependencies from CSS file contained in url() recursively
+        """Download all dependencies from CSS file contained in url() recursively
 
-            - css_org_url: URL to the CSS file on the internet
-            - css_path: path of CSS on the filesystem (Path)
-            - output_path_from_css: string representing path of the output directory relative to css_path """
+        - css_org_url: URL to the CSS file on the internet
+        - css_path: path of CSS on the filesystem (Path)
+        - output_path_from_css: string representing path of the output directory relative to css_path"""
 
         def encapsulate(url):
             return f"url({url})"
@@ -231,8 +238,8 @@ class HtmlProcessor:
         return bool(anchors)
 
     def get_path_and_netloc_to_send(self, netloc, path_on_server, downloaded_asset_url):
-        """ get the path and netloc to send recursively after downloading asset from downloaded_asset_url
-            path_on_server is the current path on server and netloc is the current netloc """
+        """get the path and netloc to send recursively after downloading asset from downloaded_asset_url
+        path_on_server is the current path on server and netloc is the current netloc"""
 
         parsed_src = urllib.parse.urlparse(downloaded_asset_url)
         path_recursive = path_on_server
@@ -437,8 +444,8 @@ class HtmlProcessor:
         """ rewrites internal links and ensures no root-relative links are left behind """
 
         def update_root_relative_path(anchor, fixed_path, root_from_html, netloc):
-            """ updates a root-relative path to the fixed path in zim
-                if fixed path is not available, adds the instance url as its netloc """
+            """updates a root-relative path to the fixed path in zim
+            if fixed path is not available, adds the instance url as its netloc"""
 
             if fixed_path:
                 anchor.attrib["href"] = root_from_html + fixed_path
@@ -521,7 +528,11 @@ class HtmlProcessor:
             html_body, output_path, path_from_html, netloc, path_on_server
         )
         sources = self.download_sources_from_html(
-            html_body, output_path, path_from_html, netloc, path_on_server,
+            html_body,
+            output_path,
+            path_from_html,
+            netloc,
+            path_on_server,
         )
         iframes = self.download_iframes_from_html(
             html_body,
@@ -572,11 +583,11 @@ class HtmlProcessor:
         return str(soup)
 
     def extract_head_css_js(self, soup, output_path, path_from_html, root_from_html):
-        """ returns a list of processed html strings representing CSS and JS within the <head> element
+        """returns a list of processed html strings representing CSS and JS within the <head> element
 
-            output_path: a Path object to store the downloaded CSS/JS to
-            path_from_html: a string representing the path to output_path from the resultant HTML
-            root_from_html: a string representing the path to the root from the resultant HTML """
+        output_path: a Path object to store the downloaded CSS/JS to
+        path_from_html: a string representing the path to output_path from the resultant HTML
+        root_from_html: a string representing the path to the root from the resultant HTML"""
 
         html_headers = soup.find("head")
         head_css_js = (
@@ -604,11 +615,11 @@ class HtmlProcessor:
     def extract_body_end_scripts(
         self, soup, output_path, path_from_html, root_from_html
     ):
-        """ returns a list of processed html strings representing the <script> tags at the end of the <body> 
+        """returns a list of processed html strings representing the <script> tags at the end of the <body>
 
-            output_path: a Path object to store the downloaded CSS/JS to
-            path_from_html: a string representing the path to output_path from the resultant HTML
-            root_from_html: a string representing the path to the root from the resultant HTML """
+        output_path: a Path object to store the downloaded CSS/JS to
+        path_from_html: a string representing the path to output_path from the resultant HTML
+        root_from_html: a string representing the path to the root from the resultant HTML"""
 
         html_body = soup.find("body")
         body_scripts = html_body.find_all("script", recursive=False)

@@ -627,7 +627,11 @@ class Openedx2Zim:
         if (src.suffix[1:] != self.video_format) or self.low_quality:
             preset = VideoWebmLow() if self.video_format == "webm" else VideoMp4Low()
             return reencode(
-                src, dst, preset.to_ffmpeg_args(), delete_src=True, failsafe=False,
+                src,
+                dst,
+                preset.to_ffmpeg_args(),
+                delete_src=True,
+                failsafe=False,
             )
 
     def optimize_image(self, src, dst):
@@ -666,8 +670,8 @@ class Openedx2Zim:
         return f"{fpath.suffix[1:]}/{safe_url}/{quality}"
 
     def download_file(self, url, fpath):
-        """ downloads a file from the supplied url to the supplied fpath
-            returns true if successful, false if unsuccessful """
+        """downloads a file from the supplied url to the supplied fpath
+        returns true if successful, false if unsuccessful"""
 
         is_youtube = "youtube" in url
         downloaded_from_cache = False
@@ -801,7 +805,9 @@ class Openedx2Zim:
         self.instance_config.update({"instance_url": f"https://{instance_netloc}"})
         logger.info("Testing openedx instance credentials ...")
         self.instance_connection = InstanceConnection(
-            self.email, self.password, self.instance_config,
+            self.email,
+            self.password,
+            self.instance_config,
         )
         self.instance_connection.establish_connection()
         jinja_init()
