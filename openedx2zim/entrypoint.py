@@ -9,11 +9,14 @@ from .constants import NAME, SCRAPER, getLogger, setDebug
 
 def main():
     parser = argparse.ArgumentParser(
-        prog=NAME, description="Scraper to create ZIM files MOOCs on openedx instances",
+        prog=NAME,
+        description="Scraper to create ZIM files MOOCs on openedx instances",
     )
 
     parser.add_argument(
-        "--course-url", help="URL of the course you wnat to scrape", required=True,
+        "--course-url",
+        help="URL of the course you wnat to scrape",
+        required=True,
     )
 
     parser.add_argument(
@@ -56,7 +59,8 @@ def main():
     )
 
     parser.add_argument(
-        "--title", help="Custom title for your ZIM. Based on MOOC otherwise.",
+        "--title",
+        help="Custom title for your ZIM. Based on MOOC otherwise.",
     )
 
     parser.add_argument(

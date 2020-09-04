@@ -48,7 +48,9 @@ def check_missing_binary():
         """ checks whether a given binary is present by running it """
         try:
             subprocess.run(
-                binary, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                binary,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
         except OSError:
             return False

@@ -32,8 +32,8 @@ class Problem(BaseXblock):
         self.xmodule_handler = None
 
     def check_problem_type_and_get_options(self, problem_tag):
-        """ returns whether answers are fetchable for a problem, if yes, also returns whether the problem
-            has single correct answers, and a list of options for answers """
+        """returns whether answers are fetchable for a problem, if yes, also returns whether the problem
+        has single correct answers, and a list of options for answers"""
 
         single_answer_correct_options = problem_tag.find_all(
             "input", attrs={"type": "radio"}
@@ -92,11 +92,11 @@ class Problem(BaseXblock):
         self.answers_available = True
 
     def get_answers(self, instance_connection, problem_tag):
-        """ retrieve answers to a problem if the answers are retrievable
+        """retrieve answers to a problem if the answers are retrievable
 
-            answers can only be retrieved if the problem is a multiple choice question with
-            single correct answers or with multiple correct answers (only if number of options <= 5)
-            the answers are saved in a js file in instance_assets directory """
+        answers can only be retrieved if the problem is a multiple choice question with
+        single correct answers or with multiple correct answers (only if number of options <= 5)
+        the answers are saved in a js file in instance_assets directory"""
 
         def get_html_replacement_content(result):
             """ get the content with which the content of the problem be replaced from the response from API """
