@@ -355,10 +355,10 @@ class Openedx2Zim:
 
         # check for paths in org_tab_path
         if tab_org_path == "course" or "courseware" in tab_org_path:
-            tab_name = tab_text.replace(", current location", "")
+            tab_name = "Course"
             tab_path = "course/" + self.head_course_xblock.folder_name + "/index.html"
         elif "info" in tab_org_path:
-            tab_name = tab_text.replace(", current location", "")
+            tab_name = "Course Info"
             tab_path = "/index.html"
         elif "wiki" in tab_org_path and self.add_wiki:
             self.wiki = MoocWiki(self)

@@ -70,9 +70,11 @@ vertical
           </div>
           {% endif %}
           <div class="window-wrap">
-          <div id="seq_content">
+          <div class="container">
             <div class="course-wrapper" role="presentation">
             <section id="course-content" class="course-content" role="main" aria-label="Content">
+            <main id="main" tabindex="-1" aria-label="Content">
+            <div id="seq_content">
             <div class="xblock xblock-student_view xblock-student_view-vertical xblock-initialized">
               <h2 class="hd hd-2 unit-title"> {{ vertical.xblock_json["display_name"] }} </h2>
               <div class="vert-mod">
@@ -81,6 +83,8 @@ vertical
               {% endfor %}
               </div>
             </div>
+            </div>
+            </main>
             </section>
             </div>
           </div>
