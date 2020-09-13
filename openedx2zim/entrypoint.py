@@ -189,6 +189,10 @@ def main():
     )
 
     parser.add_argument(
+        "--threads", help="Number of threads to use while offlining xblocks", type=int, default=1
+    )
+
+    parser.add_argument(
         "--version",
         help="Display scraper version and exit",
         action="version",

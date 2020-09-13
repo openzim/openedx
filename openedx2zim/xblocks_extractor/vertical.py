@@ -70,10 +70,6 @@ class Vertical(BaseXblock):
                 )
             )
 
-        # download content from descendants
-        for x in self.descendants:
-            x.download(instance_connection)
-
         # get divs with class vert as those contain extra CSS classes to be applied at render step
         seq_contents = soup.find_all("div", attrs={"class": "seq_contents"})
         for content in seq_contents:

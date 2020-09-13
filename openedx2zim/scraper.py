@@ -11,14 +11,15 @@ import sys
 import tempfile
 import urllib
 import uuid
+import concurrent.futures
 
-import youtube_dl
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
 from pif import get_public_ip
 from slugify import slugify
-from zimscraperlib.download import save_large_file
-from zimscraperlib.imaging import resize_image, convert_image
+from zimscraperlib.download import save_large_file, YoutubeDownloader, BestMp4, BestWebm
+from zimscraperlib.image.transformation import resize_image
+from zimscraperlib.image.convertion import convert_image
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
 from zimscraperlib.zim import make_zim_file
@@ -109,6 +110,7 @@ class Openedx2Zim:
         no_zim,
         keep_build_dir,
         debug,
+        threads,
     ):
 
         # video-encoding info
@@ -139,6 +141,8 @@ class Openedx2Zim:
         self.ignore_missing_xblocks = ignore_missing_xblocks
         self.autoplay = autoplay
         self.remove_seq_nav = remove_seq_nav
+        self.threads = threads
+        self.yt_downloader = YoutubeDownloader(threads=1 if threads == 1 else 2)
 
         # authentication
         self.email = email
@@ -525,7 +529,12 @@ class Openedx2Zim:
 
         # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
-        self.head_course_xblock.download(self.instance_connection)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
+            fs = [
+                executor.submit(xblock.download, self.instance_connection)
+                for xblock in self.xblock_extractor_objects
+            ]
+            concurrent.futures.wait(fs, return_when=concurrent.futures.ALL_COMPLETED)
 
     def s3_credentials_ok(self):
         logger.info("Testing S3 Optimization Cache credentials ...")
@@ -600,27 +609,21 @@ class Openedx2Zim:
             return None
 
     def download_from_youtube(self, url, fpath):
-        audext, vidext = {"webm": ("webm", "webm"), "mp4": ("m4a", "mp4")}[
-            self.video_format
-        ]
         output_file_name = fpath.name.replace(fpath.suffix, "")
-        options = {
-            "outtmpl": str(fpath.parent.joinpath(f"{output_file_name}.%(ext)s")),
-            "preferredcodec": self.video_format,
-            "format": f"best[ext={vidext}]/bestvideo[ext={vidext}]+bestaudio[ext={audext}]/best",
-            "retries": 20,
-            "fragment-retries": 50,
-        }
+        options = (
+            BestWebm if self.video_format == "webm" else BestMp4
+        ).get_options(
+            target_dir=fpath.parent, filepath=pathlib.Path(f"{output_file_name}.%(ext)s")
+        )
         try:
-            with youtube_dl.YoutubeDL(options) as ydl:
-                ydl.download([url])
-                for content in fpath.parent.iterdir():
-                    if content.is_file() and content.name.startswith(
-                        f"{output_file_name}."
-                    ):
-                        return content
+            self.yt_downloader.download(url, options)
+            for content in fpath.parent.iterdir():
+                if content.is_file() and content.name.startswith(
+                    f"{output_file_name}."
+                ):
+                    return content
         except Exception as exc:
-            logger.error(f"Error while running youtube_dl: {exc}")
+            logger.error(f"Error while downloading from youtube: {exc}")
             return None
 
     def convert_video(self, src, dst):
@@ -844,4 +847,6 @@ class Openedx2Zim:
             if not self.keep_build_dir:
                 logger.info("Removing temp folder...")
                 shutil.rmtree(self.build_dir, ignore_errors=True)
+        # shutdown the youtube downloader
+        self.yt_downloader.shutdown()
         logger.info("Done everything")
