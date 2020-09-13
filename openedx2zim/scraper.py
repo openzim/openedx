@@ -460,7 +460,7 @@ class Openedx2Zim:
         save_large_file(self.favicon_url, favicon_fpath)
 
         # convert and resize
-        convert_image(favicon_fpath, favicon_fpath, "PNG")
+        convert_image(favicon_fpath, favicon_fpath, fmt="PNG")
         resize_image(favicon_fpath, 48, allow_upscaling=True)
 
         if not favicon_fpath.exists():
@@ -529,7 +529,9 @@ class Openedx2Zim:
 
         # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.threads
+        ) as executor:
             fs = [
                 executor.submit(xblock.download, self.instance_connection)
                 for xblock in self.xblock_extractor_objects
@@ -610,10 +612,9 @@ class Openedx2Zim:
 
     def download_from_youtube(self, url, fpath):
         output_file_name = fpath.name.replace(fpath.suffix, "")
-        options = (
-            BestWebm if self.video_format == "webm" else BestMp4
-        ).get_options(
-            target_dir=fpath.parent, filepath=pathlib.Path(f"{output_file_name}.%(ext)s")
+        options = (BestWebm if self.video_format == "webm" else BestMp4).get_options(
+            target_dir=fpath.parent,
+            filepath=pathlib.Path(f"{output_file_name}.%(ext)s"),
         )
         try:
             self.yt_downloader.download(url, options)
