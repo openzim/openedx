@@ -9,10 +9,6 @@ class Chapter(BaseXblock):
             xblock_json, relative_path, root_url, xblock_id, descendants, scraper
         )
 
-    def download(self, instance_connection):
-        for x in self.descendants:
-            x.download(instance_connection)
-
     def render(self, prev_info, next_info):
         for x in range(0, len(self.descendants)):
             if x == 0:  # We search for previous vertical
