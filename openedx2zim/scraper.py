@@ -142,7 +142,7 @@ class Openedx2Zim:
         self.autoplay = autoplay
         self.remove_seq_nav = remove_seq_nav
         self.threads = threads
-        self.yt_downloader = YoutubeDownloader(threads=1 if threads == 1 else 2)
+        self.yt_downloader = YoutubeDownloader(threads=1)
 
         # authentication
         self.email = email

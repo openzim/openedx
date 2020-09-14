@@ -20,6 +20,9 @@ COPY openedx2zim /src/openedx2zim
 COPY setup.py *.md get_js_deps.sh MANIFEST.in /src/
 RUN cd /src/ && python3 ./setup.py install
 
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+
 RUN mkdir -p /output
 WORKDIR /output
 CMD ["openedx2zim", "--help"]
