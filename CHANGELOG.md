@@ -1,6 +1,7 @@
 # 1.0.1.dev0
 
 - fixed recursive paths and URLs in html_processor.py
+- fixed usage on older browsers (without ES6 support)
 - added multithreading support
 
 # 1.0.0
