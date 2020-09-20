@@ -53,6 +53,12 @@ def main():
     )
 
     parser.add_argument(
+        "--locale",
+        help="The locale to use in the UI (can be iso language code / locale)",
+        dest="locale_name",
+    )
+
+    parser.add_argument(
         "--name",
         help="ZIM name. Used as identifier and filename (date will be appended)",
         required=True,

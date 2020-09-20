@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
+import concurrent.futures
 import datetime
+import locale
 import os
 import pathlib
 import re
@@ -11,15 +13,16 @@ import sys
 import tempfile
 import urllib
 import uuid
-import concurrent.futures
+from gettext import gettext as _
 
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
 from pif import get_public_ip
 from slugify import slugify
-from zimscraperlib.download import save_large_file, YoutubeDownloader, BestMp4, BestWebm
-from zimscraperlib.image.transformation import resize_image
+from zimscraperlib.download import BestMp4, BestWebm, YoutubeDownloader, save_large_file
+from zimscraperlib.i18n import get_language_details, setlocale
 from zimscraperlib.image.convertion import convert_image
+from zimscraperlib.image.transformation import resize_image
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import (
     VideoMp4Low,
@@ -43,11 +46,11 @@ from .instance_connection import InstanceConnection
 from .utils import (
     check_missing_binary,
     exec_cmd,
+    get_back_jumps,
     get_meta_from_url,
     jinja,
     jinja_init,
     prepare_url,
-    get_back_jumps,
 )
 from .xblocks_extractor.chapter import Chapter
 from .xblocks_extractor.course import Course
@@ -92,6 +95,7 @@ class Openedx2Zim:
         video_format,
         low_quality,
         autoplay,
+        locale_name,
         name,
         title,
         description,
@@ -190,6 +194,18 @@ class Openedx2Zim:
         self.root_xblock_id = None
         self.wiki = None
         self.forum = None
+
+        # set and record locale for translations
+        locale_details = get_language_details(locale_name)
+        if locale_details["querytype"] != "locale":
+            locale_name = locale_details["iso-639-1"]
+        try:
+            self.locale = setlocale(ROOT_DIR, locale_name)
+        except locale.Error:
+            logger.error(
+                f"No locale for {locale_name}. Use --locale to specify it. defaulting to en_US"
+            )
+            self.locale = setlocale(ROOT_DIR, "en")
 
     @property
     def instance_assets_dir(self):
@@ -364,10 +380,10 @@ class Openedx2Zim:
 
         # check for paths in org_tab_path
         if tab_org_path == "course" or "courseware" in tab_org_path:
-            tab_name = "Course"
+            tab_name = _("Course")
             tab_path = "course/" + self.head_course_xblock.folder_name + "/index.html"
         elif "info" in tab_org_path:
-            tab_name = "Course Info"
+            tab_name = _("Course Info")
             tab_path = "/index.html"
         elif "wiki" in tab_org_path and self.add_wiki:
             self.wiki = MoocWiki(self)
