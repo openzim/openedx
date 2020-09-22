@@ -3,6 +3,8 @@
 - fixed recursive paths and URLs in html_processor.py
 - fixed usage on older browsers (without ES6 support)
 - added multithreading support
+- fixed missing videos due to youtube_dl error
+- added support for convertion in high quality
 
 # 1.0.0
 

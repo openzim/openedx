@@ -21,7 +21,12 @@ from zimscraperlib.download import save_large_file, YoutubeDownloader, BestMp4, 
 from zimscraperlib.image.transformation import resize_image
 from zimscraperlib.image.convertion import convert_image
 from zimscraperlib.video.encoding import reencode
-from zimscraperlib.video.presets import VideoMp4Low, VideoWebmLow
+from zimscraperlib.video.presets import (
+    VideoMp4Low,
+    VideoWebmLow,
+    VideoMp4High,
+    VideoWebmHigh,
+)
 from zimscraperlib.zim import make_zim_file
 
 from .annex import MoocForum, MoocWiki
@@ -615,6 +620,7 @@ class Openedx2Zim:
         options = (BestWebm if self.video_format == "webm" else BestMp4).get_options(
             target_dir=fpath.parent,
             filepath=pathlib.Path(f"{output_file_name}.%(ext)s"),
+            format=f"best[ext={self.video_format}]/best",
         )
         try:
             self.yt_downloader.download(url, options)
@@ -628,8 +634,11 @@ class Openedx2Zim:
             return None
 
     def convert_video(self, src, dst):
-        if (src.suffix[1:] != self.video_format) or self.low_quality:
+        preset = None
+        if self.low_quality:
             preset = VideoWebmLow() if self.video_format == "webm" else VideoMp4Low()
+        elif src.suffix[1:] != self.video_format:
+            preset = VideoWebmHigh() if self.video_format == "webm" else VideoMp4High()
             return reencode(
                 src,
                 dst,
