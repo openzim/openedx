@@ -1,5 +1,5 @@
 <div class="xblock xblock-student_view xblock-student_view-video xmodule_display xmodule_VideoBlock xblock-initialized">
-  <h3 class="hd hd2">{{ title }}</h3>
+  <h3 class="hd hd-2">{% if title != "xblock" %}{{ title }}{% endif %}</h3>
   {% if self.no_video != False %}
   <div class="video is-initialized">
       <div class="tc-wrapper">
