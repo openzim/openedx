@@ -26,6 +26,8 @@ curl -L -o opensans.zip http://google-webfonts-helper.herokuapp.com/api/fonts/op
 rm -rf $ASSETS_PATH/fonts/opensans
 mkdir -p $ASSETS_PATH/fonts/opensans
 unzip -o -d $ASSETS_PATH/fonts/opensans opensans.zip
+mv $ASSETS_PATH/fonts/opensans/*.woff $ASSETS_PATH/fonts/opensans/opensans.woff
+mv $ASSETS_PATH/fonts/opensans/*.woff2 $ASSETS_PATH/fonts/opensans/opensans.woff2
 rm -f opensans.zip
 
 echo "getting fontawesome"
