@@ -6,6 +6,7 @@
 - fixed missing videos due to youtube_dl error
 - added support for convertion in high quality
 - use dynamic versions for opensans font
+- fixed mobile navigation menu
 
 # 1.0.0
 

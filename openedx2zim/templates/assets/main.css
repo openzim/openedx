@@ -1360,7 +1360,7 @@ div.zim-book-wrapper .zim-book {
   #zim-course-content{
     padding:2em 0.5em;
   }
-  .topmobilebar{
+  .zim-topmobilebar{
     width:100%;
     display: flex;
     justify-content: space-between;
