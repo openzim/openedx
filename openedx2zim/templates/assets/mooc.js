@@ -1,6 +1,6 @@
 function show_sidemenu(){
-  var e=document.getElementsByClassName("course-index")[0];
-  var course_content = document.getElementById("course-content");
+  var e=document.getElementsByClassName("zim-course-index")[0];
+  var course_content = document.getElementById("zim-course-content");
   if(e.style.display == 'none' || e.style.display == '') {
     e.style.display = 'block';
     course_content.style.display = 'none';
@@ -15,8 +15,8 @@ function show_sidemenu(){
 }
 
 function show_pagemobilemenu(){
-  var e=document.getElementsByClassName("courseware")[0];
-  var course_content = document.getElementById("course-content");
+  var e=document.getElementsByClassName("zim-courseware")[0];
+  var course_content = document.getElementById("zim-course-content");
   if(e.style.display == 'none' || e.style.display == '') {
     e.style.display = 'block';
     //course_content.style.display = 'none';
