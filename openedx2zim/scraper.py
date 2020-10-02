@@ -621,6 +621,8 @@ class Openedx2Zim:
             target_dir=fpath.parent,
             filepath=pathlib.Path(f"{output_file_name}.%(ext)s"),
             format=f"best[ext={self.video_format}]/best",
+            writethumbnail=False,
+            write_all_thumbnails=False,
         )
         try:
             self.yt_downloader.download(url, options)
@@ -639,13 +641,13 @@ class Openedx2Zim:
             preset = VideoWebmLow() if self.video_format == "webm" else VideoMp4Low()
         elif src.suffix[1:] != self.video_format:
             preset = VideoWebmHigh() if self.video_format == "webm" else VideoMp4High()
-            return reencode(
-                src,
-                dst,
-                preset.to_ffmpeg_args(),
-                delete_src=True,
-                failsafe=False,
-            )
+        return reencode(
+            src,
+            dst,
+            preset.to_ffmpeg_args(),
+            delete_src=True,
+            failsafe=False,
+        )
 
     def optimize_image(self, src, dst):
         optimized = False
