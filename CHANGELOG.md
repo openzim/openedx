@@ -7,6 +7,7 @@
 - added support for convertion in high quality
 - use dynamic versions for opensans font
 - fixed mobile navigation menu
+- fixed video encoding in low quality in WebM
 
 # 1.0.0
 
