@@ -5,7 +5,7 @@ import json
 import sys
 import urllib
 
-from .constants import getLogger
+from .constants import getLogger, LANGUAGE_COOKIES, OPENEDX_LANG_MAP
 
 logger = getLogger()
 
@@ -25,7 +25,7 @@ def get_response(url, post_data, headers, max_attempts=5):
 
 
 class InstanceConnection:
-    def __init__(self, email, password, instance_config):
+    def __init__(self, email, password, instance_config, locale):
         self.email = email
         self.password = password if password else getpass.getpass(stream=sys.stderr)
         self.instance_config = instance_config
@@ -33,6 +33,7 @@ class InstanceConnection:
         self.headers = None
         self.instance_connection = None
         self.user = None
+        self.locale = locale
 
     def update_csrf_token_in_headers(self):
         csrf_token = None
@@ -75,6 +76,8 @@ class InstanceConnection:
                 self.user = json.loads(
                     cookie.value.replace(r"\054", ",").replace("\\", "")[1:-1]
                 )["username"]
+            elif cookie.name in LANGUAGE_COOKIES:
+                cookie.value = OPENEDX_LANG_MAP.get(self.locale, self.locale)
 
     def get_api_json(self, page, post_data=None, referer=None):
         self.update_csrf_token_in_headers()

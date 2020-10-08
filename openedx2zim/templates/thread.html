@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
-{% block addcss %} <link href="{{ rooturl }}assets/thread.css" rel="stylesheet" type="text/css" /> {% endblock %}
+{% block addcss %}
+{% if rtl %}
+<link href="{{ rooturl }}assets/thread_rtl.css" rel="stylesheet" type="text/css" />
+{% else %}
+<link href="{{ rooturl }}assets/thread_ltr.css" rel="stylesheet" type="text/css" />
+{% endif %}
+{% endblock %}
 {% block bodyclass %}thread container{% endblock %}
 
 {% block title %}{{ thread["title"] }}{% endblock %}

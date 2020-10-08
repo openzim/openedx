@@ -25,7 +25,7 @@ vertical
     {% if side_menu %}
         {% include "side_menu.html" %}
     {% endif %}
-    <section id="course-content" class="zim-course-content" role="main" aria-label="Content">
+    <section id="zim-course-content" class="zim-course-content" role="main" aria-label="Content">
       <div class="xblock xblock-student_view xblock-student_view-sequential xmodule_display xmodule_SequenceModule xblock-initialized" data-runtime-class="LmsRuntime" data-init="XBlockToXModuleShim" data-block-type="sequential" data-usage-id="{{ vertical.xblock_json["id"] }}" data-type="Sequence" data-course-id="{{ mooc.course_id }}">
         <div id="sequence_{{ extracted_id }}" class="sequence" data-id="{{ vertical.xblock_json["id"] }}" data-position="1">
           {% if not remove_seq_nav %}
@@ -36,7 +36,7 @@ vertical
               {% else %}
                 <button class="zim-sequence-nav-button button-previous deactivated">
               {% endif %}
-                  <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
+                  <i class="icon fa fa-chevron-{% if rtl %}right{% else %}left{% endif %}" aria-hidden="true"></i>
                   <span class="sr">Previous</span>
                 </button>
               {% if prev_vertical %}
@@ -61,7 +61,7 @@ vertical
                 {% else %}
                   <button class="zim-sequence-nav-button button-next deactivated">
                 {% endif %}
-                  <span class="icon fa fa-chevron-right" aria-hidden="true"></span>
+                  <span class="icon fa fa-chevron-{% if rtl %}left{% else %}right{% endif %}" aria-hidden="true"></span>
                   <span class="sr">Next</span>
                 </button>
                 {% if next_vertical %}
@@ -69,7 +69,7 @@ vertical
 		            {% endif %}
           </div>
           {% endif %}
-          <div class="window-wrap">
+          <div class="window-wrap" dir="{% if rtl %}rtl{% else %}ltr{% endif %}">
           <div class="container">
             <div class="course-wrapper" role="presentation">
             <section id="course-content" class="course-content" role="main" aria-label="Content">
@@ -93,23 +93,23 @@ vertical
             {% if prev_vertical %}
             <a href="{{ rooturl }}{{ prev_vertical.relative_path }}/index.html" title="{{ prev_vertical.display_name }}">
               <button class="zim-sequence-nav-button button-previous">
-                <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
+                <i class="icon fa fa-chevron-{% if rtl %}right{% else %}left{% endif %}" aria-hidden="true"></i>
               </button>
             </a>
             {% else %}
               <button class="zim-sequence-nav-button button-previous deactivated">
-                <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
+                <i class="icon fa fa-chevron-{% if rtl %}right{% else %}left{% endif %}" aria-hidden="true"></i>
               </button>
             {% endif %}
             {% if next_vertical %}
             <a href="{{ rooturl }}{{ next_vertical.relative_path }}/index.html" title="{{ next_vertical.display_name }}">
               <button class="zim-sequence-nav-button button-next">
-                <i class="icon fa fa-chevron-right" aria-hidden="true"></i>
+                <i class="icon fa fa-chevron-{% if rtl %}left{% else %}right{% endif %}" aria-hidden="true"></i>
               </button>
             </a>
             {% else %}
               <button class="zim-sequence-nav-button button-next deactivated">
-                <i class="icon fa fa-chevron-right" aria-hidden="true"></i>
+                <i class="icon fa fa-chevron-{% if rtl %}left{% else %}right{% endif %}" aria-hidden="true"></i>
               </button>
             {% endif %}
           </nav>

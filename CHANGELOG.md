@@ -8,6 +8,7 @@
 - use dynamic versions for opensans font
 - fixed mobile navigation menu
 - fixed video encoding in low quality in WebM
+- added support for internationalization
 
 # 1.0.0
 

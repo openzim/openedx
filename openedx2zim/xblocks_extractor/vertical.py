@@ -106,4 +106,5 @@ class Vertical(BaseXblock):
             side_menu=True,
             rooturl=self.root_url,
             remove_seq_nav=self.scraper.remove_seq_nav,
+            rtl=self.scraper.is_rtl,
         )

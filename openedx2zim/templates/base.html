@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html>
-  <head>
+  <head dir="{% if rtl %}rtl{% else %}ltr{% endif %}">
     <meta charset="utf-8" />
     <title>{% block title %}{% endblock %}</title>
     <meta name="generator" content="https://github.com/openzim/openedx/"/>
     <meta name="author" content="kiwix team"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link id="favicon" rel="shortcut icon" href="{{ rooturl }}favicon.png" type="image/png">
-    <link href="{{ rooturl }}assets/main.css" rel="stylesheet" type="text/css" />
+    {% if rtl %}
+    <link href="{{ rooturl }}assets/main_rtl.css" rel="stylesheet" type="text/css" />
+    {% else %}
+    <link href="{{ rooturl }}assets/main_ltr.css" rel="stylesheet" type="text/css" />
+    {% endif %}
     <link href="{{ rooturl }}assets/fontawesome/css/all.css" rel="stylesheet" type="text/css" />
     <link href="{{ rooturl }}assets/videojs/video-js.min.css" rel="stylesheet" type="text/css">
     <script src="{{ rooturl }}assets/zim_prefix.js"></script>
@@ -25,7 +29,7 @@
       }
     </style>
   </head>
-  <body class="{% block bodyclass %}{% endblock %}">
+  <body class="{% if rtl %}rtl{% else %}ltr{% endif %} {%block bodyclass %}{% endblock %}">
     <div class="zim-topmobilebar">
       {% if side_menu or forum_menu %}
         <a onclick="{% if side_menu %}show_sidemenu(){% else %}show_forum_menu(){% endif %}" id="zim-show_sidemenu">
@@ -36,7 +40,7 @@
         <i class="fa fa-angle-down"></i>
       </a>
     </div>
-  <div class="zim-window-wrap">
+  <div class="zim-window-wrap" dir="{% if rtl %}rtl{% else %}ltr{% endif %}">
     <div id="content" class="zim-content-wrapper">
       <nav class="zim-courseware zim-wrapper-course-material" aria-label="Course Material">
         <div class="zim-course-material">

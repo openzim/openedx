@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
 
+import concurrent.futures
 import datetime
+import locale
 import os
 import pathlib
 import re
@@ -11,15 +13,15 @@ import sys
 import tempfile
 import urllib
 import uuid
-import concurrent.futures
 
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
 from pif import get_public_ip
 from slugify import slugify
-from zimscraperlib.download import save_large_file, YoutubeDownloader, BestMp4, BestWebm
-from zimscraperlib.image.transformation import resize_image
+from zimscraperlib.download import BestMp4, BestWebm, YoutubeDownloader, save_large_file
+from zimscraperlib.i18n import get_language_details, setlocale, _
 from zimscraperlib.image.convertion import convert_image
+from zimscraperlib.image.transformation import resize_image
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import (
     VideoMp4Low,
@@ -43,11 +45,11 @@ from .instance_connection import InstanceConnection
 from .utils import (
     check_missing_binary,
     exec_cmd,
+    get_back_jumps,
     get_meta_from_url,
     jinja,
     jinja_init,
     prepare_url,
-    get_back_jumps,
 )
 from .xblocks_extractor.chapter import Chapter
 from .xblocks_extractor.course import Course
@@ -92,6 +94,7 @@ class Openedx2Zim:
         video_format,
         low_quality,
         autoplay,
+        locale_name,
         name,
         title,
         description,
@@ -190,6 +193,19 @@ class Openedx2Zim:
         self.root_xblock_id = None
         self.wiki = None
         self.forum = None
+
+        # set and record locale for translations
+        locale_details = get_language_details(locale_name)
+        self.instance_lang = locale_details["iso-639-1"]
+        if locale_details["querytype"] != "locale":
+            locale_name = self.instance_lang
+        try:
+            self.locale = setlocale(ROOT_DIR, locale_name)
+        except locale.Error:
+            logger.error(
+                f"No locale for {locale_name}. Use --locale to specify it. defaulting to en_US"
+            )
+            self.locale = setlocale(ROOT_DIR, "en")
 
     @property
     def instance_assets_dir(self):
@@ -364,10 +380,10 @@ class Openedx2Zim:
 
         # check for paths in org_tab_path
         if tab_org_path == "course" or "courseware" in tab_org_path:
-            tab_name = "Course"
+            tab_name = _("Course")
             tab_path = "course/" + self.head_course_xblock.folder_name + "/index.html"
         elif "info" in tab_org_path:
-            tab_name = "Course Info"
+            tab_name = _("Course Info")
             tab_path = "/index.html"
         elif "wiki" in tab_org_path and self.add_wiki:
             self.wiki = MoocWiki(self)
@@ -377,9 +393,9 @@ class Openedx2Zim:
             tab_path = "forum/index.html"
         elif ("wiki" not in tab_org_path) and ("forum" not in tab_org_path):
             # check if already in dict
-            for _, val in self.course_tabs.items():
-                if val == f"{tab_org_path}/index.html":
-                    tab_path = val
+            for key in self.course_tabs:
+                if self.course_tabs[key] == f"{tab_org_path}/index.html":
+                    tab_path = self.course_tabs[key]
                     break
             else:
                 tab_path = self.annex_extra_page(tab_href, tab_org_path)
@@ -498,6 +514,9 @@ class Openedx2Zim:
             raise SystemExit(1)
         self.build_dir.joinpath("home").mkdir(parents=True, exist_ok=True)
         soup = BeautifulSoup(content, "lxml")
+
+        # save the direction (ltr or rtl)
+        self.is_rtl = True if soup.find("head").attrs["dir"] == "rtl" else False
         welcome_message = soup.find("div", attrs={"class": "welcome-message"})
 
         # there are multiple welcome messages
@@ -733,6 +752,7 @@ class Openedx2Zim:
                 dir_path=book_nav["dir_path"],
                 mooc=self,
                 rooturl=get_back_jumps(3),
+                rtl=self.is_rtl,
             )
 
     def render(self):
@@ -751,6 +771,7 @@ class Openedx2Zim:
                 extra_headers=page["extra_head_content"],
                 body_scripts=page["body_end_scripts"],
                 rooturl="../",
+                rtl=self.is_rtl,
             )
 
         # render wiki if available
@@ -773,6 +794,7 @@ class Openedx2Zim:
                 messages=self.homepage_html,
                 mooc=self,
                 render_homepage=True,
+                rtl=self.is_rtl,
             )
         shutil.copytree(
             ROOT_DIR.joinpath("templates").joinpath("assets"),
@@ -823,6 +845,7 @@ class Openedx2Zim:
             self.email,
             self.password,
             self.instance_config,
+            self.instance_lang,
         )
         self.instance_connection.establish_connection()
         jinja_init()
