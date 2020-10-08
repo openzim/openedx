@@ -13,14 +13,13 @@ import sys
 import tempfile
 import urllib
 import uuid
-from gettext import gettext as _
 
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
 from pif import get_public_ip
 from slugify import slugify
 from zimscraperlib.download import BestMp4, BestWebm, YoutubeDownloader, save_large_file
-from zimscraperlib.i18n import get_language_details, setlocale
+from zimscraperlib.i18n import get_language_details, setlocale, _
 from zimscraperlib.image.convertion import convert_image
 from zimscraperlib.image.transformation import resize_image
 from zimscraperlib.video.encoding import reencode
@@ -197,8 +196,9 @@ class Openedx2Zim:
 
         # set and record locale for translations
         locale_details = get_language_details(locale_name)
+        self.instance_lang = locale_details["iso-639-1"]
         if locale_details["querytype"] != "locale":
-            locale_name = locale_details["iso-639-1"]
+            locale_name = self.instance_lang
         try:
             self.locale = setlocale(ROOT_DIR, locale_name)
         except locale.Error:
@@ -393,9 +393,9 @@ class Openedx2Zim:
             tab_path = "forum/index.html"
         elif ("wiki" not in tab_org_path) and ("forum" not in tab_org_path):
             # check if already in dict
-            for _, val in self.course_tabs.items():
-                if val == f"{tab_org_path}/index.html":
-                    tab_path = val
+            for key in self.course_tabs:
+                if self.course_tabs[key] == f"{tab_org_path}/index.html":
+                    tab_path = self.course_tabs[key]
                     break
             else:
                 tab_path = self.annex_extra_page(tab_href, tab_org_path)
@@ -514,6 +514,9 @@ class Openedx2Zim:
             raise SystemExit(1)
         self.build_dir.joinpath("home").mkdir(parents=True, exist_ok=True)
         soup = BeautifulSoup(content, "lxml")
+
+        # save the direction (ltr or rtl)
+        self.is_rtl = True if soup.find("head").attrs["dir"] == "rtl" else False
         welcome_message = soup.find("div", attrs={"class": "welcome-message"})
 
         # there are multiple welcome messages
@@ -749,6 +752,7 @@ class Openedx2Zim:
                 dir_path=book_nav["dir_path"],
                 mooc=self,
                 rooturl=get_back_jumps(3),
+                rtl=self.is_rtl,
             )
 
     def render(self):
@@ -767,6 +771,7 @@ class Openedx2Zim:
                 extra_headers=page["extra_head_content"],
                 body_scripts=page["body_end_scripts"],
                 rooturl="../",
+                rtl=self.is_rtl,
             )
 
         # render wiki if available
@@ -789,6 +794,7 @@ class Openedx2Zim:
                 messages=self.homepage_html,
                 mooc=self,
                 render_homepage=True,
+                rtl=self.is_rtl,
             )
         shutil.copytree(
             ROOT_DIR.joinpath("templates").joinpath("assets"),
@@ -839,6 +845,7 @@ class Openedx2Zim:
             self.email,
             self.password,
             self.instance_config,
+            self.instance_lang,
         )
         self.instance_connection.establish_connection()
         jinja_init()

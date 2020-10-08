@@ -16,6 +16,15 @@ with open(ROOT_DIR.joinpath("VERSION"), "r") as fh:
 
 SCRAPER = f"{NAME} {VERSION}"
 
+LANGUAGE_COOKIES = ["openedx-language-preference", "prod-edx-language-preference"]
+
+OPENEDX_LANG_MAP = {
+    "it": "it-it",
+    "de": "de-de",
+    "fa": "fa-ir",
+    "es": "es-419",
+}
+
 VIDEO_FORMATS = ["webm", "mp4"]
 
 IMAGE_FORMATS = ["png", "jpeg", "jpg", "gif"]

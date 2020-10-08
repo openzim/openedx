@@ -36,4 +36,5 @@ class Course(BaseXblock):
                 mooc=self.scraper,
                 all_side_menu_open=True,
                 display_on_mobile=True,
+                rtl=self.scraper.is_rtl,
             )

@@ -56,6 +56,7 @@ def main():
         "--locale",
         help="The locale to use in the UI (can be iso language code / locale)",
         dest="locale_name",
+        default="en",
     )
 
     parser.add_argument(

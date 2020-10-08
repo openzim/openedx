@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-20 22:40+0530\n"
-"PO-Revision-Date: 2020-09-20 22:43+0530\n"
+"POT-Creation-Date: 2020-10-08 20:33+0530\n"
+"PO-Revision-Date: 2020-10-08 20:35+0530\n"
 "Language: hi\n"
 "Language-Team: hi <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -19,10 +19,10 @@ msgstr ""
 "Last-Translator: \n"
 "X-Generator: Poedit 2.4.1\n"
 
-#: openedx2zim/scraper.py:366
+#: openedx2zim/scraper.py:383
 msgid "Course"
 msgstr "कोर्स"
 
-#: openedx2zim/scraper.py:369
+#: openedx2zim/scraper.py:386
 msgid "Course Info"
 msgstr "पाठ्यक्रम की जानकारी"
