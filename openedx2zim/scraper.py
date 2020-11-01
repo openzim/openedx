@@ -663,6 +663,10 @@ class Openedx2Zim:
             preset = VideoWebmLow() if self.video_format == "webm" else VideoMp4Low()
         elif src.suffix[1:] != self.video_format:
             preset = VideoWebmHigh() if self.video_format == "webm" else VideoMp4High()
+        else:
+            if not src.resolve() == dst.resolve():
+                shutil.move(src, dst)
+            return True
         return reencode(
             src,
             dst,
