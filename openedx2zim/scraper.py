@@ -872,7 +872,7 @@ class Openedx2Zim:
                 favicon="favicon.png",
                 title=zim_info["title"],
                 description=zim_info["description"],
-                language="eng",
+                language=get_language_details(self.instance_lang)["iso-639-3"],
                 creator=zim_info["creator"],
                 publisher=self.publisher,
                 tags=self.tags + ["_category:other", "openedx"],
