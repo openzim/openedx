@@ -9,6 +9,7 @@
 - fixed mobile navigation menu
 - fixed video encoding in low quality in WebM
 - added support for internationalization
+- have proper language in ZIM metadata
 
 # 1.0.0
 
