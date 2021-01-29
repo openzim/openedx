@@ -875,7 +875,7 @@ class Openedx2Zim:
                 language=get_language_details(self.instance_lang)["iso-639-3"],
                 creator=zim_info["creator"],
                 publisher=self.publisher,
-                tags=self.tags + ["_category:other", "openedx"],
+                tags=self.tags + ["_category:mooc", "openedx"],
                 scraper=SCRAPER,
                 without_fulltext_index=True if self.no_fulltext_index else False,
             )
