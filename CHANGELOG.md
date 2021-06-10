@@ -1,4 +1,4 @@
-# 1.0.1.dev0
+# 1.0.1
 
 - fixed recursive paths and URLs in html_processor.py
 - fixed usage on older browsers (without ES6 support)
@@ -10,6 +10,7 @@
 - fixed video encoding in low quality in WebM
 - added support for internationalization
 - have proper language in ZIM metadata
+- updated zimscraperlib
 
 # 1.0.0
 
