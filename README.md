@@ -4,8 +4,8 @@
 An offliner to create ZIM :package: files from openedx powered courses
 
 [![PyPI](https://img.shields.io/pypi/v/openedx2zim?style=for-the-badge)](https://pypi.org/project/openedx2zim/)
-[![Docker](https://img.shields.io/docker/build/openzim/openedx?style=for-the-badge)](https://hub.docker.com/r/openzim/openedx)
-[![Codefactor Grade](https://img.shields.io/codefactor/grade/github/openzim/openedx/master?label=codefactor&style=for-the-badge)](https://www.codefactor.io/repository/github/openzim/openedx)
+[![Docker](https://img.shields.io/docker/v/openzim/openedx?label=docker&sort=semver&style=for-the-badge)](https://hub.docker.com/r/openzim/openedx)
+[![Codefactor](https://img.shields.io/codefactor/grade/github/openzim/openedx/main?label=codefactor&style=for-the-badge)](https://www.codefactor.io/repository/github/openzim/openedx)
 [![License](https://img.shields.io/github/license/openzim/openedx?color=blueviolet&style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0)
 
 Openedx is one of the most popular open source MOOC platforms which revolves around the idea of xblocks. It makes e-learning more accessible by providing an easy way to create courses for teachers, universities and others. It is used by many e-learning services as such as edX as a tool to create, organize and manage MOOCs quite easily.
