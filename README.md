@@ -4,7 +4,7 @@
 An offliner to create ZIM :package: files from openedx powered courses
 
 [![PyPI](https://img.shields.io/pypi/v/openedx2zim?style=for-the-badge)](https://pypi.org/project/openedx2zim/)
-[![Docker](https://img.shields.io/docker/v/openzim/openedx?label=docker&sort=semver&style=for-the-badge)](https://hub.docker.com/r/openzim/openedx)
+[![Docker](https://ghcr-badge.deta.dev/openzim/openedx/latest_tag?label=docker)](https://ghcr.io/openzim/openedx)
 [![Codefactor](https://img.shields.io/codefactor/grade/github/openzim/openedx/main?label=codefactor&style=for-the-badge)](https://www.codefactor.io/repository/github/openzim/openedx)
 [![License](https://img.shields.io/github/license/openzim/openedx?color=blueviolet&style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0)
 
