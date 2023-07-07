@@ -19,13 +19,20 @@ def get_response(url, post_data, headers, max_attempts=5):
     for attempt in range(max_attempts):
         try:
             return urllib.request.urlopen(req).read().decode("utf-8")
-        except Exception as exc:
+        except urllib.error.URLError as exc:
             if attempt < max_attempts - 1:
                 logger.debug(f"Error opening {url}: {exc}\nRetrying ...")
             else:
-                logger.debug(f"Error opening {url}: {exc}")
-    logger.error(f"Max attempts exceeded for {url}")
-    raise GetResponseFailed()
+                logger.debug(
+                    f"Error opening {url}: {exc},"
+                    f" max attempts ({max_attempts}) exceeded"
+                )
+                responseData = exc.read().decode("utf8", 'ignore')
+                logger.debug(responseData)
+                raise exc
+        except Exception as exc:
+            logger.debug(f"Fatal error opening {url}: {exc}")
+            raise exc
 
 
 class InstanceConnection:
@@ -70,7 +77,7 @@ class InstanceConnection:
         ).encode("utf-8")
         # API login can also be used : /user_api/v1/account/login_session/
         self.instance_connection = self.get_api_json(
-            self.instance_config["login_page"], post_data
+            self.instance_config["login_page"], post_data, max_attempts=1
         )
         if not self.instance_connection.get("success", False):
             raise SystemExit("Provided e-mail or password is incorrect")
@@ -83,17 +90,27 @@ class InstanceConnection:
             elif cookie.name in LANGUAGE_COOKIES:
                 cookie.value = OPENEDX_LANG_MAP.get(self.locale, self.locale)
 
-    def get_api_json(self, page, post_data=None, referer=None):
+    def get_api_json(self, page, post_data=None, referer=None, max_attempts=None):
         self.update_csrf_token_in_headers()
         headers = self.headers
         if referer:
             headers = copy.deepcopy(self.headers)
             headers["Referer"] = referer
-        return json.loads(
-            get_response(
+        if max_attempts:
+            resp = get_response(
+                self.instance_config["instance_url"] + page, post_data, headers,
+                max_attempts=max_attempts
+            )
+        else:
+            resp = get_response(
                 self.instance_config["instance_url"] + page, post_data, headers
             )
-        )
+        try:
+            json_resp = json.loads(resp)
+            return json_resp
+        except json.JSONDecodeError as exc:
+            logger.debug(f"Failed to decode JSON response below.\n{resp}")
+            raise exc
 
     def get_page(self, url):
         self.update_csrf_token_in_headers()
