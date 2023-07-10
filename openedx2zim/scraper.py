@@ -294,7 +294,7 @@ class Openedx2Zim:
                     logger.error(
                         f"Unsupported xblock: {current_xblock['type']} URL: {current_xblock['student_view_url']}"
                         f"  You can open an issue at https://github.com/openzim/openedx/issues with this log and MOOC URL"
-                        f"  You can ignore this message by passing --ignore-missing-xblocks in atguments"
+                        f"  You can ignore this message by passing --ignore-missing-xblocks in arguments"
                     )
                     sys.exit(1)
                 else:
