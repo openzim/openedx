@@ -110,6 +110,7 @@ class Discussion(BaseXblock):
                 pre_discussion_content=self.pre_discussion_content,
                 post_discussion_content=self.post_discussion_content,
                 discussion_header=self.discussion_header,
+                mooc=self.scraper,
             )
         if not self.scraper.forum:
             # render nothing in no forum mode

@@ -62,4 +62,5 @@ class Libcast(BaseXblock):
             subs=self.subs,
             autoplay=self.scraper.autoplay,
             path_to_root=get_back_jumps(5),
+            mooc=self.scraper,
         )

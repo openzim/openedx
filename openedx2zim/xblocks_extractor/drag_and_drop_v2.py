@@ -56,4 +56,10 @@ class DragAndDropV2(
             self.content["target_img_expanded_url"] = ""
 
     def render(self):
-        return jinja(None, "DragAndDropV2.html", False, dragdrop_content=self.content)
+        return jinja(
+            None,
+            "DragAndDropV2.html",
+            False,
+            dragdrop_content=self.content,
+            mooc=self.scraper,
+        )

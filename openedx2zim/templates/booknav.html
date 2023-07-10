@@ -12,7 +12,7 @@
 	    <ul id="zim-booknav">
 	    {% for book in book_list %}
 		  <li>
-		    <a class="zim-chapter" rel="{{ book["url"] }}" href="{{ rooturl }}{{ dir_path }}/{{ book["url"] }}" onclick="return booknav_change(this)"> {{ book["name"] }}</a>
+		    <a class="zim-chapter" rel="{{ book["url"] }}" href="{{ rooturl }}{{ dir_path }}/{{ book["url"] }}"> {{ book["name"] }}</a>
 		  </li>
 	    {% endfor %}
 	    </ul>
@@ -31,15 +31,6 @@
 </div>
 </main>
 </div>
-<script>
-function booknav_change(e){
-	if (window.matchMedia('(max-width: 640px)').matches) { // On mobile, we launch download of pdf
-		return true;
-        }else{
-		document.getElementById("viewer-frame").src = e.href;
-		return false;
-	}
-}
-</script>
+<script type="text/javascript" src="{{ rooturl }}assets/booknav.js"></script>
 
 {% endblock %}

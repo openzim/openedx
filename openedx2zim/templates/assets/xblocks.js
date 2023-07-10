@@ -1,6 +1,7 @@
 problem_answers = {};
 
-function problem_check_answers(problem_id) {
+function problem_check_answers() {
+    var e = document.getElementById(this.dataset.problemid);
     var problem_node = document.getElementById(problem_id)
     var inputs = problem_node.getElementsByTagName('input');
     var answer_id = "";
@@ -20,3 +21,10 @@ function problem_check_answers(problem_id) {
         trigger_seq_content_change_behaviour();
     }
 }
+
+$(window).on('load', function () {
+    const probemBtns = document.getElementsByClassName("zim-problem_btn");
+    for (var i = 0; i < probemBtns.length; ++i) {
+        probemBtns[i].addEventListener("click", problem_check_answers);
+    }
+});

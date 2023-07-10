@@ -228,6 +228,7 @@ class HtmlProcessor:
                                     path_from_html, root_from_html
                                 ),
                                 audio_format=file_format,
+                                mooc=self.scraper,
                             )
                         filename = html_fpath.name
                     anchor.attrib["href"] = (
@@ -374,6 +375,7 @@ class HtmlProcessor:
                             autoplay=self.scraper.autoplay,
                             path_to_root=root_from_html,
                             title="",
+                            mooc=self.scraper,
                         )
                         iframe.getparent().replace(iframe, lxml.html.fromstring(x))
                 elif ".pdf" in src:

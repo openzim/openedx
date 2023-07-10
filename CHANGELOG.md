@@ -1,6 +1,11 @@
 # Unreleased
 
-- scraper will fail when there are too many erros while retrieving xblocks
+- scraper will fail when there are too many errors while retrieving xblocks
+- add a Creative Commons sample EDX course
+- move all inline Javascript to standalone files to comply with some CSP
+- no more retry for login + HTTP errors
+- pin markupsafe until we upgrade Jinja2
+- fix issue with video that do not need to be re-encoded and were marked as missing
 
 # 1.0.1
 

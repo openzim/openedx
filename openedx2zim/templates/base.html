@@ -6,6 +6,7 @@
     <meta name="generator" content="https://github.com/openzim/openedx/"/>
     <meta name="author" content="kiwix team"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="course_name_slug" content="{{ mooc.course_name_slug }}"/>
     <link id="favicon" rel="shortcut icon" href="{{ rooturl }}favicon.png" type="image/png">
     {% if rtl %}
     <link href="{{ rooturl }}assets/main_rtl.css" rel="stylesheet" type="text/css" />
@@ -32,11 +33,11 @@
   <body class="{% if rtl %}rtl{% else %}ltr{% endif %} {%block bodyclass %}{% endblock %}">
     <div class="zim-topmobilebar">
       {% if side_menu or forum_menu %}
-        <a onclick="{% if side_menu %}show_sidemenu(){% else %}show_forum_menu(){% endif %}" id="zim-show_sidemenu">
+        <a class="{% if side_menu %}zim-side_menu{% else %}zim-forum_menu{% endif %}" id="zim-show_sidemenu">
           <i class="fa fa-bars"></i>
         </a>
       {% endif %}
-      <a onclick="show_pagemobilemenu()" id="zim-show_pagemobilemenu">
+      <a id="zim-show_pagemobilemenu">
         <i class="fa fa-angle-down"></i>
       </a>
     </div>
@@ -59,32 +60,7 @@
    </div>
     </div>
     {% block body_end %}{% endblock %}
-    <script>
-      window.MathJax = {
-        tex: {
-          inlineMath: [
-          ["\\(","\\)"],
-          ['[mathjaxinline]','[/mathjaxinline]']
-              ],
-          displayMath: [
-          ["\\[","\\]"],
-          ['[mathjax]','[/mathjax]']
-              ],
-          autoload: {
-            color: [],
-            colorV2: ['color']
-          },
-          packages: {'[+]': ['noerrors']}
-        },
-        options: {
-          ignoreHtmlClass: 'tex2jax_ignore',
-          processHtmlClass: 'tex2jax_process'
-        },
-        loader: {
-          load: ['input/asciimath', '[tex]/noerrors']
-        }
-      };
-      </script>
+    <script type="text/javascript" src="{{ rooturl }}assets/base.js"></script>
     <script type="text/javascript" src="{{ rooturl }}assets/mathjax/tex-mml-svg.js"></script>
   </body>
 </html>
