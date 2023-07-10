@@ -3,6 +3,7 @@ import getpass
 import http
 import json
 import sys
+import tempfile
 import urllib
 
 from .constants import getLogger, LANGUAGE_COOKIES, OPENEDX_LANG_MAP
@@ -10,38 +11,9 @@ from .constants import getLogger, LANGUAGE_COOKIES, OPENEDX_LANG_MAP
 logger = getLogger()
 
 
-class GetResponseFailed(Exception):
-    pass
-
-
-def get_response(url, post_data, headers, max_attempts=5):
-    req = urllib.request.Request(url, post_data, headers)
-    for attempt in range(max_attempts):
-        try:
-            return urllib.request.urlopen(req).read().decode("utf-8")
-        except urllib.error.HTTPError as exc:
-            logger.debug(
-                f"HTTP Error opening {url}: {exc}\n"
-                "Won't retry this kind of error.\n"
-                "Error response body below:")
-            responseData = exc.read().decode("utf8", 'ignore')
-            logger.debug(responseData)
-            raise exc
-        except urllib.error.URLError as exc:
-            if attempt < max_attempts - 1:
-                logger.debug(f"Error opening {url}: {exc}\nRetrying ...")
-            else:
-                logger.debug(
-                    f"Error opening {url}: {exc},"
-                    f" max attempts ({max_attempts}) exceeded"
-                )
-        except Exception as exc:
-            logger.debug(f"Fatal error opening {url}: {exc}")
-            raise exc
-
 
 class InstanceConnection:
-    def __init__(self, email, password, instance_config, locale):
+    def __init__(self, email, password, instance_config, locale, build_dir, debug):
         self.email = email
         self.password = password if password else getpass.getpass(stream=sys.stderr)
         self.instance_config = instance_config
@@ -50,6 +22,37 @@ class InstanceConnection:
         self.instance_connection = None
         self.user = None
         self.locale = locale
+        self.build_dir = build_dir
+        self.debug = debug
+
+    def get_response(self, url, post_data, headers, max_attempts=5):
+        req = urllib.request.Request(url, post_data, headers)
+        for attempt in range(max_attempts):
+            try:
+                return urllib.request.urlopen(req).read().decode("utf-8")
+            except urllib.error.HTTPError as exc:
+                logger.debug(f"HTTP Error (won't retry this kind of error) while opening {url}: {exc}")
+                if self.debug:
+                    responseData = exc.read().decode("utf8", 'ignore')
+                    if len(responseData) > 256:
+                        with tempfile.NamedTemporaryFile(dir=self.build_dir.joinpath("logs"), suffix=".raw", mode="wt", delete=False) as fp:
+                            fp.write(responseData)
+                            logger.debug(f"Error response saved in {fp.name}")
+                    else:
+                        logger.debug(responseData)
+                raise exc
+            except urllib.error.URLError as exc:
+                if attempt < max_attempts - 1:
+                    logger.debug(f"Error opening {url}: {exc}\nRetrying ...")
+                    continue
+                logger.debug(
+                    f"Error opening {url}: {exc},"
+                    f" max attempts ({max_attempts}) exceeded"
+                )
+                raise exc
+            except Exception as exc:
+                logger.debug(f"Fatal error opening {url}: {exc}")
+                raise exc
 
     def update_csrf_token_in_headers(self):
         csrf_token = None
@@ -102,12 +105,12 @@ class InstanceConnection:
             headers = copy.deepcopy(self.headers)
             headers["Referer"] = referer
         if max_attempts:
-            resp = get_response(
+            resp = self.get_response(
                 self.instance_config["instance_url"] + page, post_data, headers,
                 max_attempts=max_attempts
             )
         else:
-            resp = get_response(
+            resp = self.get_response(
                 self.instance_config["instance_url"] + page, post_data, headers
             )
         try:
@@ -121,7 +124,7 @@ class InstanceConnection:
         self.update_csrf_token_in_headers()
         headers = copy.deepcopy(self.headers)
         headers["X-Requested-With"] = ""
-        return get_response(url, None, headers)
+        return self.get_response(url, None, headers)
 
     def get_redirection(self, url):
         self.update_csrf_token_in_headers()

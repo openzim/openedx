@@ -144,6 +144,7 @@ class Openedx2Zim:
         if tmp_dir:
             pathlib.Path(tmp_dir).mkdir(parents=True, exist_ok=True)
         self.build_dir = pathlib.Path(tempfile.mkdtemp(dir=tmp_dir))
+        self.build_dir.joinpath("logs").mkdir(parents=True, exist_ok=True)
 
         # scraper options
         self.course_url = course_url
@@ -322,6 +323,7 @@ class Openedx2Zim:
             current_id=self.root_xblock_id,
             root_url="../",
         )
+        logger.debug(f"{len(self.xblock_extractor_objects)} xblocks will be extracted")
 
     def get_book_list(self, book, output_path):
         pdf = book.find_all("a")
@@ -869,6 +871,8 @@ class Openedx2Zim:
             self.password,
             self.instance_config,
             self.instance_lang,
+            build_dir=self.build_dir,
+            debug=self.debug,
         )
         self.instance_connection.establish_connection()
         jinja_init()
