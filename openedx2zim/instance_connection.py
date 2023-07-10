@@ -19,6 +19,14 @@ def get_response(url, post_data, headers, max_attempts=5):
     for attempt in range(max_attempts):
         try:
             return urllib.request.urlopen(req).read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            logger.debug(
+                f"HTTP Error opening {url}: {exc}\n"
+                "Won't retry this kind of error.\n"
+                "Error response body below:")
+            responseData = exc.read().decode("utf8", 'ignore')
+            logger.debug(responseData)
+            raise exc
         except urllib.error.URLError as exc:
             if attempt < max_attempts - 1:
                 logger.debug(f"Error opening {url}: {exc}\nRetrying ...")
@@ -27,9 +35,6 @@ def get_response(url, post_data, headers, max_attempts=5):
                     f"Error opening {url}: {exc},"
                     f" max attempts ({max_attempts}) exceeded"
                 )
-                responseData = exc.read().decode("utf8", 'ignore')
-                logger.debug(responseData)
-                raise exc
         except Exception as exc:
             logger.debug(f"Fatal error opening {url}: {exc}")
             raise exc
