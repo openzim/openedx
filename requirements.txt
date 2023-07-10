@@ -12,3 +12,7 @@ pif>=0.8.2,<0.9
 xxhash>=2.0.0,<2.1
 # youtube-dl should be updated as frequently as possible
 youtube_dl
+# Jinja2 2.11 depends on soft_unicode which has been remove from markupsafe after 2.0.1
+# so we pin the version to 2.0.1 ; this HAS to be removed once Jinja2 is update to a more
+# recent version
+markupsafe==2.0.1
