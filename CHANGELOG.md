@@ -5,6 +5,7 @@
 - move all inline Javascript to standalone files to comply with some CSP
 - no more retry for login + HTTP errors
 - display HTTP error responses or save them in a temporary file for analysis
+- save API response for course xblocks in temporary file for debugging
 - pin markupsafe until we upgrade Jinja2
 - fix issue with video that do not need to be re-encoded and were marked as missing
 

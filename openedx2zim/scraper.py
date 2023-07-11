@@ -14,6 +14,7 @@ import sys
 import tempfile
 import urllib
 import uuid
+import json
 
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
@@ -257,6 +258,10 @@ class Openedx2Zim:
             + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
         )
         self.course_xblocks = xblocks_data["blocks"]
+        if self.debug:
+            with tempfile.NamedTemporaryFile(dir=self.build_dir.joinpath("logs"), suffix=".json", mode="wt", delete=False) as fp:
+                json.dump(self.course_xblocks, fp, indent=4)
+                logger.debug(f"Saved API response while fetching list of course blocks in {fp.name}")
         self.root_xblock_id = xblocks_data["root"]
 
     def parse_course_xblocks(self):
