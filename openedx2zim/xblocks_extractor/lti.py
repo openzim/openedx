@@ -13,14 +13,18 @@ class Lti(BaseXblock):
             xblock_json, relative_path, root_url, xblock_id, descendants, scraper
         )
 
-    def download(self, instance_connection):
+    def download_inner(self, instance_connection):
         # IMPROUVEMENT LTI can be lot of content type ? Here pdf
         url = (
             self.xblock_json["lms_web_url"].replace("/jump_to/", "/xblock/")
             + "/handler/preview_handler"
         )
-        content = instance_connection.get_page(url)
+        try:
+            content = instance_connection.get_page(url)
+        except Exception:
+            content = None
         if not content:
+            self.add_failed({"url": url})
             return
         soup = BeautifulSoup(content, "lxml")
         content_url = soup.find("form")

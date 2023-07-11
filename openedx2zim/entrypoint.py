@@ -203,6 +203,20 @@ def main():
     )
 
     parser.add_argument(
+        "--watcher-min-dl-count",
+        help="Minimum number of resources to have downloaded before considering to stop on errors",
+        type=int,
+        default=50,
+    )
+
+    parser.add_argument(
+        "--watcher-min-ratio",
+        help="Minimum ratio of resources processed successfully. If ratio is below this threshold, the scrapper will stop.",
+        type=float,
+        default=0.9,
+    )
+
+    parser.add_argument(
         "--version",
         help="Display scraper version and exit",
         action="version",

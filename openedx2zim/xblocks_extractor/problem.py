@@ -200,12 +200,17 @@ class Problem(BaseXblock):
         for span in soup.find_all("span", attrs={"class": "sr"}):
             span.decompose()
 
-    def download(self, instance_connection):
+    def download_inner(self, instance_connection):
         """ download the problem xblock content from the instance """
 
         # try to fetch content
-        content = instance_connection.get_page(self.xblock_json["student_view_url"])
+        url = self.xblock_json["student_view_url"]
+        try:
+            content = instance_connection.get_page(url)
+        except Exception:
+            content = None
         if not content:
+            self.add_failed({"url": url})
             return
         raw_soup = BeautifulSoup(content, "lxml")
         self.xmodule_handler = str(

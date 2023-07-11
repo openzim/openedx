@@ -1,3 +1,7 @@
+# Unreleased
+
+- scraper will fail when there are too many erros while retrieving xblocks
+
 # 1.0.1
 
 - fixed recursive paths and URLs in html_processor.py

@@ -4,7 +4,9 @@
 
 import concurrent.futures
 import datetime
+import json
 import locale
+from multiprocessing import Lock
 import os
 import pathlib
 import re
@@ -64,6 +66,7 @@ from .xblocks_extractor.sequential import Sequential
 from .xblocks_extractor.unavailable import Unavailable
 from .xblocks_extractor.vertical import Vertical
 from .xblocks_extractor.video import Video
+from .xblocks_extractor.base_xblock import BaseXblock
 
 XBLOCK_EXTRACTORS = {
     "course": Course,
@@ -119,6 +122,8 @@ class Openedx2Zim:
         keep_build_dir,
         debug,
         threads,
+        watcher_min_dl_count,
+        watcher_min_ratio,
     ):
 
         # video-encoding info
@@ -151,6 +156,10 @@ class Openedx2Zim:
         self.remove_seq_nav = remove_seq_nav
         self.threads = threads
         self.yt_downloader = YoutubeDownloader(threads=1)
+
+        # resource processing watcher
+        BaseXblock.watcher_min_dl_count = watcher_min_dl_count
+        BaseXblock.watcher_min_ratio = watcher_min_ratio
 
         # authentication
         self.email = email
@@ -230,6 +239,7 @@ class Openedx2Zim:
             self.instance_config["course_prefix"],
             self.instance_url,
         )
+        logger.debug(f"Course ID: {self.course_id}")
         logger.info("Getting course info ...")
         self.course_info = self.instance_connection.get_api_json(
             "/api/courses/v1/courses/"
@@ -553,14 +563,25 @@ class Openedx2Zim:
 
         # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
+        lock = Lock()
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.threads
         ) as executor:
             fs = [
-                executor.submit(xblock.download, self.instance_connection)
+                executor.submit(xblock.download, self.instance_connection, lock)
                 for xblock in self.xblock_extractor_objects
             ]
             concurrent.futures.wait(fs, return_when=concurrent.futures.ALL_COMPLETED)
+
+        if BaseXblock.too_many_failures():
+            logger.error("Stopping scrapper because too many errors occured while getting content")
+            if self.debug:
+                with tempfile.NamedTemporaryFile(dir=self.build_dir.joinpath("logs"), suffix=".json", mode="wt", delete=False) as fp:
+                    json.dump(BaseXblock.watcher.failed_xblocks, fp, indent=4)
+                    logger.debug(f"Saved details about failures in {fp.name}")
+            return False
+
+        return True
 
     def s3_credentials_ok(self):
         logger.info("Testing S3 Optimization Cache credentials ...")
@@ -854,7 +875,8 @@ class Openedx2Zim:
         self.prepare_mooc_data()
         self.parse_course_xblocks()
         self.annex()
-        self.get_content()
+        if not self.get_content():
+            return
         self.render()
         if not self.no_zim:
             self.fname = (

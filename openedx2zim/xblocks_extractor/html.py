@@ -15,9 +15,14 @@ class Html(BaseXblock):
         self.is_video = False  # check this
         self.html = ""
 
-    def download(self, instance_connection):
-        content = instance_connection.get_page(self.xblock_json["student_view_url"])
+    def download_inner(self, instance_connection):
+        url = self.xblock_json["student_view_url"]
+        try:
+            content = instance_connection.get_page(url)
+        except Exception:
+            content = None
         if not content:
+            self.add_failed({"url": url})
             return
         soup = BeautifulSoup(content, "lxml")
         html_content = soup.find("div", attrs={"class": "xblock"})

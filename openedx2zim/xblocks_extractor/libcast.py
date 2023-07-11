@@ -15,9 +15,14 @@ class Libcast(BaseXblock):
         # extra vars
         self.subs = []
 
-    def download(self, instance_connection):
-        content = instance_connection.get_page(self.xblock_json["student_view_url"])
+    def download_inner(self, instance_connection):
+        url = self.xblock_json["student_view_url"]
+        try:
+            content = instance_connection.get_page(url)
+        except Exception:
+            content = None
         if not content:
+            self.add_failed({"url": url})
             return
         soup = BeautifulSoup(content, "lxml")
         url = str(soup.find("video").find("source")["src"])
@@ -44,9 +49,10 @@ class Libcast(BaseXblock):
         else:
             video_path = self.output_path.joinpath("video.mp4")
         if not video_path.exists():
-            self.scraper.download_file(
-                prepare_url(url, self.scraper.instance_url), video_path
-            )
+            prepared_url = prepare_url(url, self.scraper.instance_url)
+            success = self.scraper.download_file(prepared_url, video_path)
+            if not success:
+                self.add_failed({"url": prepared_url})
 
     def render(self):
         return jinja(
