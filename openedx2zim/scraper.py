@@ -6,7 +6,6 @@ import concurrent.futures
 import datetime
 import json
 import locale
-from multiprocessing import Lock
 import os
 import pathlib
 import re
@@ -563,12 +562,11 @@ class Openedx2Zim:
 
         # make xblock_extractor objects download their content
         logger.info("Getting content for supported xblocks ...")
-        lock = Lock()
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.threads
         ) as executor:
             fs = [
-                executor.submit(xblock.download, self.instance_connection, lock)
+                executor.submit(xblock.download, self.instance_connection)
                 for xblock in self.xblock_extractor_objects
             ]
             concurrent.futures.wait(fs, return_when=concurrent.futures.ALL_COMPLETED)
@@ -576,9 +574,8 @@ class Openedx2Zim:
         if BaseXblock.too_many_failures():
             logger.error("Stopping scrapper because too many errors occured while getting content")
             if self.debug:
-                with tempfile.NamedTemporaryFile(dir=self.build_dir.joinpath("logs"), suffix=".json", mode="wt", delete=False) as fp:
-                    json.dump(BaseXblock.watcher.failed_xblocks, fp, indent=4)
-                    logger.debug(f"Saved details about failures in {fp.name}")
+                print("Xblock download failure details:", file=sys.stderr)
+                json.dump(BaseXblock.watcher.failed_xblocks, sys.stderr, indent=4)
             return False
 
         return True

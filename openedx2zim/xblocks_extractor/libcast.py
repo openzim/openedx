@@ -50,8 +50,7 @@ class Libcast(BaseXblock):
             video_path = self.output_path.joinpath("video.mp4")
         if not video_path.exists():
             prepared_url = prepare_url(url, self.scraper.instance_url)
-            success = self.scraper.download_file(prepared_url, video_path)
-            if not success:
+            if not self.scraper.download_file(prepared_url, video_path):
                 self.add_failed({"url": prepared_url})
 
     def render(self):

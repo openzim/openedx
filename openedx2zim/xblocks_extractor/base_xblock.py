@@ -1,3 +1,4 @@
+from multiprocessing import Lock
 from slugify import slugify
 
 from ..constants import getLogger
@@ -18,6 +19,8 @@ class BaseXblock:
     watcher = ExtractionWatcher()
     watcher_min_dl_count = 0
     watcher_min_ratio = 0
+
+    lock = Lock()
 
     def __init__(
         self, xblock_json, output_path, root_url, xblock_id, descendants, scraper
@@ -41,10 +44,9 @@ class BaseXblock:
     def too_many_failures(cls):
         return cls.watcher.dl_count > cls.watcher_min_dl_count and (cls.watcher.success_count / cls.watcher.dl_count) < cls.watcher_min_ratio
     
-    def download(self, instance_connection, lock):
+    def download(self, instance_connection):
         if BaseXblock.too_many_failures():
             return
-        self.lock = lock
         with self.lock:
             self.watcher.dl_count += 1
         logger.debug(f"Downloading resource {self.watcher.dl_count} of {self.watcher.total_count} ({self.watcher.success_count} success so far)")

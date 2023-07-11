@@ -204,7 +204,7 @@ def main():
 
     parser.add_argument(
         "--watcher-min-dl-count",
-        help="Minimum number of resources to have downloaded before considering to stop on errors",
+        help="[dev] Minimum number of resources to have downloaded before considering to stop on errors",
         type=int,
         default=50,
     )
