@@ -1,9 +1,3 @@
-/*
-function check_freetext(text_id){
-  alert("Sorry, we cannot check free text offline"); 
-}
-*/
-
 function save_freetext() {
     var text_id = this.dataset.textid
     document.cookie = courseNameSlug + "-" + text_id + "=" + document.getElementById(text_id).value;

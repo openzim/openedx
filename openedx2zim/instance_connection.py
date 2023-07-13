@@ -3,7 +3,6 @@ import getpass
 import http
 import json
 import sys
-import tempfile
 import urllib
 
 from .constants import getLogger, LANGUAGE_COOKIES, OPENEDX_LANG_MAP
@@ -34,12 +33,7 @@ class InstanceConnection:
                 logger.debug(f"HTTP Error (won't retry this kind of error) while opening {url}: {exc}")
                 if self.debug:
                     responseData = exc.read().decode("utf8", 'ignore')
-                    if len(responseData) > 256:
-                        with tempfile.NamedTemporaryFile(dir=self.build_dir.joinpath("logs"), suffix=".raw", mode="wt", delete=False) as fp:
-                            fp.write(responseData)
-                            logger.debug(f"Error response saved in {fp.name}")
-                    else:
-                        logger.debug(responseData)
+                    print(responseData, file=sys.stderr)
                 raise exc
             except urllib.error.URLError as exc:
                 if attempt < max_attempts - 1:
