@@ -392,8 +392,9 @@ class HtmlProcessor:
                 else:
                     # handle iframe recursively
                     iframe_url = prepare_url(src, netloc)
-                    src_content = self.scraper.instance_connection.get_page(iframe_url)
-                    if not src_content:
+                    try:
+                        src_content = self.scraper.instance_connection.get_page(iframe_url)
+                    except Exception:
                         continue
                     path_recursive, netloc_recursive = self.get_path_and_netloc_to_send(
                         netloc, path_on_server, iframe_url

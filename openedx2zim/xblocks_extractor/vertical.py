@@ -33,9 +33,8 @@ class Vertical(BaseXblock):
         try:
             content = instance_connection.get_page(url)
         except Exception:
-            content = None
-        if not content:
             self.add_failed({"url": url})
+            return
         soup = BeautifulSoup(content, "lxml")
 
         # extract CSS and JS from HTML head

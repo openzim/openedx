@@ -338,8 +338,9 @@ class Openedx2Zim:
     def annex_extra_page(self, tab_href, tab_org_path):
         output_path = self.build_dir.joinpath(tab_org_path)
         output_path.mkdir(parents=True, exist_ok=True)
-        page_content = self.instance_connection.get_page(self.instance_url + tab_href)
-        if not page_content:
+        try:
+            page_content = self.instance_connection.get_page(self.instance_url + tab_href)
+        except Exception:
             logger.error(f"Failed to get page content for tab {tab_org_path}")
             raise SystemExit(1)
         soup_page = BeautifulSoup(page_content, "lxml")
@@ -412,8 +413,9 @@ class Openedx2Zim:
 
     def get_course_tabs(self):
         logger.info("Getting course tabs ...")
-        content = self.instance_connection.get_page(self.course_url)
-        if not content:
+        try:
+            content = self.instance_connection.get_page(self.course_url)
+        except Exception:
             logger.error("Failed to get course tabs")
             raise SystemExit(1)
         soup = BeautifulSoup(content, "lxml")
@@ -517,8 +519,9 @@ class Openedx2Zim:
 
         # get the course url and generate homepage
         logger.info("Getting homepage ...")
-        content = self.instance_connection.get_page(self.course_url)
-        if not content:
+        try:
+            content = self.instance_connection.get_page(self.course_url)
+        except Exception:
             logger.error("Error while getting homepage")
             raise SystemExit(1)
         self.build_dir.joinpath("home").mkdir(parents=True, exist_ok=True)

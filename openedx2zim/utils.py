@@ -86,8 +86,9 @@ def download_and_convert_subtitles(output_path, subtitles, instance_connection):
         subtitle_file = pathlib.Path(output_path).joinpath(f"{lang}.vtt")
         if not subtitle_file.exists():
             try:
-                raw_subtitle = instance_connection.get_page(subtitles[lang])
-                if not raw_subtitle:
+                try:
+                    raw_subtitle = instance_connection.get_page(subtitles[lang])
+                except Exception:
                     logger.error(f"Subtitle fetch failed from {subtitles[lang]}")
                     continue
                 subtitle = html.unescape(

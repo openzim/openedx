@@ -43,8 +43,6 @@ class Video(BaseXblock):
         try:
             content = instance_connection.get_page(url)
         except Exception:
-            content = None
-        if not content:
             self.add_failed({"url": url})
             return False
         soup = BeautifulSoup.BeautifulSoup(content, "lxml")
@@ -95,8 +93,6 @@ class Video(BaseXblock):
             try:
                 content = instance_connection.get_page(url)
             except Exception:
-                content = None
-            if not content:
                 self.add_failed({"url": url})
                 return False
             soup = BeautifulSoup.BeautifulSoup(content, "lxml")
