@@ -10,6 +10,10 @@ from .constants import getLogger, LANGUAGE_COOKIES, OPENEDX_LANG_MAP
 logger = getLogger()
 
 
+class GetResponseFailed(Exception):
+    pass
+
+
 def get_response(url, post_data, headers, max_attempts=5):
     req = urllib.request.Request(url, post_data, headers)
     for attempt in range(max_attempts):
@@ -21,7 +25,7 @@ def get_response(url, post_data, headers, max_attempts=5):
             else:
                 logger.debug(f"Error opening {url}: {exc}")
     logger.error(f"Max attempts exceeded for {url}")
-    return {}
+    raise GetResponseFailed()
 
 
 class InstanceConnection:

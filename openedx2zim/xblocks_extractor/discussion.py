@@ -72,10 +72,13 @@ class Discussion(BaseXblock):
                     )
                 )
 
-    def download(self, instance_connection):
+    def download_inner(self, instance_connection):
         if self.scraper.forum:
-            content = instance_connection.get_page(self.xblock_json["student_view_url"])
-            if not content:
+            url = self.xblock_json["student_view_url"]
+            try:
+                content = instance_connection.get_page(url)
+            except Exception:
+                self.add_failed({"url": url})
                 return
             soup = BeautifulSoup(content, "lxml")
 

@@ -27,9 +27,14 @@ class Vertical(BaseXblock):
         else:
             self.icon_type = "fa-book"
 
-    def download(self, instance_connection):
+    def download_inner(self, instance_connection):
         # get the LMS content for the vertical
-        content = instance_connection.get_page(self.xblock_json["lms_web_url"])
+        url = self.xblock_json["lms_web_url"]
+        try:
+            content = instance_connection.get_page(url)
+        except Exception:
+            self.add_failed({"url": url})
+            return
         soup = BeautifulSoup(content, "lxml")
 
         # extract CSS and JS from HTML head
