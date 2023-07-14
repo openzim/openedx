@@ -14,6 +14,7 @@ import sys
 import tempfile
 import urllib
 import uuid
+import json
 
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
@@ -144,6 +145,7 @@ class Openedx2Zim:
         if tmp_dir:
             pathlib.Path(tmp_dir).mkdir(parents=True, exist_ok=True)
         self.build_dir = pathlib.Path(tempfile.mkdtemp(dir=tmp_dir))
+        self.build_dir.joinpath("logs").mkdir(parents=True, exist_ok=True)
 
         # scraper options
         self.course_url = course_url
@@ -256,6 +258,10 @@ class Openedx2Zim:
             + "&depth=all&requested_fields=graded,format,student_view_multi_device&student_view_data=video,discussion&block_counts=video,discussion,problem&nav_depth=3"
         )
         self.course_xblocks = xblocks_data["blocks"]
+        if self.debug:
+            with tempfile.NamedTemporaryFile(dir=self.build_dir.joinpath("logs"), suffix=".json", mode="wt", delete=False) as fp:
+                json.dump(self.course_xblocks, fp, indent=4)
+                logger.debug(f"Saved API response while fetching list of course blocks in {fp.name}")
         self.root_xblock_id = xblocks_data["root"]
 
     def parse_course_xblocks(self):
@@ -294,7 +300,7 @@ class Openedx2Zim:
                     logger.error(
                         f"Unsupported xblock: {current_xblock['type']} URL: {current_xblock['student_view_url']}"
                         f"  You can open an issue at https://github.com/openzim/openedx/issues with this log and MOOC URL"
-                        f"  You can ignore this message by passing --ignore-missing-xblocks in atguments"
+                        f"  You can ignore this message by passing --ignore-missing-xblocks in arguments"
                     )
                     sys.exit(1)
                 else:
@@ -322,6 +328,7 @@ class Openedx2Zim:
             current_id=self.root_xblock_id,
             root_url="../",
         )
+        logger.debug(f"{len(self.xblock_extractor_objects)} xblocks will be extracted")
 
     def get_book_list(self, book, output_path):
         pdf = book.find_all("a")
@@ -681,6 +688,8 @@ class Openedx2Zim:
             preset = VideoWebmLow() if self.video_format == "webm" else VideoMp4Low()
         elif src.suffix[1:] != self.video_format:
             preset = VideoWebmHigh() if self.video_format == "webm" else VideoMp4High()
+        else:
+            return False  # no need to convert, original file must be kept as-is
         return reencode(
             src,
             dst,
@@ -867,6 +876,8 @@ class Openedx2Zim:
             self.password,
             self.instance_config,
             self.instance_lang,
+            build_dir=self.build_dir,
+            debug=self.debug,
         )
         self.instance_connection.establish_connection()
         jinja_init()

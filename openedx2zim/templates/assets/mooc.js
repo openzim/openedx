@@ -42,8 +42,8 @@ function show_forum_menu(){
 }
 
 
-function show_forum(threads_id){
-  var e = document.getElementById(threads_id);
+function show_forum(){
+  var e = document.getElementById(this.dataset.threadsid);
   if(e.style.display == 'none') {
     e.style.display = 'block';
   }else{
@@ -51,14 +51,41 @@ function show_forum(threads_id){
   }
 }
 
-function toggle_visibility_submenu(elem){
-    var e = elem.nextSibling.nextSibling;
+function toggle_visibility_submenu(){
+    var e = this.nextSibling.nextSibling;
     if(e.style.display == 'block' || e.style.display == '') {
         e.style.display = 'none';
     }else{
         e.style.display = 'block';
     }
-    elem.children[0].children[0].classList.toggle("fa-caret-down");
-    elem.children[0].children[0].classList.toggle("fa-caret-right");
+    this.children[0].children[0].classList.toggle("fa-caret-down");
+    this.children[0].children[0].classList.toggle("fa-caret-right");
 }
 
+
+$(window).on('load', function () {
+  const chapters = document.getElementsByClassName("zim-button-chapter");
+  for (var i = 0; i < chapters.length; ++i) {
+    chapters[i].addEventListener("click", toggle_visibility_submenu);
+  }
+  
+  const mobileMenu = document.getElementById("zim-show_pagemobilemenu")
+  if (mobileMenu) {
+    mobileMenu.addEventListener("click", show_pagemobilemenu);
+  }
+  
+  const sidemenus = document.getElementsByClassName("zim-side_menu");
+  for (var i = 0; i < sidemenus.length; ++i) {
+    sidemenus[i].addEventListener("click", show_sidemenu);
+  }
+  
+  const forummenus = document.getElementsByClassName("zim-forum_menu");
+  for (var i = 0; i < forummenus.length; ++i) {
+    forummenus[i].addEventListener("click", show_forum_menu);
+  }
+  
+  const forumLinks =  document.getElementsByClassName("zim-forum_link");
+  for (var i = 0; i < forumLinks.length; ++i) {
+    forumLinks[i].addEventListener("click", show_forum);
+  }
+});

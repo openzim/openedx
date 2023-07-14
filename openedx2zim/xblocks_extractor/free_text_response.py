@@ -31,8 +31,8 @@ class FreeTextResponse(BaseXblock):
         # check = soup.find("button", attrs={"class": "check"}).decompose()
         save = soup.find("button", attrs={"class": "save"})
         text_area["id"] = self.xblock_id
-        # check["onclick"] = 'check_freetext("{}")'.format(self.id)
-        save["onclick"] = 'save_freetext("{}")'.format(self.xblock_id)
+        save["data-textid"] = self.xblock_id
+        save['class'].append('zim-save_freetext')
         html_no_answers = '<div class="noanswers"><p data-l10n-id="no_answers_for_freetext" >  <b> Warning : </b> There is not correction for Freetext block. </p> </div>'
         self.html = (
             html_no_answers
@@ -50,6 +50,5 @@ class FreeTextResponse(BaseXblock):
             "freetextresponse.html",
             False,
             freetextresponse_html=self.html,
-            freetextresponse_id=self.xblock_id,
             mooc=self.scraper,
         )

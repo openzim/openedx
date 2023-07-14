@@ -45,7 +45,7 @@ openedx2zim --help
 
 Example usage
 ```bash
-openedx2zim --course-url="https://courses.edx.org/courses/course-v1:edX+edx201+1T2020/course/" --publisher="edx201" --email="example@example.com" --name="sample" --tmp-dir="output" --output="output" --debug  --keep --format="mp4"
+openedx2zim --course-url="https://openlearninglibrary.mit.edu/courses/course-v1:OCW+6.042J+2T2019/course/" --publisher="Massachusetts Institute of Technology" --email="example@example.com" --name="sample" --tmp-dir="output" --output="output" --debug  --keep --format="mp4"
 ```
 
 This project can also be run with docker. Use the provided [Dockerfile](Dockerfile) to run it with docker. See steps [here](https://docs.docker.com/get-started/part2/).

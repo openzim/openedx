@@ -15,7 +15,7 @@
           {% for cat in category %}
               <li class="forum-nav-browse-menu-item" data-discussion-id='{{ cat }}'>
 		{% if not "catego_with_sub_catego" in category[cat] %}
-                <a onclick="show_forum('{{ cat }}')" > <!--href="{{ cat }}/index.html"-->
+                <a class="zim-forum_link" data-threadsid="{{ cat }}" > <!--href="{{ cat }}/index.html"-->
 		{% endif %}
                   <span class="forum-nav-browse-title">
                     {{ category[cat]["title"] }}

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 ###
 # download JS dependencies and place them in our templates/assets folder
 # then launch our ogv.js script to fix dynamic loading links
@@ -22,7 +24,7 @@ ASSETS_PATH="${SCRIPT_PATH}/openedx2zim/templates/assets"
 echo "About to download JS assets to ${ASSETS_PATH}"
 
 echo "getting open sans font"
-curl -L -o opensans.zip http://google-webfonts-helper.herokuapp.com/api/fonts/open-sans?download=zip\&subsets=vietnamese,latin-ext,latin,greek-ext,greek,cyrillic-ext,cyrillic\&variants=regular\&formats=woff,woff2
+curl -L -o opensans.zip https://gwfh.mranftl.com/api/fonts/open-sans?download=zip\&subsets=vietnamese,latin-ext,latin,greek-ext,greek,cyrillic-ext,cyrillic\&variants=regular\&formats=woff,woff2
 rm -rf $ASSETS_PATH/fonts/opensans
 mkdir -p $ASSETS_PATH/fonts/opensans
 unzip -o -d $ASSETS_PATH/fonts/opensans opensans.zip

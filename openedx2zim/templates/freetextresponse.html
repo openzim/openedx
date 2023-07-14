@@ -1,27 +1,2 @@
 {{ freetextresponse_html }}
-<script>
-
-/*
-function check_freetext(text_id){
-  alert("Sorry, we cannot check free text offline"); 
-}
-*/
-
-function save_freetext(text_id){
-  document.cookie = "{{ mooc.course_name_slug }}-" + text_id + "=" + document.getElementById(text_id).value;
-}
-
-function load_freetext(text_id){
-  var name = "{{ mooc.course_name_slug }}-" + text_id + "=";
-  var cookie_split = document.cookie.split(';');
-  for(var i=0; i < cookie_split.length;i++){
-    var c = cookie_split[i];
-    while (c.charAt(0)==' ') c = c.substring(1,c.length);
-    if(c.indexOf(name) == 0){ document.getElementById(text_id).value = c.substring(name.length,c.length); break; }
-  }
-}
-
-load_freetext("{{ freetextresponse_id  }}");
-
-</script>
-
+<script type="text/javascript" src="{{ rooturl }}assets/freetextresponse.js"></script>

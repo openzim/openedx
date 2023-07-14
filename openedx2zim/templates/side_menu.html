@@ -5,7 +5,7 @@
       {% if chapter_.descendants|length > 0 %}
 <!--        <li>-->
           {% if chapter and chapter_.id == chapter.id  or all_side_menu_open %}
-            <a class="zim-button-chapter chapter zim-active" role="button" aria-expanded="true" onclick='toggle_visibility_submenu(this)'>
+            <a class="zim-button-chapter chapter zim-active" role="button" aria-expanded="true">
               <span class="zim-group-heading zim-active" aria-label="{{ chapter_.display_name }}">
                 <span class="icon fa fa-caret-down" aria-hidden="true"></span>
                 {{ chapter_.display_name }}
@@ -13,7 +13,7 @@
             </a>
             <div class="zim-chapter-content-container" {#" is-open" tabindex="-1" #} role="group" aria-label="{{ chapter_.display_name }} submenu" style="display:block;">
             {% else %}
-            <a class="zim-button-chapter chapter" role="button" aria-expanded="false" onclick='toggle_visibility_submenu(this)'>
+            <a class="zim-button-chapter chapter" role="button" aria-expanded="false">
               <span class="zim-group-heading" aria-label="{{ chapter_.display_name }}">
                 <span class="icon fa fa-caret-right" aria-hidden="true"></span>
                 {{ chapter_.display_name }}

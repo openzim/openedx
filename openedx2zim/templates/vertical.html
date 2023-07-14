@@ -128,14 +128,5 @@ vertical
 <!-- workaround to simulate sequential content change behaviour as some custom JS may depend on this
      we do this as our seq_content is static (as we have HTML at vertical level) but seq_content on instances 
      is not static (as they have HTML at sequential level) -->
-<script type="text/javascript">
-function trigger_seq_content_change_behaviour(){
-  $('#seq_content').append("<div id='dummy_div'></div>");
-  $('#dummy_div').remove();
-}
-
-$(window).load(function(){
-  trigger_seq_content_change_behaviour();
-});
-</script>
+<script type="text/javascript" src="{{ rooturl }}assets/vertical.js"></script>
 {% endblock %}

@@ -7,7 +7,7 @@
             <div class="action">
                 <script type="text/javascript" src="{{ path_to_root }}instance_assets/{{ problem_id }}_answers.js"></script>
                 <div class="submit-attempt-container">
-                <button type="button" class="submit btn-brand" onclick="problem_check_answers('{{ problem_id }}')" >          <span class="submit-label">Submit</span>      </button>
+                <button type="button" class="submit btn-brand zim-problem_btn" data-problemid="{{ problem_id }}">          <span class="submit-label">Submit</span>      </button>
                 </div>
             </div>
             {% endif %}

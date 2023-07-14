@@ -276,4 +276,5 @@ class Problem(BaseXblock):
             html_content=self.html_content,
             path_to_root=get_back_jumps(5),
             answers_available=self.answers_available,
+            mooc=self.scraper,
         )
