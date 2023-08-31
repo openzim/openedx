@@ -3,6 +3,10 @@
 ##### Get the best courses :books: powered by openedx offline :arrow_down:
 An offliner to create ZIM :package: files from openedx powered courses
 
+
+| :zap:        Scraper is known to have a very significant issue on recent openEdx version, we are looking for resources / support to work on this issue (https://github.com/openzim/openedx/issues/175)   |
+|-----------------------------------------|
+
 [![PyPI](https://img.shields.io/pypi/v/openedx2zim?style=for-the-badge)](https://pypi.org/project/openedx2zim/)
 [![Docker](https://ghcr-badge.deta.dev/openzim/openedx/latest_tag?label=docker)](https://ghcr.io/openzim/openedx)
 [![Codefactor](https://img.shields.io/codefactor/grade/github/openzim/openedx/main?label=codefactor&style=for-the-badge)](https://www.codefactor.io/repository/github/openzim/openedx)
