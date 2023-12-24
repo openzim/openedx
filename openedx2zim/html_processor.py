@@ -1,6 +1,6 @@
 import pathlib
 import re
-import urllib
+import requests
 
 import xxhash
 import lxml.html
@@ -26,9 +26,10 @@ class HtmlProcessor:
         """downloads a file from src and return the name of the downloaded file
 
         with_ext: ensure that downloaded file has the given extension
-        filter_ext: download only if the file to download has an extension in this list"""
+        filter_ext: download only if the file to download has an extension in this list
+        """
 
-        server_path = pathlib.Path(urllib.parse.urlparse(src).path)
+        server_path = pathlib.Path(requests.utils.urlparse(src).path)
         ext = with_ext if with_ext else server_path.suffix
 
         if server_path.suffix:
@@ -57,7 +58,8 @@ class HtmlProcessor:
 
         - css_org_url: URL to the CSS file on the internet
         - css_path: path of CSS on the filesystem (Path)
-        - output_path_from_css: string representing path of the output directory relative to css_path"""
+        - output_path_from_css: string representing path of the output directory relative to css_path
+        """
 
         def encapsulate(url):
             return f"url({url})"
@@ -71,7 +73,7 @@ class HtmlProcessor:
 
         # ensure the original CSS url has netloc
         css_org_url = prepare_url(css_org_url, netloc, path_on_server)
-        css_org_url = urllib.parse.urlparse(css_org_url)
+        css_org_url = requests.utils.urlparse(css_org_url)
 
         with open(css_path, "r") as fp:
             content = fp.read()
@@ -93,7 +95,7 @@ class HtmlProcessor:
                 continue
 
             # add netloc if not present
-            parsed_url = urllib.parse.urlparse(css_url)
+            parsed_url = requests.utils.urlparse(css_url)
             if parsed_url.netloc == "":
                 if parsed_url.path.startswith("/"):
                     css_url = (
@@ -120,7 +122,7 @@ class HtmlProcessor:
                     path_on_server=path_on_server,
                     with_ext=".css",
                 )
-                parsed_css_url = urllib.parse.urlparse(css_url)
+                parsed_css_url = requests.utils.urlparse(css_url)
                 self.download_dependencies_from_css(
                     css_org_url=css_url,
                     css_path=output_path.joinpath(filename),
@@ -147,7 +149,7 @@ class HtmlProcessor:
     def download_images_from_html(
         self, html_body, output_path, path_from_html, netloc, path_on_server
     ):
-        """ download images from <img> tag and fix path """
+        """download images from <img> tag and fix path"""
 
         imgs = html_body.xpath("//img")
         for img in imgs:
@@ -171,7 +173,7 @@ class HtmlProcessor:
         return bool(imgs)
 
     def get_root_from_asset(self, path_from_html, root_from_html):
-        """ get path to root from the downloaded/generated asset """
+        """get path to root from the downloaded/generated asset"""
 
         # return original root if path_from_html is empty
         if path_from_html == "":
@@ -200,7 +202,7 @@ class HtmlProcessor:
         netloc,
         path_on_server,
     ):
-        """ download documents from <a> tag and fix path """
+        """download documents from <a> tag and fix path"""
 
         anchors = html_body.xpath("//a")
         for anchor in anchors:
@@ -242,7 +244,7 @@ class HtmlProcessor:
         """get the path and netloc to send recursively after downloading asset from downloaded_asset_url
         path_on_server is the current path on server and netloc is the current netloc"""
 
-        parsed_src = urllib.parse.urlparse(downloaded_asset_url)
+        parsed_src = requests.utils.urlparse(downloaded_asset_url)
         path_recursive = path_on_server
         if parsed_src.path:
             asset_path_on_server = pathlib.Path(parsed_src.path)
@@ -262,7 +264,7 @@ class HtmlProcessor:
     def download_css_from_html(
         self, html_body, output_path, path_from_html, netloc, path_on_server
     ):
-        """ download css files from <link> tag and fix path """
+        """download css files from <link> tag and fix path"""
 
         css_files = html_body.xpath("//link")
         for css in css_files:
@@ -298,7 +300,7 @@ class HtmlProcessor:
     def download_js_from_html(
         self, html_body, output_path, path_from_html, netloc, path_on_server
     ):
-        """ download javascript from <script> tag and fix path """
+        """download javascript from <script> tag and fix path"""
 
         js_files = html_body.xpath("//script")
         for js in js_files:
@@ -320,7 +322,7 @@ class HtmlProcessor:
     def download_sources_from_html(
         self, html_body, output_path, path_from_html, netloc, path_on_server
     ):
-        """ downloads content from <source> tags """
+        """downloads content from <source> tags"""
 
         sources = html_body.xpath("//source")
         for source in sources:
@@ -348,7 +350,7 @@ class HtmlProcessor:
         netloc,
         path_on_server,
     ):
-        """ download youtube videos and pdf files from iframes in html content """
+        """download youtube videos and pdf files from iframes in html content"""
 
         iframes = html_body.xpath("//iframe")
         for iframe in iframes:
@@ -395,7 +397,9 @@ class HtmlProcessor:
                     # handle iframe recursively
                     iframe_url = prepare_url(src, netloc)
                     try:
-                        src_content = self.scraper.instance_connection.get_page(iframe_url)
+                        src_content = self.scraper.instance_connection.get_page(
+                            iframe_url
+                        )
                     except Exception:
                         continue
                     path_recursive, netloc_recursive = self.get_path_and_netloc_to_send(
@@ -425,7 +429,7 @@ class HtmlProcessor:
         return bool(iframes)
 
     def handle_jump_to_paths(self, target_path):
-        """ return a fixed path in zim for a inter-xblock path containing jump_to """
+        """return a fixed path in zim for a inter-xblock path containing jump_to"""
 
         def check_descendants_and_return_path(xblock_extractor):
             if xblock_extractor.xblock_json["type"] in ["vertical", "course"]:
@@ -436,7 +440,9 @@ class HtmlProcessor:
 
         for xblock_extractor in self.scraper.xblock_extractor_objects:
             if (xblock_extractor.xblock_json["block_id"] == target_path.parts[-1]) or (
-                urllib.parse.urlparse(xblock_extractor.xblock_json["lms_web_url"]).path
+                requests.utils.urlparse(
+                    xblock_extractor.xblock_json["lms_web_url"]
+                ).path
                 == str(target_path)
             ):
                 # we have a path match, we now check xblock type to redirect properly
@@ -444,7 +450,7 @@ class HtmlProcessor:
                 return check_descendants_and_return_path(xblock_extractor)
 
     def rewrite_internal_links(self, html_body, root_from_html, netloc):
-        """ rewrites internal links and ensures no root-relative links are left behind """
+        """rewrites internal links and ensures no root-relative links are left behind"""
 
         def update_root_relative_path(anchor, fixed_path, root_from_html, netloc):
             """updates a root-relative path to the fixed path in zim
@@ -456,12 +462,12 @@ class HtmlProcessor:
                 anchor.attrib["href"] = netloc + anchor.attrib["href"]
 
         anchors = html_body.xpath("//a")
-        path_prefix = f"{self.scraper.instance_config['course_prefix']}{urllib.parse.unquote_plus(self.scraper.course_id)}"
+        path_prefix = f"{self.scraper.instance_config['course_prefix']}{requests.utils.unquote(self.scraper.course_id)}"
         has_changed = False
         for anchor in anchors:
             if "href" not in anchor.attrib:
                 continue
-            src = urllib.parse.urlparse(anchor.attrib["href"])
+            src = requests.utils.urlparse(anchor.attrib["href"])
 
             # ignore external links
             if src.netloc and src.netloc != self.scraper.instance_url:
@@ -507,7 +513,7 @@ class HtmlProcessor:
         netloc=None,
         path_on_server="",
     ):
-        """ downloads all static dependencies from an HTML content, and fixes links """
+        """downloads all static dependencies from an HTML content, and fixes links"""
 
         if not netloc:
             netloc = self.scraper.instance_url
@@ -551,7 +557,7 @@ class HtmlProcessor:
         return content
 
     def defer_scripts(self, content, output_path, path_from_html):
-        """ defer all scripts in content. For inline scripts, they're placed in a *.js file and deferred """
+        """defer all scripts in content. For inline scripts, they're placed in a *.js file and deferred"""
 
         soup = BeautifulSoup(content, "lxml")
         script_tags = soup.find_all("script")
@@ -590,7 +596,8 @@ class HtmlProcessor:
 
         output_path: a Path object to store the downloaded CSS/JS to
         path_from_html: a string representing the path to output_path from the resultant HTML
-        root_from_html: a string representing the path to the root from the resultant HTML"""
+        root_from_html: a string representing the path to the root from the resultant HTML
+        """
 
         html_headers = soup.find("head")
         head_css_js = (
@@ -622,7 +629,8 @@ class HtmlProcessor:
 
         output_path: a Path object to store the downloaded CSS/JS to
         path_from_html: a string representing the path to output_path from the resultant HTML
-        root_from_html: a string representing the path to the root from the resultant HTML"""
+        root_from_html: a string representing the path to the root from the resultant HTML
+        """
 
         html_body = soup.find("body")
         body_scripts = html_body.find_all("script", recursive=False)
