@@ -12,9 +12,8 @@ import re
 import shutil
 import sys
 import tempfile
-import urllib
+import requests
 import uuid
-import json
 
 from bs4 import BeautifulSoup
 from kiwixstorage import KiwixStorage
@@ -125,7 +124,6 @@ class Openedx2Zim:
         watcher_min_dl_count,
         watcher_min_ratio,
     ):
-
         # video-encoding info
         self.video_format = video_format
         self.low_quality = low_quality
@@ -230,7 +228,7 @@ class Openedx2Zim:
         ]
         if "%3" in clean_id:  # course_id seems already encode
             return clean_id
-        return urllib.parse.quote_plus(clean_id)
+        return requests.utils.quote(clean_id, safe="")
 
     def prepare_mooc_data(self):
         self.instance_url = self.instance_config["instance_url"]
@@ -259,9 +257,16 @@ class Openedx2Zim:
         )
         self.course_xblocks = xblocks_data["blocks"]
         if self.debug:
-            with tempfile.NamedTemporaryFile(dir=self.build_dir.joinpath("logs"), suffix=".json", mode="wt", delete=False) as fp:
+            with tempfile.NamedTemporaryFile(
+                dir=self.build_dir.joinpath("logs"),
+                suffix=".json",
+                mode="wt",
+                delete=False,
+            ) as fp:
                 json.dump(self.course_xblocks, fp, indent=4)
-                logger.debug(f"Saved API response while fetching list of course blocks in {fp.name}")
+                logger.debug(
+                    f"Saved API response while fetching list of course blocks in {fp.name}"
+                )
         self.root_xblock_id = xblocks_data["root"]
 
     def parse_course_xblocks(self):
@@ -334,7 +339,9 @@ class Openedx2Zim:
         pdf = book.find_all("a")
         book_list = []
         for url in pdf:
-            file_name = pathlib.Path(urllib.parse.urlparse(url["rel"][0]).path).name
+            file_name = pathlib.Path(
+                requests.utils.urlparse(url.get("rel", [""])[0]).path
+            ).name
             if self.download_file(
                 prepare_url(url["rel"][0], self.instance_url),
                 output_path.joinpath(file_name),
@@ -346,7 +353,9 @@ class Openedx2Zim:
         output_path = self.build_dir.joinpath(tab_org_path)
         output_path.mkdir(parents=True, exist_ok=True)
         try:
-            page_content = self.instance_connection.get_page(self.instance_url + tab_href)
+            page_content = self.instance_connection.get_page(
+                self.instance_url + tab_href
+            )
         except Exception:
             logger.error(f"Failed to get page content for tab {tab_org_path}")
             raise SystemExit(1)
@@ -491,7 +500,7 @@ class Openedx2Zim:
             self.forum.annex_forum()
 
     def get_favicon(self):
-        """ get the favicon from the given URL for the instance or the fallback URL """
+        """get the favicon from the given URL for the instance or the fallback URL"""
 
         favicon_fpath = self.build_dir.joinpath("favicon.png")
 
@@ -506,10 +515,10 @@ class Openedx2Zim:
             raise Exception("Favicon download failed")
 
     def get_content(self):
-        """ download the content for the course """
+        """download the content for the course"""
 
         def clean_content(html_article):
-            """ removes unwanted elements from homepage html """
+            """removes unwanted elements from homepage html"""
 
             unwanted_elements = {
                 "div": {"class": "dismiss-message"},
@@ -582,7 +591,9 @@ class Openedx2Zim:
             concurrent.futures.wait(fs, return_when=concurrent.futures.ALL_COMPLETED)
 
         if BaseXblock.too_many_failures():
-            logger.error("Stopping scrapper because too many errors occured while getting content")
+            logger.error(
+                "Stopping scrapper because too many errors occured while getting content"
+            )
             if self.debug:
                 print("Xblock download failure details:", file=sys.stderr)
                 json.dump(BaseXblock.watcher.failed_xblocks, sys.stderr, indent=4)
@@ -605,7 +616,7 @@ class Openedx2Zim:
         return True
 
     def download_from_cache(self, key, fpath, meta):
-        """ whether it downloaded from S3 cache """
+        """whether it downloaded from S3 cache"""
 
         filetype = "jpeg" if fpath.suffix in [".jpeg", ".jpg"] else fpath.suffix[1:]
         if not self.s3_storage.has_object(key) or not meta:
@@ -627,7 +638,7 @@ class Openedx2Zim:
         return True
 
     def upload_to_cache(self, key, fpath, meta):
-        """ whether it uploaded to S3 cache """
+        """whether it uploaded to S3 cache"""
 
         filetype = "jpeg" if fpath.suffix in [".jpeg", ".jpg"] else fpath.suffix[1:]
         if not meta or not filetype:
@@ -727,9 +738,9 @@ class Openedx2Zim:
             quality = "low" if self.low_quality else "high"
         else:
             quality = "default"
-        src_url = urllib.parse.urlparse(url)
+        src_url = requests.utils.urlparse(url)
         prefix = f"{src_url.scheme}://{src_url.netloc}/"
-        safe_url = f"{src_url.netloc}/{urllib.parse.quote_plus(src_url.geturl()[len(prefix):])}"
+        safe_url = f"{src_url.netloc}/{requests.utils.quote(src_url.geturl()[len(prefix):], safe='~')}"
         # safe url looks similar to ww2.someplace.state.gov/data%2F%C3%A9t%C3%A9%2Fsome+chars%2Fimage.jpeg%3Fv%3D122%26from%3Dxxx%23yes
         return f"{fpath.suffix[1:]}/{safe_url}/{quality}"
 
@@ -868,7 +879,7 @@ class Openedx2Zim:
             )
 
         # update instance config
-        instance_netloc = urllib.parse.urlparse(self.course_url).netloc
+        instance_netloc = requests.utils.urlparse(self.course_url).netloc
         self.instance_config.update({"instance_url": f"https://{instance_netloc}"})
         logger.info("Testing openedx instance credentials ...")
         self.instance_connection = InstanceConnection(
