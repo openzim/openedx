@@ -3,7 +3,7 @@ import getpass
 import http
 import json
 import sys
-import urllib
+import requests
 
 from .constants import getLogger, LANGUAGE_COOKIES, OPENEDX_LANG_MAP
 
@@ -25,17 +25,17 @@ class InstanceConnection:
         self.debug = debug
 
     def get_response(self, url, post_data, headers, max_attempts=5):
-        req = urllib.request.Request(url, post_data, headers)
+        req = requests.post(url, data=post_data, headers=headers)
         for attempt in range(max_attempts):
             try:
-                return urllib.request.urlopen(req).read().decode("utf-8")
-            except urllib.error.HTTPError as exc:
+                requests.urlopen(req).content.decode("utf-8")
+            except requests.exceptions.HTTPError as exc:
                 logger.debug(f"HTTP Error (won't retry this kind of error) while opening {url}: {exc}")
                 if self.debug:
                     responseData = exc.read().decode("utf8", 'ignore')
                     print(responseData, file=sys.stderr)
                 raise exc
-            except urllib.error.URLError as exc:
+            except requests.exceptions.RequestException as exc:
                 if attempt < max_attempts - 1:
                     logger.debug(f"Error opening {url}: {exc}\nRetrying ...")
                     continue
@@ -56,11 +56,9 @@ class InstanceConnection:
         self.headers.update({"X-CSRFToken": csrf_token})
 
     def generate_connection_headers(self):
-        opener = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(self.cookie_jar)
-        )
+        opener = requests.Session().cookies.update(self.cookie_jar)
         opener.addheaders = [("User-Agent", "Mozilla/5.0")]
-        urllib.request.install_opener(opener)
+        requests.Session().cookies = opener.cookies
         opener.open(self.instance_config["instance_url"] + "/login")
         self.headers = {
             "User-Agent": "Mozilla/5.0",
@@ -74,9 +72,7 @@ class InstanceConnection:
 
     def establish_connection(self):
         self.generate_connection_headers()
-        post_data = urllib.parse.urlencode(
-            {"email": self.email, "password": self.password, "remember": False}
-        ).encode("utf-8")
+        post_data = {"email": self.email, "password": self.password, "remember": False}
         # API login can also be used : /user_api/v1/account/login_session/
         self.instance_connection = self.get_api_json(
             self.instance_config["login_page"], post_data, max_attempts=1
@@ -122,5 +118,5 @@ class InstanceConnection:
 
     def get_redirection(self, url):
         self.update_csrf_token_in_headers()
-        req = urllib.request.Request(url, None, self.headers)
-        return urllib.request.urlopen(req).geturl()
+        response = requests.get(url, headers=self.headers, allow_redirects=False)
+        return response.headers.get('Location', response.url)
