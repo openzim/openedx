@@ -2,7 +2,6 @@ import html
 import mimetypes
 import pathlib
 import re
-import urllib
 import shlex
 import subprocess
 import zlib
@@ -28,7 +27,7 @@ def prepare_url(url, netloc, path_on_remote=None):
         # add a scheme first to prevent wrong URL parsing
         if not url.startswith("http://") and not url.startswith("https://"):
             url = f"http://{url}"
-        parsed_url = urllib.parse.urlparse(url)
+        parsed_url = requests.utils.urlparse(url)
         if not parsed_url.netloc and path_on_remote:
             url = f"{netloc}{str(pathlib.Path(path_on_remote).joinpath(url))}"
     return url
