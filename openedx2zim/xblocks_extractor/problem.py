@@ -1,7 +1,6 @@
 import json
 import uuid
-import itertools
-import urllib
+import itertools 
 
 from bs4 import BeautifulSoup
 
@@ -65,8 +64,6 @@ class Problem(BaseXblock):
                 }
             )
 
-        # encode the payload as a byte string
-        post_data = urllib.parse.urlencode(post_data).encode("utf-8")
 
         # send a POST request to the instance with the payload
         return instance_connection.get_api_json(
