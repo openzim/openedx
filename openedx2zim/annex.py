@@ -3,7 +3,7 @@ import html
 import uuid
 import json
 import pathlib
-import collections
+from collections import OrderedDict, defaultdict
 
 from bs4 import BeautifulSoup
 
@@ -17,7 +17,7 @@ class MoocForum:
     def __init__(self, scraper):
         self.scraper = scraper
         self.threads = []
-        self.categories = collections.OrderedDict()
+        self.categories = OrderedDict()
         self.staff_user = []
         self.output_path = self.scraper.build_dir.joinpath("forum")
         self.output_path.mkdir(parents=True, exist_ok=True)
@@ -219,7 +219,7 @@ class MoocForum:
             self.update_thread_children(thread)
 
     def render_forum(self):
-        thread_by_category = collections.defaultdict(list)
+        thread_by_category = defaultdict(list)
         for thread in self.threads:
             thread_by_category[thread["commentable_id"]].append(thread)
         jinja(
