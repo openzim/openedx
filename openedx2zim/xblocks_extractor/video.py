@@ -1,11 +1,11 @@
 import json
 import re
-import urllib
+import requests
 
 from bs4 import BeautifulSoup
 
 from .base_xblock import BaseXblock
-from ..utils import jinja, download_and_convert_subtitles, prepare_url, get_back_jumps
+from ..utils import jinja, download_and_convert_subtitles, get_back_jumps
 from ..constants import getLogger
 
 
@@ -64,7 +64,7 @@ class Video(BaseXblock):
             and "url"
             in self.xblock_json["student_view_data"]["encoded_videos"]["fallback"]
         ):
-            self.url = urllib.parse.unquote(
+            self.url = requests.utils.unquote(
                 self.xblock_json["student_view_data"]["encoded_videos"]["fallback"][
                     "url"
                 ]
@@ -74,10 +74,10 @@ class Video(BaseXblock):
             and "url"
             in self.xblock_json["student_view_data"]["encoded_videos"]["mobile_low"]
         ):
-            self.url = urllib.parse.unquote(
-                self.xblock_json["student_view_data"]["encoded_videos"][
-                    "mobile_low"
-                ]["url"]
+            self.url = requests.utils.unquote(
+                self.xblock_json["student_view_data"]["encoded_videos"]["mobile_low"][
+                    "url"
+                ]
             )
         elif (
             "youtube" in self.xblock_json["student_view_data"]["encoded_videos"]
@@ -117,9 +117,7 @@ class Video(BaseXblock):
             else:
                 self.no_video = True
                 logger.error(
-                    "Cannot get video for {}".format(
-                        self.xblock_json["lms_web_url"]
-                    )
+                    "Cannot get video for {}".format(self.xblock_json["lms_web_url"])
                 )
                 logger.error(self.xblock_json)
                 self.add_failed({"url": self.xblock_json["lms_web_url"]})
@@ -139,7 +137,10 @@ class Video(BaseXblock):
                 if not success:
                     self.add_failed({"url": self.url})
             else:
-                prepared_url = prepare_url(urllib.parse.unquote(self.url), self.scraper.instance_url)
+                prepared_url = requests.utils.unquote(self.url)
+                prepared_url = requests.utils.urljoin(
+                    self.scraper.instance_url, prepared_url
+                )
                 success = self.scraper.download_file(
                     prepared_url,
                     video_path,
