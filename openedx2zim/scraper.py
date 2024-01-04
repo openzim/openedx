@@ -32,7 +32,12 @@ from zimscraperlib.video.presets import (
     VideoWebmHigh,
 )
 from zimscraperlib.zim import make_zim_file
-
+from zimscraperlib.constants import (
+    MAXIMUM_DESCRIPTION_METADATA_LENGTH as MAX_DESC_LENGTH,
+)
+from zimscraperlib.constants import (
+    MAXIMUM_LONG_DESCRIPTION_METADATA_LENGTH as MAXIMUM_LONG_DESC_LENGTH,
+)
 from .annex import MoocForum, MoocWiki
 from .constants import (
     IMAGE_FORMATS,
@@ -85,6 +90,8 @@ XBLOCK_EXTRACTORS = {
     "unavailable": Unavailable,
 }
 
+
+
 logger = getLogger()
 
 
@@ -101,6 +108,8 @@ class Openedx2Zim:
         name,
         title,
         description,
+        #added long_description here
+        long_description,
         creator,
         publisher,
         tags,
@@ -135,6 +144,8 @@ class Openedx2Zim:
         self.tags = [] if tags is None else [t.strip() for t in tags.split(",")]
         self.title = title
         self.description = description
+        #long description
+        self.long_description = long_description
         self.creator = creator
         self.publisher = publisher
         self.name = name
@@ -496,7 +507,7 @@ class Openedx2Zim:
         favicon_fpath = self.build_dir.joinpath("favicon.png")
 
         # download the favicon
-        save_large_file(self.favicon_url, favicon_fpath)
+        save_large_file(self.favicon_url,favicon_fpath)
 
         # convert and resize
         convert_image(favicon_fpath, favicon_fpath, fmt="PNG")
@@ -831,6 +842,24 @@ class Openedx2Zim:
             self.build_dir.joinpath("assets"),
         )
 
+            
+    def handle_descriptions(self, default_description, description=None, long_description=None):
+        description = description or default_description[:MAX_DESC_LENGTH]
+        long_description = None 
+
+        # checks the length of the description
+        if long_description:
+            if len(long_description) > MAXIMUM_LONG_DESC_LENGTH:
+                raise ValueError(
+                    f"LongDescription too long ({len(long_description)}) > {MAXIMUM_LONG_DESC_LENGTH}"
+                )
+            long_description = long_description
+        elif len(default_description) > MAX_DESC_LENGTH:
+            long_description = default_description[MAX_DESC_LENGTH:]
+
+        return description, long_description
+
+
     def get_zim_info(self):
         if not self.has_homepage:
             homepage = f"{self.head_course_xblock.relative_path}/index.html"
@@ -843,10 +872,16 @@ class Openedx2Zim:
             else f"{self.course_info['name']} from {self.course_info['org']}"
         )
 
+        description,long_description = self.handle_descriptions(
+            default_description = fallback_description,
+            description = self.description,
+            long_description = self.long_description
+        )
+      
+
         return {
-            "description": self.description
-            if self.description
-            else fallback_description,
+            "description": description,
+            "long-description" : long_description,
             "title": self.title if self.title else self.course_info["name"],
             "creator": self.creator if self.creator else self.course_info["org"],
             "homepage": homepage,
@@ -902,9 +937,10 @@ class Openedx2Zim:
                 fpath=self.output_dir.joinpath(self.fname),
                 name=self.name,
                 main_page=zim_info["homepage"],
-                favicon="favicon.png",
+                illustration="favicon.png",
                 title=zim_info["title"],
                 description=zim_info["description"],
+                long_description= zim_info["long-description"],
                 language=get_language_details(self.instance_lang)["iso-639-3"],
                 creator=zim_info["creator"],
                 publisher=self.publisher,

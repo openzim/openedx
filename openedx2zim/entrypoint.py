@@ -75,6 +75,13 @@ def main():
         help="Custom description for your ZIM. Based on MOOC otherwise.",
     )
 
+    ##made changes here 
+    parser.add_argument(
+        "--long-description",
+        help="Custom description for your ZIM,optional",
+    )
+
+
     parser.add_argument("--creator", help="Name of content creator", default="edX")
 
     parser.add_argument(

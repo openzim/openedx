@@ -73,6 +73,7 @@ celerybeat-schedule
 
 # dotenv
 .env
+.venv
 
 # virtualenv
 venv/
@@ -92,3 +93,5 @@ openedx2zim/templates/assets/mathjax/
 openedx2zim/templates/assets/ogvjs/
 openedx2zim/templates/assets/jquery.min.js
 openedx2zim/templates/assets/videojs-ogvjs.js
+openedx/openedx2zim.egg-info/
+openedx/output/
