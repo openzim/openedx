@@ -78,7 +78,7 @@ def main():
     parser.add_argument("--creator", help="Name of content creator", default="edX")
 
     parser.add_argument(
-        "--publisher", help="Custom publisher name (ZIM metadata)", default="Kiwix"
+        "--publisher", help="Custom publisher name (ZIM metadata)", default="openZIM"
     )
 
     parser.add_argument(
