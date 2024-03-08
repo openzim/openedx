@@ -9,6 +9,10 @@
 - fix issue with video that do not need to be re-encoded and were marked as missing
 - README.md: replace course in sample command by one under a Creative Commons license
 
+# 1.0.2
+
+- changed default publisher metadata from 'Kiwix' to 'openZIM'
+
 # 1.0.1
 
 - fixed recursive paths and URLs in html_processor.py
