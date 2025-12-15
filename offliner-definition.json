@@ -44,7 +44,8 @@
       "pattern": "^/"
     },
     "favicon_url": {
-      "type": "url",
+      "type": "blob",
+      "kind": "image",
       "required": false,
       "title": "Favicon URL",
       "description": "URL pointing to a favicon image. Recommended size >= (48px x 48px)"
