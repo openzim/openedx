@@ -32,7 +32,7 @@ from zimscraperlib.video.presets import (
     VideoWebmHigh,
 )
 from zimscraperlib.zim import make_zim_file
-
+from zimscraperlib.metadata import MAXIMUM_DESCRIPTION_LENGTH
 from .annex import MoocForum, MoocWiki
 from .constants import (
     IMAGE_FORMATS,
@@ -902,8 +902,9 @@ class Openedx2Zim:
                 fpath=self.output_dir.joinpath(self.fname),
                 name=self.name,
                 main_page=zim_info["homepage"],
-                favicon="favicon.png",
+                illustration="favicon.png",
                 title=zim_info["title"],
+                long_description=zim_info["long_description"][:MAXIMUM_DESCRIPTION_LENGTH] if self.long_description else None,
                 description=zim_info["description"],
                 language=get_language_details(self.instance_lang)["iso-639-3"],
                 creator=zim_info["creator"],

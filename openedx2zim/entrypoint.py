@@ -51,6 +51,12 @@ def main():
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "--long-description",
+        help="Custom long description for your ZIM. Based on MOOC otherwise.",
+        dest="long_description",
+        default=None,
+    )
 
     parser.add_argument(
         "--locale",
