@@ -74,7 +74,7 @@
       "title": "No top sequential navigation",
       "description": "Remove the top sequential navigation bar in the ZIM"
     },
-    "video_format": {
+    "format": {
       "type": "string-enum",
       "required": false,
       "title": "Video format",
