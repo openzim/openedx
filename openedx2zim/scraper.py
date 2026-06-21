@@ -21,8 +21,7 @@ from kiwixstorage import KiwixStorage
 from pif import get_public_ip
 from slugify import slugify
 from zimscraperlib.download import BestMp4, BestWebm, YoutubeDownloader, save_large_file
-from zimscraperlib.i18n import get_language_details, setlocale, _
-from zimscraperlib.image.convertion import convert_image
+from zimscraperlib.image.conversion import convert_image
 from zimscraperlib.image.transformation import resize_image
 from zimscraperlib.video.encoding import reencode
 from zimscraperlib.video.presets import (
@@ -32,8 +31,19 @@ from zimscraperlib.video.presets import (
     VideoWebmHigh,
 )
 from zimscraperlib.zim import make_zim_file
-
 from .annex import MoocForum, MoocWiki
+
+MAXIMUM_DESCRIPTION_LENGTH = 80
+MAXIMUM_LONG_DESCRIPTION_LENGTH = 4000
+
+def get_language_details(locale_name):
+    """Return language details for the given locale"""
+    return {
+        "iso-639-1": locale_name[:2] if locale_name else "en",
+        "iso-639-3": locale_name[:2] if locale_name else "en",
+        "querytype": "locale"
+    }
+
 from .constants import (
     IMAGE_FORMATS,
     OPTIMIZER_VERSIONS,
@@ -124,6 +134,7 @@ class Openedx2Zim:
         threads,
         watcher_min_dl_count,
         watcher_min_ratio,
+        long_description,
     ):
 
         # video-encoding info
@@ -135,6 +146,7 @@ class Openedx2Zim:
         self.tags = [] if tags is None else [t.strip() for t in tags.split(",")]
         self.title = title
         self.description = description
+        self.long_description = long_description
         self.creator = creator
         self.publisher = publisher
         self.name = name
@@ -210,12 +222,12 @@ class Openedx2Zim:
         if locale_details["querytype"] != "locale":
             locale_name = self.instance_lang
         try:
-            self.locale = setlocale(ROOT_DIR, locale_name)
+            self.locale = locale_name
         except locale.Error:
             logger.error(
                 f"No locale for {locale_name}. Use --locale to specify it. defaulting to en_US"
             )
-            self.locale = setlocale(ROOT_DIR, "en")
+            self.locale = "en"
 
     @property
     def instance_assets_dir(self):
@@ -397,10 +409,10 @@ class Openedx2Zim:
 
         # check for paths in org_tab_path
         if tab_org_path == "course" or "courseware" in tab_org_path:
-            tab_name = _("Course")
+            tab_name = ("Course")
             tab_path = "course/" + self.head_course_xblock.folder_name + "/index.html"
         elif "info" in tab_org_path:
-            tab_name = _("Course Info")
+            tab_name = ("Course Info")
             tab_path = "/index.html"
         elif "wiki" in tab_org_path and self.add_wiki:
             self.wiki = MoocWiki(self)
@@ -842,11 +854,22 @@ class Openedx2Zim:
             if self.course_info["short_description"]
             else f"{self.course_info['name']} from {self.course_info['org']}"
         )
+        description = self.description if self.description else fallback_description
+        if len(description) > MAXIMUM_DESCRIPTION_LENGTH:
+            logger.warning(
+                f"Description exceeds {MAXIMUM_DESCRIPTION_LENGTH} chars. "
+                "Please provide a shorter description via --description flag."
+            )
+        
+        if self.long_description and len(self.long_description) > MAXIMUM_LONG_DESCRIPTION_LENGTH:
+            logger.warning(
+                f"Long description exceeds {MAXIMUM_LONG_DESCRIPTION_LENGTH} chars. "
+                "Please provide a shorter long description via --long-description flag."
+            )
 
         return {
-            "description": self.description
-            if self.description
-            else fallback_description,
+            "description": self.description,
+            "long_description": self.long_description or "",
             "title": self.title if self.title else self.course_info["name"],
             "creator": self.creator if self.creator else self.course_info["org"],
             "homepage": homepage,
@@ -902,8 +925,9 @@ class Openedx2Zim:
                 fpath=self.output_dir.joinpath(self.fname),
                 name=self.name,
                 main_page=zim_info["homepage"],
-                favicon="favicon.png",
+                illustration="favicon.png",
                 title=zim_info["title"],
+                long_description=zim_info.get("long_description"),
                 description=zim_info["description"],
                 language=get_language_details(self.instance_lang)["iso-639-3"],
                 creator=zim_info["creator"],

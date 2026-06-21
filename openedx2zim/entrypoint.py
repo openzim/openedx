@@ -12,10 +12,14 @@ def main():
         prog=NAME,
         description="Scraper to create ZIM files MOOCs on openedx instances",
     )
+    parser.add_argument(
+        "--description",
+        help="Custom short description for your ZIM (80 characters max). ZIM metadata only.",
+    )
 
     parser.add_argument(
         "--course-url",
-        help="URL of the course you wnat to scrape",
+        help="URL of the course you want to scrape",
         required=True,
     )
 
@@ -51,6 +55,12 @@ def main():
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "--long-description",
+        help="Custom long description for your ZIM (up to 4000 characters). Displayed in ZIM.",
+        dest="long_description",
+        default=None,
+    )
 
     parser.add_argument(
         "--locale",
@@ -70,10 +80,6 @@ def main():
         help="Custom title for your ZIM. Based on MOOC otherwise.",
     )
 
-    parser.add_argument(
-        "--description",
-        help="Custom description for your ZIM. Based on MOOC otherwise.",
-    )
 
     parser.add_argument("--creator", help="Name of content creator", default="edX")
 
